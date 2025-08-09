@@ -28,16 +28,9 @@ if mode == "ArtiBot":
     """
 else:
     widget = """
-    <script>
-    (function (w, d, s, o, f, js, fjs) {
-        w["botsonic_widget"] = o;
-        w[o] = w[o] || function () { (w[o].q = w[o].q || []).push(arguments); };
-        js = d.createElement(s); fjs = d.getElementsByTagName(s)[0];
-        js.id = o; js.src = f; js.async = 1; fjs.parentNode.insertBefore(js, fjs);
-    }(window, document, "script", "Botsonic", "https://widget.botsonic.com/CDN/botsonic.min.js"));
-    Botsonic("init", { serviceBaseUrl: "https://api.bot.writesonic.com",
-                        token: "ee01da67-ed42-4565-9ed8-7f6a69759791" });
-    </script>
+    <iframe style="height:100vh;width:100vw" frameBorder="0" 
+src="https://widget.botsonic.com/CDN/index.html?service-base-url=https%3A%2F%2Fapi-bot.writesonic.com&token=ee01da67-ed42-4565-9ed8-7f6a67957791&base-origin=https%3A%2F%2Fbot.writesonic.com&instance-name=Botsonic&standalone=true&page-url=https%3A%2F%2Fislamichat.streamlit.app/%2Fbots%2F65e6b43d-d567-45c3-ba79-2affb44112e3%2Fconnect">
+</iframe>
     """
 
 html(container_css.replace("{WIDGET}", widget), height=750)
