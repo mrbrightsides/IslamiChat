@@ -7,7 +7,7 @@ from streamlit.components.v1 import html
 
 # ====== Page setup ======
 st.set_page_config(page_title="IslamiChat 🤖", layout="wide")
-st.title("IslamiChat – Tanya Jawab + Waktu Sholat")
+st.title("IslamiChat = Tanya Jawab + Waktu Sholat")
 st.caption("Powered by ArtiBot / Botsonic • Waktu sholat dari Aladhan API")
 
 tab_chat, tab_prayer = st.tabs(["🤖 Chatbot", "🕋 Waktu Sholat"])
