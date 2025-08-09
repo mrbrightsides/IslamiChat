@@ -14,7 +14,12 @@ tab_chat, tab_prayer = st.tabs(["🤖 Chatbot", "🕋 Waktu Sholat"])
 
 # ====== TAB 1: Chatbot ======
 with tab_chat:
-    mode = st.radio("Pilih widget:", ["ArtiBot", "BotSonic"], horizontal=True)
+    st.subheader("Pilih widget:")
+    widget_opt = st.radio(
+        " ", 
+        ["ArtiBot", "BotSonic", "TawkTo"], 
+        horizontal=True, label_visibility="collapsed"
+    )
 
     container_css = """
     <div style="display:flex;justify-content:center;width:100%;">
@@ -24,26 +29,45 @@ with tab_chat:
     </div>
     """
 
-    if mode == "ArtiBot":
-        widget = """
-        <script type="text/javascript">
-        !function(t,e){t.artibotApi={l:[],t:[],on:function(){this.l.push(arguments)},trigger:function(){this.t.push(arguments)}};
-        var a=!1,i=e.createElement("script");i.async=!0,i.type="text/javascript",i.src="https://app.artibot.ai/loader.js",
-        e.getElementsByTagName("head").item(0).appendChild(i),
-        i.onreadystatechange=i.onload=function(){if(!(a||this.readyState&&"loaded"!=this.readyState&&"complete"!=this.readyState)){
-          new window.ArtiBot({i:"5ace9d64-708e-48cb-86df-b8c605d17c1e"});a=!0}}}(window,document);
-        </script>
-        """
-    else:
-        # NOTE: pastikan domain Streamlit kamu sudah di-allow di Botsonic
-        widget = """
-        <iframe style="height:85vh;width:100%;border:0;border-radius:12px" frameBorder="0" 
-        src="https://widget.botsonic.com/CDN/index.html?service-base-url=https%3A%2F%2Fapi-bot.writesonic.com&token=78d9eaba-80fc-4293-b290-fe72e1899607&base-origin=https%3A%2F%2Fbot.writesonic.com&instance-name=Botsonic&standalone=true&page-url=https%3A%2F%2Fislamichat.streamlit.app%2Fbots%2Fa148b878-259e-4591-858a-8869b9b23604%2Fconnect">
-        </iframe>
-        """
+    ARTIBOT = """
+    <script type="text/javascript">
+    !function(t,e){t.artibotApi={l:[],t:[],on:function(){this.l.push(arguments)},trigger:function(){this.t.push(arguments)}};
+    var a=!1,i=e.createElement("script");i.async=!0,i.type="text/javascript",i.src="https://app.artibot.ai/loader.js",
+    e.getElementsByTagName("head").item(0).appendChild(i),
+    i.onreadystatechange=i.onload=function(){if(!(a||this.readyState&&"loaded"!=this.readyState&&"complete"!=this.readyState)){
+      new window.ArtiBot({i:"5ace9d64-708e-48cb-86df-b8c605d17c1e"});a=!0}}}(window,document);
+    </script>
+    """
 
-    html(container_css.replace("{WIDGET}", widget), height=750)
+    BOTSONIC = """
+    <iframe style="height:85vh;width:100%;border:0;border-radius:12px" frameBorder="0" 
+      src="https://widget.botsonic.com/CDN/index.html?service-base-url=https%3A%2F%2Fapi-bot.writesonic.com&token=78d9eaba-80fc-4293-b290-fe72e1899607&base-origin=https%3A%2F%2Fbot.writesonic.com&instance-name=Botsonic&standalone=true&page-url=https%3A%2F%2Fislamichat.streamlit.app%2Fbots%2Fa148b878-259e-4591-858a-8869b9b23604%2Fconnect">
+    </iframe>
+    """
 
+    # ganti URL di bawah dengan Space kamu sendiri
+    TAWKTO = """
+<script type="text/javascript">
+var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+(function(){
+var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+s1.async=true;
+s1.src='https://embed.tawk.to/63f1709c4247f20fefe15b12/1gpjhvpnb';
+s1.charset='UTF-8';
+s1.setAttribute('crossorigin','*');
+s0.parentNode.insertBefore(s1,s0);
+})();
+</script>
+    """
+
+    html_map = {
+        "ArtiBot": ARTIBOT,
+        "BotSonic": BOTSONIC,
+        "TawkTo": TAWKTO
+    }
+
+    html(container_css.replace("{WIDGET}", html_map[widget_opt]), height=750)
+    
 # ====== Helpers untuk Waktu Sholat ======
 TZ = pytz.timezone("Asia/Jakarta")
 METHODS = {
