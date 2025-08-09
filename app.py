@@ -6,7 +6,7 @@ st.title("IslamiChat – Tanya Jawab")
 st.caption("Powered by ArtiBot / Botsonic")
 
 # Pilih widget mana yang mau ditampilkan
-mode = st.radio("Pilih widget:", ["ArtiBot", "EmbedAI"], horizontal=True)
+mode = st.radio("Pilih widget:", ["ArtiBot", "BotSonic"], horizontal=True)
 
 container_css = """
 <div style="display:flex;justify-content:center;width:100%;">
@@ -28,7 +28,9 @@ if mode == "ArtiBot":
     """
 else:
     widget = """
-    <script id="embedai" src="https://embedai.thesamur.ai/embedai.js" data-id="islamichat-ai"></script>
+    <iframe style="height:100vh;width:100vw" frameBorder="0" 
+src="https://widget.botsonic.com/CDN/index.html?service-base-url=https%3A%2F%2Fapi-bot.writesonic.com&token=78d9eaba-80fc-4293-b290-fe72e1899607&base-origin=https%3A%2F%2Fbot.writesonic.com&instance-name=Botsonic&standalone=true&page-url=https%3A%2F%2Fislamichat.streamlit.app/%2Fbots%2Fa148b878-259e-4591-858a-8869b9b23604%2Fconnect">
+</iframe>
     """
 
 html(container_css.replace("{WIDGET}", widget), height=750)
