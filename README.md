@@ -6,7 +6,8 @@ Powered by **ArtiBot**, **BotSonic**, & **Aladhan API**
 [![Streamlit](https://img.shields.io/badge/Deploy%20on-Streamlit-FF4B4B)](https://islamichat.streamlit.app)
 [![Python](https://img.shields.io/badge/Python-3.9%2B-blue)](https://www.python.org/)
 [![Status](https://img.shields.io/badge/status-active-success)]()
-[![Issues](https://img.shields.io/github/issues/mrbrightsides/IslamiChat)](../../issues)
+[![Issues](https://img.shields.io/github/issues/mrbrightsides/IslamiChat)](../../issues
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.16787143.svg)](https://doi.org/10.5281/zenodo.16787143)
 
 ---
 
