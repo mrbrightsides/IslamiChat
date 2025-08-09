@@ -58,6 +58,8 @@ Proyek ini dapat dihubungkan dengan:
 
 ### Dashboard admin untuk mengatur lokasi & metode hisab.
 
+<img width="1024" height="1024" alt="image" src="https://github.com/user-attachments/assets/128aa5d2-ed36-4d27-a42e-19b3e287a38b" />
+
 ---
 
 ## 📄 Lisensi
