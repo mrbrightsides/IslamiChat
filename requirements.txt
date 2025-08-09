@@ -1,0 +1,6 @@
+streamlit
+paho-mqtt
+python-dotenv
+fastapi
+uvicorn[standard]
+hbmqtt
