@@ -17,11 +17,10 @@ def _run_overpass(endpoint: str, q: str):
         endpoint,
         data={"data": q},
         headers={"User-Agent": "IslamiChat/1.0"},
-        timeout=(6, 20),   # (connect, read)
+        timeout=(6, 20),  # (connect, read)
     )
 
 def build_query(lat: float, lon: float, radius: int, lite: bool) -> str:
-    # regex nama masjid yg umum dipakai di Indonesia (case-insensitive pakai ", i")
     name_regex = "masjid|musholl?a|mushol?a|mus(ha)?ll?a|musala|surau|langgar|prayer.?room"
     if lite:
         return f"""
@@ -56,7 +55,7 @@ def fetch_mosques(lat: float, lon: float, radius: int, lite: bool):
     last_err = []
     for ep in OVERPASS_ENDPOINTS:
         delay = 1.2
-        for attempt in range(2):  # fail-fast
+        for attempt in range(2):
             try:
                 r = _run_overpass(ep, q)
                 if r.status_code == 429:
@@ -69,76 +68,78 @@ def fetch_mosques(lat: float, lon: float, radius: int, lite: bool):
                 time.sleep(delay); delay *= 1.6
     raise RuntimeError("Overpass gagal: " + " | ".join(last_err[:3]) + " …")
 
-# ===== Geocoding (multi-kandidat) =====
+# ===== Geocoding (multi kandidat + fallback) =====
 @st.cache_data(ttl=3600)
 def geocode_candidates(q: str, country_bias: str | None = "id"):
     geo = Nominatim(user_agent="islamiChat/1.0", timeout=10)
-    # exactly_one=False agar dapat beberapa kandidat
+    # coba full query
     results = geo.geocode(
-        q, language="id", addressdetails=True, exactly_one=False,
-        limit=5, country_codes=country_bias
+        q, language="id", addressdetails=True, exactly_one=False, limit=5,
+        country_codes=country_bias
     )
+    # fallback ke bagian paling akhir (biasanya kota) kalau kosong
+    if not results and "," in q:
+        tail = q.split(",")[-1].strip()
+        if tail:
+            results = geo.geocode(
+                tail, language="id", addressdetails=True, exactly_one=False, limit=5,
+                country_codes=country_bias
+            )
     if not results:
         return []
-    out = []
-    for r in results:
-        out.append({"label": r.address, "lat": float(r.latitude), "lon": float(r.longitude)})
-    return out
+    return [{"label": r.address, "lat": float(r.latitude), "lon": float(r.longitude)} for r in results]
 
-# ===== UI =====
+# ===== UI utama =====
 def show_nearby_mosques():
     st.header("🕌 Masjid Terdekat")
 
-    # --- Controls utama
     radius = st.slider("Radius pencarian (meter)", 300, 4000, 1500, step=100)
     lite = st.toggle("Gunakan query ringan (lebih mudah lolos rate-limit)", value=False)
 
-    # --- Input alamat
+    # Satu tempat input alamat
     q = st.text_input(
-        "Masukkan alamat/lokasi (contoh: Jl. Jendral Sudirman, 8 Ilir, Palembang)",
-        value=st.session_state.get("addr_query", "Palembang, Indonesia"),
+        "Masukkan alamat/lokasi (contoh: **8 Ilir, Palembang** atau **Sekayu, Musi Banyuasin**)",
+        value=st.session_state.get("addr_query", ""),
+        placeholder="Kelurahan, Kota",
         key="addr_query",
     )
 
-    col_btn, _, _ = st.columns([1, 1, 2])
-    with col_btn:
-        cari_click = st.button("🔎 Cari alamat")
+    cari_click = st.button("🔎 Cari alamat")
 
-    # --- State helper
-    # - cands: list kandidat alamat [{'label', 'lat', 'lon'}, ...]
-    # - use_center: True jika user memilih "Cari dari center peta"
+    # State penyimpanan kandidat & indeks pilihan
     if "cands" not in st.session_state:
-        st.session_state.cands = geocode_candidates(q) or []
-    if "use_center" not in st.session_state:
-        st.session_state.use_center = False
+        st.session_state.cands = []
+    if "cand_idx" not in st.session_state:
+        st.session_state.cand_idx = 0
     if "addr_query_prev" not in st.session_state:
-        st.session_state.addr_query_prev = q
+        st.session_state.addr_query_prev = ""
 
-    # Re-geocode saat:
-    # 1) tombol cari ditekan, atau
-    # 2) teks alamat berubah
-    if cari_click or (q.strip() and q != st.session_state.addr_query_prev):
+    # Geocode hanya ketika tombol ditekan atau teks berubah (dan tidak kosong)
+    if (cari_click or (q and q != st.session_state.addr_query_prev)) and q.strip():
         st.session_state.cands = geocode_candidates(q.strip())
-        st.session_state.use_center = False         # kalau lagi center, batal
+        st.session_state.cand_idx = 0
         st.session_state.addr_query_prev = q
 
-    # Tentukan sumber koordinat: center map atau hasil geocode
-    if st.session_state.use_center and st.session_state.cands:
-        cands = st.session_state.cands             # akan berisi satu entri "Center peta"
-    else:
-        cands = st.session_state.cands
-
-    if not cands:
-        st.error("Lokasi tidak ditemukan. Coba lebih spesifik atau tulis nama kota/kelurahan.")
+    # Jika belum ada pencarian → stop (tidak auto-load Palembang)
+    if not st.session_state.cands:
+        st.info("Masukkan alamat, lalu klik **Cari alamat**.")
         return
 
-    labels = [c["label"] for c in cands]
-    idx = st.selectbox("Pilih lokasi yang sesuai:", range(len(cands)), format_func=lambda i: labels[i], key="cand_idx")
+    # Pilih kandidat (muncul hanya setelah ada hasil)
+    labels = [c["label"] for c in st.session_state.cands]
+    st.session_state.cand_idx = st.selectbox(
+        "Pilih lokasi yang sesuai:",
+        range(len(labels)),
+        format_func=lambda i: labels[i],
+        index=st.session_state.cand_idx,
+        key="cand_idx_select",
+    )
 
-    lat, lon = cands[idx]["lat"], cands[idx]["lon"]
-    st.caption(f"Lokasi dipilih: {labels[idx]} • ({lat:.5f}, {lon:.5f})")
+    cand = st.session_state.cands[st.session_state.cand_idx]
+    lat, lon, label = cand["lat"], cand["lon"], cand["label"]
+    st.caption(f"Lokasi dipilih: {label} • ({lat:.5f}, {lon:.5f})")
 
-    # --- Ambil data masjid
+    # Ambil data masjid
     try:
         elements = fetch_mosques(lat, lon, radius, lite)
         if not elements:
@@ -150,7 +151,7 @@ def show_nearby_mosques():
         st.error(f"Gagal mengambil data masjid: {e}")
         return
 
-    # --- Render peta
+    # Peta di tengah halaman
     m = folium.Map(location=[lat, lon], zoom_start=14, control_scale=True)
     folium.Marker([lat, lon], tooltip="Titik pencarian",
                   icon=folium.Icon(color="blue", icon="user")).add_to(m)
@@ -172,22 +173,8 @@ def show_nearby_mosques():
             count += 1
 
     st.success(f"Ditemukan {count} lokasi dalam radius {radius} m.")
-    map_state = st_folium(m, width=800, height=520)
 
-    # --- Cari ulang dari center peta
-    with st.expander("🔁 Cari ulang dari titik tengah peta ini"):
-        st.caption("Geser/zoom peta di atas, lalu klik tombol di bawah untuk mencari dari center tampilan.")
-        if st.button("Cari dari center peta"):
-            cen_lat, cen_lon = None, None
-            if map_state and "center" in map_state:
-                cen_lat = map_state["center"]["lat"]
-                cen_lon = map_state["center"]["lng"]
-            elif map_state and "bounds" in map_state:
-                cen_lat = (map_state["bounds"]["_southWest"]["lat"] + map_state["bounds"]["_northEast"]["lat"]) / 2
-                cen_lon = (map_state["bounds"]["_southWest"]["lng"] + map_state["bounds"]["_northEast"]["lng"]) / 2
-            if cen_lat is None:
-                st.warning("Center peta belum terbaca. Coba gerakkan/zoom peta dulu.")
-            else:
-                st.session_state.cands = [{"label": "Center peta", "lat": cen_lat, "lon": cen_lon}]
-                st.session_state.use_center = True
-                st.rerun()
+    # render map di kolom tengah (centered)
+    left, mid, right = st.columns([1, 6, 1])
+    with mid:
+        st_folium(m, width=800, height=520)
