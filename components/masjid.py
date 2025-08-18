@@ -45,27 +45,6 @@ def build_query(lat: float, lon: float, radius: int, lite: bool) -> str:
     out center;
     """
 
-@st.cache_data(ttl=300)
-def fetch_mosques(lat: float, lon: float, radius: int, lite: bool):
-    q = build_query(lat, lon, radius, lite)
-    last_err = []
-    for ep in OVERPASS_ENDPOINTS:
-        for use_get in (False, True):
-            delay = 1.5
-            for attempt in range(4):
-                try:
-                    resp = _run_overpass(ep, q, use_get)
-                    if resp.status_code == 429:
-                        time.sleep(delay); delay *= 1.8
-                        continue
-                    resp.raise_for_status()
-                    data = resp.json()
-                    return data.get("elements", [])
-                except Exception as e:
-                    last_err.append(f"{ep} {'GET' if use_get else 'POST'} try{attempt+1}: {e}")
-                    time.sleep(delay); delay *= 1.5
-    raise RuntimeError("Semua endpoint Overpass gagal. Detail: " + " | ".join(last_err[:3]) + " ...")
-
 # ---------- Lokasi ----------
 @st.cache_data(ttl=600)
 def ip_lookup():
