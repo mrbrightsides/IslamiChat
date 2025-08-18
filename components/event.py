@@ -367,23 +367,46 @@ def render_event():
     with c4:
         only_labeled = st.checkbox("Tampilkan hanya hari bertanda (event/puasa)", value=False)
 
-    # Build calendar (butuh helper yang sudah ada di modulmu)
+    # Build calendar
     rows = build_hijri_year_calendar(int(year_h), include_mon_thu, include_tasua)
     if not rows:
         st.warning("Kalender tahun ini belum tersedia lengkap dari API.")
         return
-
-    # Upcoming
+    
+    import pandas as pd
+    from datetime import date
+    
+    # normalisasi YYYY-MM-DD (kalau _to_iso_gdate ga di-import, bikin kecilnya)
+    def _to_iso(s):
+        s = str(s)
+        if len(s) == 10 and s[2] == "-" and s[5] == "-":
+            dd, mm, yyyy = s.split("-")
+            return f"{yyyy}-{mm}-{dd}"
+        return s
+    
+    rows_df = pd.DataFrame(rows, columns=["gregorian","weekday","hijri","h_month_en","labels"])
+    rows_df["gregorian"] = rows_df["gregorian"].apply(_to_iso)
+    
+    # label-kan setahun penuh
+    rows_df = add_event_labels(rows_df, include_mon_thu, include_tasua)
+    rows_labeled = rows_df.to_dict("records")
+    
+    # === Event Terdekat (PAKAI rows_labeled) ===
     st.subheader("🗓️ Event Terdekat")
-    ups = find_upcoming(rows, from_g=date.today(), limit=8)
+    ups = find_upcoming(rows_labeled, from_g=date.today(), limit=8)
     if ups:
         for r in ups:
             left_txt = f" (tinggal {r['days_left']} hari)" if r["days_left"] > 0 else " (hari ini)"
             st.write(f"- **{r['labels']}** — {r['gregorian']} (Hijri: {r['hijri']} / {r['h_month_en']}){left_txt}")
     else:
-        st.caption(
-            "Belum ada event terdekat yang terdaftar. Aktifkan penanda Senin/Kamis atau Tāsū‘ā/‘Āsyūrā’ untuk melihat jadwal."
-        )
+        st.caption("Belum ada event terdekat. Aktifkan penanda Senin/Kamis atau Tasu‘ā.")
+    
+    # === Data untuk tabel bulan (juga dari rows_labeled) ===
+    filtered = filter_rows(
+        rows_labeled,
+        only_labeled=only_labeled,
+        month_filter=view_month
+    )
 
     # View mode: tahun penuh / bulan tertentu
     st.subheader("📋 Kalender")
