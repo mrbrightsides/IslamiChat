@@ -47,6 +47,7 @@ def build_query(lat: float, lon: float, radius: int, lite: bool) -> str:
 
 @st.cache_data(ttl=300)
 def fetch_mosques(lat: float, lon: float, radius: int, lite: bool):
+    q = build_query(lat, lon, radius, lite)   # <-- INI YANG KURANG
     last_err = []
     for ep in OVERPASS_ENDPOINTS:
         for use_get in (False, True):
