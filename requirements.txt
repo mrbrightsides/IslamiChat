@@ -2,7 +2,7 @@ streamlit
 requests
 pytz
 geopy
-openai
+openai>=1.30.0
 pandas
 markdownify
 streamlit-folium==0.20.0
