@@ -2,7 +2,7 @@
 import streamlit as st
 import requests
 
-RADIO_API = "https://mp3quran.net/api/v3/radios?language=id"
+RADIO_API = "https://mp3quran.net/api/v3/radios"
 
 @st.cache_data(ttl=86400)
 def fetch_radios():
@@ -21,7 +21,7 @@ def fetch_radios():
 def show_murottal_tab():
     st.header("📻 Murottal 24 Jam")
     st.markdown("""
-        Dengarkan bacaan Al-Qur'an nonstop yang disertai terjemahan Bahasa Indonesia.
+        Dengarkan bacaan Al-Qur'an nonstop dengan berbagai pilihan qori internasional.
         Sumber audio streaming dari [mp3quran.net](https://mp3quran.net).
     """)
 
@@ -44,6 +44,6 @@ def show_murottal_tab():
     stream_url = selected.get("url")
     if stream_url:
         st.audio(stream_url, format="audio/mp3")
-        st.caption(f"Siaran: {selected.get('name', 'Tanpa Nama')}")
+        st.caption(f"Qori: {selected.get('name', 'Tanpa Nama')}")
     else:
         st.error("URL streaming tidak tersedia untuk channel ini.")
