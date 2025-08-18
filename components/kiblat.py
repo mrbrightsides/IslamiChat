@@ -2,7 +2,7 @@ import streamlit as st
 from math import radians, degrees, sin, cos, atan2
 from geopy.geocoders import Nominatim
 
-def arah_kiblat():
+def show_qibla_direction():
     st.subheader("🧭 Arah Kiblat")
 
     lokasi = st.text_input("Masukkan Nama Lokasi", placeholder="contoh: Jakarta, Indonesia")
