@@ -7,6 +7,23 @@ from typing import Optional, List, Dict
 
 API_BASE = "https://api.aladhan.com/v1"
 
+def _to_iso_gdate(val: str) -> str:
+    """
+    Normalisasi tanggal gregorian ke ISO (YYYY-MM-DD).
+    API kadang mengirim 'DD-MM-YYYY'.
+    """
+    if not isinstance(val, str):
+        return val
+    try:
+        if len(val) == 10 and val[4] == '-' and val[7] == '-':
+            return val
+        if len(val) == 10 and val[2] == '-' and val[5] == '-':
+            dd, mm, yyyy = val.split('-')
+            return f"{yyyy}-{mm}-{dd}"
+    except Exception:
+        pass
+    return val
+
 # ========== CACHE HELPERS ==========
 @st.cache_data(ttl=6 * 60 * 60)
 def g_to_h(date_dd_mm_yyyy: str) -> Optional[dict]:
@@ -98,8 +115,8 @@ def build_hijri_year_calendar(year_h: int, include_mon_thu: bool, include_tasua:
             h = item.get("hijri", {})
             g = item.get("gregorian", {})
             try:
-                g_date = g["date"]               # 'YYYY-MM-DD'
-                h_date = h["date"]               # 'DD-MM-YYYY'
+                g_date = _to_iso_gdate(g["date"])
+                h_date = h["date"]
                 h_day = int(h["day"])
                 h_month_num = int(h["month"]["number"])
                 h_month_en = h["month"]["en"]
@@ -162,7 +179,7 @@ def to_ics_bytes(rows: List[Dict]) -> bytes:
     for r in rows:
         if not r["labels"]:
             continue
-        y, m, d = r["gregorian"].split("-")
+        y, m, d = _to_iso_gdate(r["gregorian"]).split("-")
         dt = f"{y}{m}{d}"
         summary = r["labels"].split(",")[0]  # ambil label pertama
         desc = f"Hijri: {r['hijri']} ({r['h_month_en']})\\nSemua label: {r['labels']}"
