@@ -46,23 +46,41 @@ tabs = st.tabs([
 ])
 
 # ===== Tab: Chatbot =====
+from streamlit.components.v1 import iframe
+
 with tabs[0]:
     st.subheader("Pilih widget:")
+
+    # --- Persist pilihan widget
+    if "chat_widget" not in st.session_state:
+        st.session_state.chat_widget = "TawkTo"  # default
+
     widget_opt = st.radio(
-        " ",
-        ["ArtiBot", "TawkTo"],
-        horizontal=True, label_visibility="collapsed"
+        " ", ["ArtiBot", "TawkTo"],
+        horizontal=True, label_visibility="collapsed",
+        index=["ArtiBot","TawkTo"].index(st.session_state.chat_widget),
+        key="chat_widget"
     )
 
     URLS = {
         "ArtiBot": "https://my.artibot.ai/islamichat",
         "TawkTo": "https://tawk.to/chat/63f1709c4247f20fefe15b12/1gpjhvpnb"
     }
-
     chosen_url = URLS[widget_opt]
 
+    # --- Opsi cache-bust (kalau iframe keliatan “nge-freeze”)
+    cache_bust = st.toggle("Force refresh chat (cache-bust)", value=False)
+    final_url = f"{chosen_url}?t={int(time.time())}" if cache_bust else chosen_url
+
     st.write(f"💬 Chat aktif: **{widget_opt}**")
-    iframe(src=chosen_url, height=700)
+    st.caption("Jika area kosong, kemungkinan dibatasi oleh CSP/X-Frame-Options dari penyedia.")
+
+    # --- Render iframe
+    iframe(src=final_url, height=720)
+
+    # --- Fallback link aman
+    st.link_button(f"↗️ Buka {widget_opt} di tab ini (fallback)",
+                   chosen_url, use_container_width=True)
 
 # === Tab 1: Waktu Sholat ===
 with tabs[1]:
