@@ -440,6 +440,8 @@ def render_event():
     else:
         st.caption("Belum ada event terdekat. Aktifkan penanda Senin/Kamis atau Tasu‘ā.")
 
+    st.write("debug head:", rows_df.head(3).to_dict("records"))
+
     # ===== Data untuk tabel bulan (juga dari rows_labeled) =====
     filtered = filter_rows(rows_labeled, only_labeled=only_labeled, month_filter=view_month)
 
