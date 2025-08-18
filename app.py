@@ -20,7 +20,7 @@ from components.kiblat import (
 
 # ===== Komponen: Zakat =====
 from components.zakat import (
-    zakat_kalkulator, OZI_TO_GRAM,
+    zakat_kalkulator, OZT_TO_GRAM,
     fetch_gold_price_idr_per_gram, format_rp, nisab_emas_idr
 )
 
