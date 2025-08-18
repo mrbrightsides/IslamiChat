@@ -7,6 +7,7 @@ from typing import Optional, List, Dict
 
 API_BASE = "https://api.aladhan.com/v1"
 
+# ===================== Helpers Tanggal =====================
 def _to_iso_gdate(val: str) -> str:
     """
     Normalisasi tanggal gregorian ke ISO (YYYY-MM-DD).
@@ -15,8 +16,10 @@ def _to_iso_gdate(val: str) -> str:
     if not isinstance(val, str):
         return val
     try:
+        # Sudah ISO
         if len(val) == 10 and val[4] == '-' and val[7] == '-':
             return val
+        # DD-MM-YYYY
         if len(val) == 10 and val[2] == '-' and val[5] == '-':
             dd, mm, yyyy = val.split('-')
             return f"{yyyy}-{mm}-{dd}"
@@ -24,7 +27,17 @@ def _to_iso_gdate(val: str) -> str:
         pass
     return val
 
-# ========== CACHE HELPERS ==========
+def _safe_fromiso(s: str) -> Optional[date]:
+    """Coba parse YYYY-MM-DD; kalau gagal, coba normalize dulu."""
+    try:
+        return date.fromisoformat(s)
+    except Exception:
+        try:
+            return date.fromisoformat(_to_iso_gdate(s))
+        except Exception:
+            return None
+
+# ===================== CACHE: API =====================
 @st.cache_data(ttl=6 * 60 * 60)
 def g_to_h(date_dd_mm_yyyy: str) -> Optional[dict]:
     """Konversi Gregorian → Hijri (satu hari). Param harus DD-MM-YYYY."""
@@ -57,7 +70,7 @@ def h_to_g_calendar(year_h: int, month_h: int) -> Optional[List[dict]]:
         st.warning(f"Gagal ambil kalender H{year_h}/{month_h}: {e}")
     return None
 
-# ========== EVENT RULES ==========
+# ===================== RULES =====================
 FIXED_EVENTS = {
     # Ramadan
     (1, 9):  "Awal Ramadhan",
@@ -74,9 +87,8 @@ FIXED_EVENTS = {
     (10, 12): "Idul Adha",
     # Muharram
     (10, 1): "‘Āsyūrā’ (10 Muharram)",
-    (9, 1):  "Tāsū‘ā (9 Muharram)",   # opsional, bisa di-hide via toggle jika mau
+    (9, 1):  "Tāsū‘ā (9 Muharram)",
 }
-
 AYYAM_AL_BID_DAYS = {13, 14, 15}
 MON_THU = {"Monday": "Puasa Senin", "Thursday": "Puasa Kamis"}
 
@@ -90,20 +102,19 @@ def labels_for_day(
     labels = []
     # fixed events
     if (h_day, h_month_num) in FIXED_EVENTS:
-        # kalau user tidak ingin menampilkan Tasu'a, skip (9 Muharram)
         if not include_tasua and (h_day, h_month_num) == (9, 1):
             pass
         else:
             labels.append(FIXED_EVENTS[(h_day, h_month_num)])
-    # ayyam al-bid
+    # ayyam al-bid (selalu ditampilkan)
     if h_day in AYYAM_AL_BID_DAYS:
         labels.append("Ayyām al-Bīḍ (puasa 13–15)")
-    # monday-thursday
+    # monday-thursday (opsional)
     if include_mon_thu and weekday_en in MON_THU:
         labels.append(MON_THU[weekday_en])
     return labels
 
-# ========== BUILD CALENDAR ==========
+# ===================== BUILD KALENDER =====================
 @st.cache_data(ttl=6 * 60 * 60)
 def build_hijri_year_calendar(year_h: int, include_mon_thu: bool, include_tasua: bool) -> List[Dict]:
     rows: List[Dict] = []
@@ -124,43 +135,48 @@ def build_hijri_year_calendar(year_h: int, include_mon_thu: bool, include_tasua:
             except Exception:
                 continue
 
-            lbls = ", ".join(labels_for_day(h_day, h_month_num, w_en, include_mon_thu, include_tasua))
+            lbls = ", ".join(
+                labels_for_day(h_day, h_month_num, w_en, include_mon_thu, include_tasua)
+            )
             rows.append({
-                "gregorian": g_date,
+                "gregorian": g_date,           # YYYY-MM-DD (dinormalisasi)
                 "weekday": w_en,
-                "hijri": h_date,
+                "hijri": h_date,               # dd-mm-yyyy (dari API)
                 "h_day": h_day,
-                "h_month_num": h_month_num,
+                "h_month_num": h_month_num,    # 1..12
                 "h_month_en": h_month_en,
-                "labels": lbls
+                "labels": lbls                 # string gabungan label
             })
-    rows.sort(key=lambda r: r["gregorian"])
+    # sort aman pakai date parsed
+    rows.sort(key=lambda r: (_safe_fromiso(r["gregorian"]) or date.max))
     return rows
 
-# ========== FILTERS & UPCOMING ==========
+# ===================== FILTER & UPCOMING =====================
 def find_upcoming(rows: List[Dict], from_g: date, limit: int = 5) -> List[Dict]:
+    # hanya yang berlabel & >= today
     out = []
     for r in rows:
-        if not r["labels"]:
+        if not r.get("labels"):
             continue
-        g = date.fromisoformat(r["gregorian"])
-        if g >= from_g:
-            delta = (g - from_g).days
-            r = {**r, "days_left": delta}
-            out.append(r)
-        if len(out) >= limit:
-            break
-    return out
+        gdt = _safe_fromiso(r["gregorian"])
+        if not gdt:
+            continue
+        if gdt >= from_g:
+            delta = (gdt - from_g).days
+            out.append({**r, "days_left": delta})
+    # sort by tanggal lalu ambil limit
+    out.sort(key=lambda r: _safe_fromiso(r["gregorian"]))
+    return out[:limit]
 
 def filter_rows(rows: List[Dict], only_labeled: bool, month_filter: Optional[int]) -> List[Dict]:
     res = rows
-    if only_labeled:
-        res = [r for r in res if r["labels"]]
     if month_filter:
         res = [r for r in res if r["h_month_num"] == month_filter]
+    if only_labeled:
+        res = [r for r in res if r.get("labels")]
     return res
 
-# ========== EXPORTERS ==========
+# ===================== EXPORTERS =====================
 def to_csv_bytes(rows: List[Dict]) -> bytes:
     buf = io.StringIO()
     writer = csv.DictWriter(buf, fieldnames=[
@@ -177,11 +193,11 @@ def to_ics_bytes(rows: List[Dict]) -> bytes:
     """
     lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//IslamiChat//Kalender Hijriah//ID"]
     for r in rows:
-        if not r["labels"]:
+        if not r.get("labels"):
             continue
         y, m, d = _to_iso_gdate(r["gregorian"]).split("-")
         dt = f"{y}{m}{d}"
-        summary = r["labels"].split(",")[0]  # ambil label pertama
+        summary = r["labels"].split(",")[0].strip()  # ambil label pertama
         desc = f"Hijri: {r['hijri']} ({r['h_month_en']})\\nSemua label: {r['labels']}"
         uid = f"{dt}-{summary.replace(' ', '')}-{r['hijri']}"
         lines += [
@@ -195,7 +211,7 @@ def to_ics_bytes(rows: List[Dict]) -> bytes:
     lines.append("END:VCALENDAR")
     return ("\r\n".join(lines)).encode("utf-8")
 
-# ========== UI ==========
+# ===================== UI =====================
 def render_event():
     st.header("📅 Kalender Islam")
 
@@ -248,21 +264,30 @@ def render_event():
             left_txt = f" (tinggal {r['days_left']} hari)" if r["days_left"] > 0 else " (hari ini)"
             st.write(f"- **{r['labels']}** — {r['gregorian']} (Hijri: {r['hijri']} / {r['h_month_en']}){left_txt}")
     else:
-        st.caption("Belum ada event terdekat yang terdaftar.")
+        st.caption("Belum ada event terdekat yang terdaftar. Aktifkan penanda Senin/Kamis atau Tāsū‘ā/‘Āsyūrā’ untuk melihat jadwal.")
 
     # View mode: tahun penuh / bulan tertentu
     st.subheader("📋 Kalender")
-    vm1, vm2 = st.columns([1, 2])
+    vm1, _ = st.columns([1, 3])
+    options_vals = [0] + list(range(1, 13))
+    # index di selectbox adalah posisi dalam list, jadi mapping dulu
+    default_val = h_month_num if int(year_h) == h_year else 0
+    default_idx = options_vals.index(default_val)
+
     with vm1:
         view_month = st.selectbox(
             "Tampilan bulan (opsional)",
-            options=[0] + list(range(1, 13)),
+            options=options_vals,
             format_func=lambda x: "Tahun penuh" if x == 0 else f"Bulan {x}",
-            index=(h_month_num if year_h == h_year else 0),
+            index=default_idx,
             help="Pilih 'Tahun penuh' atau salah satu bulan Hijriah."
         )
 
-    filtered = filter_rows(rows, only_labeled=only_labeled, month_filter=view_month if view_month != 0 else None)
+    filtered = filter_rows(
+        rows,
+        only_labeled=only_labeled,
+        month_filter=view_month if view_month != 0 else None
+    )
 
     show_cols = ["gregorian", "weekday", "hijri", "h_month_en", "labels"]
     st.dataframe([{k: r[k] for k in show_cols} for r in filtered], use_container_width=True, height=420)
@@ -273,14 +298,14 @@ def render_event():
         st.download_button(
             "⬇️ Unduh CSV Kalender (sesuai tampilan)",
             data=to_csv_bytes(filtered),
-            file_name=f"kalender_hijriah_{year_h}{'_bulan'+str(view_month) if view_month else ''}.csv",
+            file_name=f"kalender_hijriah_{year_h}{('_bulan'+str(view_month)) if view_month else ''}.csv",
             mime="text/csv",
         )
     with cold2:
         st.download_button(
             "📥 Ekspor .ICS (Google/Apple/Outlook)",
             data=to_ics_bytes(filtered),
-            file_name=f"kalender_hijriah_{year_h}{'_bulan'+str(view_month) if view_month else ''}.ics",
+            file_name=f"kalender_hijriah_{year_h}{('_bulan'+str(view_month)) if view_month else ''}.ics",
             mime="text/calendar",
         )
 
