@@ -70,6 +70,26 @@ def h_to_g_calendar(year_h: int, month_h: int) -> Optional[List[dict]]:
         st.warning(f"Gagal ambil kalender H{year_h}/{month_h}: {e}")
     return None
 
+@st.cache_data(ttl=6 * 60 * 60)
+def h_to_g_single(dd_mm_yyyy_h: str) -> Optional[dict]:
+    """
+    Konversi satu tanggal Hijriah (DD-MM-YYYY) ke Gregorian.
+    Return: {"gregorian": {"date": "...", "weekday": {"en": ...}}, "hijri": {...}}
+    """
+    try:
+        r = requests.get(f"{API_BASE}/hToG", params={"date": dd_mm_yyyy_h}, timeout=10)
+        r.raise_for_status()
+        j = r.json()
+        if j.get("code") == 200:
+            d = j.get("data", {})
+            # sebagian response sudah punya struktur g/hijri di level atas
+            if isinstance(d, dict) and "gregorian" in d and "hijri" in d:
+                return d
+            # fallback lain: kadang d langsung "date", dll — abaikan kalau tak lengkap
+    except Exception:
+        pass
+    return None
+
 # ===================== RULES =====================
 FIXED_EVENTS = {
     # Ramadan
@@ -116,40 +136,24 @@ def labels_for_day(
 
 # ===================== BUILD KALENDER =====================
 @st.cache_data(ttl=6 * 60 * 60)
-def build_hijri_year_calendar(year_h: int, include_mon_thu: bool, include_tasua: bool) -> List[Dict]:
-    rows: List[Dict] = []
-    for m in range(1, 13):
-        data = h_to_g_calendar(year_h, m)
-        if not data:
-            continue
-        for item in data:
-            h = item.get("hijri", {})
-            g = item.get("gregorian", {})
-            try:
-                g_date = _to_iso_gdate(g["date"])
-                h_date = h["date"]
-                h_day = int(h["day"])
-                h_month_num = int(h["month"]["number"])
-                h_month_en = h["month"]["en"]
-                w_en = g["weekday"]["en"]
-            except Exception:
-                continue
-
-            lbls = ", ".join(
-                labels_for_day(h_day, h_month_num, w_en, include_mon_thu, include_tasua)
-            )
-            rows.append({
-                "gregorian": g_date,           # YYYY-MM-DD (dinormalisasi)
-                "weekday": w_en,
-                "hijri": h_date,               # dd-mm-yyyy (dari API)
-                "h_day": h_day,
-                "h_month_num": h_month_num,    # 1..12
-                "h_month_en": h_month_en,
-                "labels": lbls                 # string gabungan label
-            })
-    # sort aman pakai date parsed
-    rows.sort(key=lambda r: (_safe_fromiso(r["gregorian"]) or date.max))
-    return rows
+def h_to_g_single(dd_mm_yyyy_h: str) -> Optional[dict]:
+    """
+    Konversi satu tanggal Hijriah (DD-MM-YYYY) ke Gregorian.
+    Return: {"gregorian": {"date": "...", "weekday": {"en": ...}}, "hijri": {...}}
+    """
+    try:
+        r = requests.get(f"{API_BASE}/hToG", params={"date": dd_mm_yyyy_h}, timeout=10)
+        r.raise_for_status()
+        j = r.json()
+        if j.get("code") == 200:
+            d = j.get("data", {})
+            # sebagian response sudah punya struktur g/hijri di level atas
+            if isinstance(d, dict) and "gregorian" in d and "hijri" in d:
+                return d
+            # fallback lain: kadang d langsung "date", dll — abaikan kalau tak lengkap
+    except Exception:
+        pass
+    return None
 
 # ===================== FILTER & UPCOMING =====================
 def find_upcoming(rows: List[Dict], from_g: date, limit: int = 5) -> List[Dict]:
