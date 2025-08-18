@@ -211,7 +211,6 @@ def generate_khutbah(jenis, tema, gaya, panjang, audience, tanggal, tambahan):
     # biarkan slider jadi _indikasi_ level detail, bukan angka presisi
     return text
 
-
 # ====== UI ======
 def render_khutbah_form():
     st.title("🕌 KhutbahGPT - Generator Khutbah Otomatis")
@@ -235,6 +234,13 @@ def render_khutbah_form():
             horizontal=False,
             index=0
         )
+        if engine.startswith("GPT"):
+            model = st.selectbox("Model", ["gpt-4o-mini", "gpt-4o"], index=0)
+        else:
+            model = None
+
+         submitted = st.form_submit_button("🎙️ Buat Khutbah Sekarang")
+
     if submitted:
         try:
             if engine.startswith("GPT"):
@@ -255,8 +261,6 @@ def render_khutbah_form():
             data=text.encode("utf-8"),
             file_name=f"Khutbah_{jenis_khutbah}_{tanggal.isoformat()}.txt",
             mime="text/plain")
-
-        submitted = st.form_submit_button("🎙️ Buat Khutbah Sekarang")
 
     if not submitted:
         st.caption("👉 Setelah klik **Buat Khutbah Sekarang**, teks khutbah akan muncul di bawah.")
