@@ -46,7 +46,6 @@ tabs = st.tabs([
 ])
 
 # ===== Tab: Chatbot =====
-# ===== Tab: Chatbot =====
 with tabs[0]:
     st.subheader("Pilih widget:")
     widget_opt = st.radio(
