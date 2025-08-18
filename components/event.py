@@ -367,7 +367,40 @@ def render_event():
     with c4:
         only_labeled = st.checkbox("Tampilkan hanya hari bertanda (event/puasa)", value=False)
 
-    # Build calendar
+    # ---- Dari list -> DataFrame ----
+    import pandas as pd
+    df = pd.DataFrame(filtered, columns=["gregorian", "weekday", "hijri", "h_month_en", "labels"])
+
+    # ---- Helpers untuk label ----
+    def _parse_hijri_day(hijri_str: str):
+        try:
+            return int(str(hijri_str).split("-")[0])
+        except Exception:
+            return None
+
+    def add_event_labels(df_in: pd.DataFrame, mark_mk: bool, mark_tasua: bool) -> pd.DataFrame:
+        if df_in is None or df_in.empty:
+            return df_in
+        df2 = df_in.copy()
+        lab = []
+        for _, r in df2.iterrows():
+            tags = []
+            if mark_mk:
+                wd = str(r.get("weekday", "")).strip()
+                if wd == "Monday":
+                    tags.append("Puasa Senin")
+                elif wd == "Thursday":
+                    tags.append("Puasa Kamis")
+            if mark_tasua:
+                dnum = _parse_hijri_day(r.get("hijri", ""))
+                hme = str(r.get("h_month_en", "")).lower()
+                if dnum == 9 and hme == "muharram":
+                    tags.append("Tasū‘a (9 Muharram)")
+            lab.append(", ".join(tags))
+        df2["labels"] = lab
+        return df2
+
+     # Build calendar
     rows = build_hijri_year_calendar(int(year_h), include_mon_thu, include_tasua)
     if not rows:
         st.warning("Kalender tahun ini belum tersedia lengkap dari API.")
@@ -468,39 +501,6 @@ def render_event():
                     "labels": "Data tahun penuh tidak tersedia",
                 }
             ]
-
-    # ---- Dari list -> DataFrame ----
-    import pandas as pd
-    df = pd.DataFrame(filtered, columns=["gregorian", "weekday", "hijri", "h_month_en", "labels"])
-
-    # ---- Helpers untuk label ----
-    def _parse_hijri_day(hijri_str: str):
-        try:
-            return int(str(hijri_str).split("-")[0])
-        except Exception:
-            return None
-
-    def add_event_labels(df_in: pd.DataFrame, mark_mk: bool, mark_tasua: bool) -> pd.DataFrame:
-        if df_in is None or df_in.empty:
-            return df_in
-        df2 = df_in.copy()
-        lab = []
-        for _, r in df2.iterrows():
-            tags = []
-            if mark_mk:
-                wd = str(r.get("weekday", "")).strip()
-                if wd == "Monday":
-                    tags.append("Puasa Senin")
-                elif wd == "Thursday":
-                    tags.append("Puasa Kamis")
-            if mark_tasua:
-                dnum = _parse_hijri_day(r.get("hijri", ""))
-                hme = str(r.get("h_month_en", "")).lower()
-                if dnum == 9 and hme == "muharram":
-                    tags.append("Tasū‘a (9 Muharram)")
-            lab.append(", ".join(tags))
-        df2["labels"] = lab
-        return df2
 
     # Tambahkan label sesuai toggle
     df = add_event_labels(df, include_mon_thu, include_tasua)
