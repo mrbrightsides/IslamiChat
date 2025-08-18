@@ -6,23 +6,22 @@ from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
 from geopy.geocoders import Nominatim
 
-# ── Endpoint: pakai yang stabil dulu
+# Mirror yang relatif stabil terlebih dahulu
 OVERPASS_ENDPOINTS = [
     "https://overpass.kumi.systems/api/interpreter",
     "https://overpass-api.de/api/interpreter",
 ]
 
 def _run_overpass(endpoint: str, q: str):
-    # GET dengan timeout terpisah connect/read
+    """Selalu GET untuk menghindari 400/CSRF pada beberapa mirror."""
     return requests.get(
         endpoint,
         params={"data": q},
         headers={"User-Agent": "IslamiChat/1.0"},
-        timeout=(6, 14),  # (connect, read) -> total maks ~20s
+        timeout=(6, 14),  # (connect, read)
     )
 
 def build_query(lat: float, lon: float, radius: int, lite: bool) -> str:
-    # turunkan timeout server Overpass supaya gak kerja terlalu lama
     if lite:
         return f"""
         [out:json][timeout:15];
@@ -47,26 +46,23 @@ def build_query(lat: float, lon: float, radius: int, lite: bool) -> str:
 
 @st.cache_data(ttl=300)
 def fetch_mosques(lat: float, lon: float, radius: int, lite: bool):
-    # bikin query dulu
-    q = build_query(lat, lon, radius, lite)  
-    
+    q = build_query(lat, lon, radius, lite)
     last_err = []
     for ep in OVERPASS_ENDPOINTS:
-        for use_get in (False, True):
-            delay = 1.5
-            for attempt in range(4):
-                try:
-                    resp = _run_overpass(ep, q, use_get)
-                    if resp.status_code == 429:  # rate limit
-                        time.sleep(delay); delay *= 1.8
-                        continue
-                    resp.raise_for_status()
-                    data = resp.json()
-                    return data.get("elements", [])
-                except Exception as e:
-                    last_err.append(f"{ep} {'GET' if use_get else 'POST'} try{attempt+1}: {e}")
-                    time.sleep(delay); delay *= 1.5
-    raise RuntimeError("Semua endpoint Overpass gagal. Detail: " + " | ".join(last_err[:3]) + " ...")
+        delay = 1.2
+        for attempt in range(2):  # fail-fast
+            try:
+                resp = _run_overpass(ep, q)
+                if resp.status_code == 429:
+                    time.sleep(delay); delay *= 1.6
+                    continue
+                resp.raise_for_status()
+                data = resp.json()
+                return data.get("elements", [])
+            except Exception as e:
+                last_err.append(f"{ep} try{attempt+1}: {e}")
+                time.sleep(delay); delay *= 1.6
+    raise RuntimeError("Overpass gagal: " + " | ".join(last_err[:3]) + " …")
 
 # ---------- Lokasi ----------
 @st.cache_data(ttl=600)
