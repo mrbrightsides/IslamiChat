@@ -26,10 +26,6 @@ from components.khutbah_gpt import render_khutbah_form
 import os
 import pandas as pd  # untuk tampilan tabel lebih rapi
 
-st.sidebar.caption("🔧 Build check")
-st.sidebar.code(f"file={__file__}")
-st.sidebar.code(f"utc={dt.datetime.utcnow().isoformat()}Z")
-
 # ===== Page setup =====
 st.set_page_config(page_title="IslamiChat 🤖🌸", layout="wide")
 st.title("IslamiChat = Tanya Jawab + Waktu Sholat")
