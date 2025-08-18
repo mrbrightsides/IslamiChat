@@ -89,34 +89,56 @@ def geocode_candidates(q: str, country_bias: str | None = "id"):
 def show_nearby_mosques():
     st.header("🕌 Masjid Terdekat")
 
+    # --- Controls utama
     radius = st.slider("Radius pencarian (meter)", 300, 4000, 1500, step=100)
     lite = st.toggle("Gunakan query ringan (lebih mudah lolos rate-limit)", value=False)
 
-    # input alamat bebas
+    # --- Input alamat
     q = st.text_input(
         "Masukkan alamat/lokasi (contoh: Jl. Jendral Sudirman, 8 Ilir, Palembang)",
-        value="Palembang, Indonesia"
+        value=st.session_state.get("addr_query", "Palembang, Indonesia"),
+        key="addr_query",
     )
 
-    cols = st.columns([1, 1, 2])
-    with cols[0]:
-        if st.button("🔎 Cari alamat"):
-            if q.strip():
-                st.session_state["_cands"] = geocode_candidates(q.strip())
-            else:
-                st.warning("Tulis alamat atau nama lokasi terlebih dahulu.")
+    col_btn, _, _ = st.columns([1, 1, 2])
+    with col_btn:
+        cari_click = st.button("🔎 Cari alamat")
 
-    cands = st.session_state.get("_cands", geocode_candidates(q))  # isi awal dari nilai default
+    # --- State helper
+    # - cands: list kandidat alamat [{'label', 'lat', 'lon'}, ...]
+    # - use_center: True jika user memilih "Cari dari center peta"
+    if "cands" not in st.session_state:
+        st.session_state.cands = geocode_candidates(q) or []
+    if "use_center" not in st.session_state:
+        st.session_state.use_center = False
+    if "addr_query_prev" not in st.session_state:
+        st.session_state.addr_query_prev = q
+
+    # Re-geocode saat:
+    # 1) tombol cari ditekan, atau
+    # 2) teks alamat berubah
+    if cari_click or (q.strip() and q != st.session_state.addr_query_prev):
+        st.session_state.cands = geocode_candidates(q.strip())
+        st.session_state.use_center = False         # kalau lagi center, batal
+        st.session_state.addr_query_prev = q
+
+    # Tentukan sumber koordinat: center map atau hasil geocode
+    if st.session_state.use_center and st.session_state.cands:
+        cands = st.session_state.cands             # akan berisi satu entri "Center peta"
+    else:
+        cands = st.session_state.cands
+
     if not cands:
-        st.error("Lokasi tidak ditemukan. Coba lebih spesifik.")
+        st.error("Lokasi tidak ditemukan. Coba lebih spesifik atau tulis nama kota/kelurahan.")
         return
 
     labels = [c["label"] for c in cands]
-    idx = st.selectbox("Pilih lokasi yang sesuai:", range(len(cands)), format_func=lambda i: labels[i])
+    idx = st.selectbox("Pilih lokasi yang sesuai:", range(len(cands)), format_func=lambda i: labels[i], key="cand_idx")
+
     lat, lon = cands[idx]["lat"], cands[idx]["lon"]
     st.caption(f"Lokasi dipilih: {labels[idx]} • ({lat:.5f}, {lon:.5f})")
 
-    # ===== Ambil data masjid (+fallback kalau kosong) =====
+    # --- Ambil data masjid
     try:
         elements = fetch_mosques(lat, lon, radius, lite)
         if not elements:
@@ -128,7 +150,7 @@ def show_nearby_mosques():
         st.error(f"Gagal mengambil data masjid: {e}")
         return
 
-    # ===== Peta =====
+    # --- Render peta
     m = folium.Map(location=[lat, lon], zoom_start=14, control_scale=True)
     folium.Marker([lat, lon], tooltip="Titik pencarian",
                   icon=folium.Icon(color="blue", icon="user")).add_to(m)
@@ -150,25 +172,22 @@ def show_nearby_mosques():
             count += 1
 
     st.success(f"Ditemukan {count} lokasi dalam radius {radius} m.")
-
-    # render dan simpan state peta
     map_state = st_folium(m, width=800, height=520)
 
-    # ===== Cari ulang dari center peta (opsional) =====
+    # --- Cari ulang dari center peta
     with st.expander("🔁 Cari ulang dari titik tengah peta ini"):
         st.caption("Geser/zoom peta di atas, lalu klik tombol di bawah untuk mencari dari center tampilan.")
         if st.button("Cari dari center peta"):
+            cen_lat, cen_lon = None, None
             if map_state and "center" in map_state:
                 cen_lat = map_state["center"]["lat"]
                 cen_lon = map_state["center"]["lng"]
             elif map_state and "bounds" in map_state:
-                # fallback hitung center dari bounds
                 cen_lat = (map_state["bounds"]["_southWest"]["lat"] + map_state["bounds"]["_northEast"]["lat"]) / 2
                 cen_lon = (map_state["bounds"]["_southWest"]["lng"] + map_state["bounds"]["_northEast"]["lng"]) / 2
-            else:
+            if cen_lat is None:
                 st.warning("Center peta belum terbaca. Coba gerakkan/zoom peta dulu.")
-                st.stop()
-
-            # simpan kandidat baru lalu rerun supaya selectbox pindah ke "Center peta"
-            st.session_state["_cands"] = [{"label": "Center peta", "lat": cen_lat, "lon": cen_lon}]
-            st.rerun()
+            else:
+                st.session_state.cands = [{"label": "Center peta", "lat": cen_lat, "lon": cen_lon}]
+                st.session_state.use_center = True
+                st.rerun()
