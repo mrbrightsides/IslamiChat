@@ -404,6 +404,47 @@ def render_event():
         month_filter=view_month if view_month != 0 else None
     )
 
+    if not filtered:
+        month_len = 30
+        skeleton = []
+        if view_month != 0:
+            for d in range(1, month_len + 1):
+                dd = f"{d:02d}"
+                mm = f"{int(view_month):02d}"
+                yyyy = str(int(year_h))
+                payload = h_to_g_single(f"{dd}-{mm}-{yyyy}")
+                if not payload:
+                    # jika konversi gagal, tetap isi minimal
+                    skeleton.append({
+                        "gregorian": f"—",
+                        "weekday": "",
+                        "hijri": f"{dd}-{mm}-{yyyy} H",
+                        "h_month_en": "",
+                        "labels": ""
+                    })
+                    continue
+    
+                g = payload.get("gregorian", {})
+                h = payload.get("hijri", {})
+                skeleton.append({
+                    "gregorian": _to_iso_gdate(g.get("date","—")),
+                    "weekday": g.get("weekday", {}).get("en", ""),
+                    "hijri": h.get("date", f"{dd}-{mm}-{yyyy} H"),
+                    "h_month_en": h.get("month", {}).get("en", ""),
+                    "labels": ""  # tanpa penanda, biar tetap muncul
+                })
+            filtered = skeleton
+        else:
+            # kalau "Tahun penuh" kosong, tetap kasih placeholder
+            filtered = [{
+                "gregorian": "—",
+                "weekday": "",
+                "hijri": f"{year_h} H",
+                "h_month_en": "",
+                "labels": "Data tahun penuh tidak tersedia"
+            }]
+
+
     show_cols = ["gregorian", "weekday", "hijri", "h_month_en", "labels"]
     st.dataframe([{k: r[k] for k in show_cols} for r in filtered], use_container_width=True, height=420)
 
