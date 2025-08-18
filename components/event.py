@@ -388,26 +388,21 @@ def render_event():
     # View mode: tahun penuh / bulan tertentu
     st.subheader("📋 Kalender")
     vm1, _ = st.columns([1, 3])
-    options_vals = [0] + list(range(1, 13))
-    default_val = h_month_num if int(year_h) == h_year else 0
-    default_idx = options_vals.index(default_val)
+    options_vals = list(range(1, 13))
+    default_val = h_month_num
+    default_idx = default_val - 1
 
     with vm1:
         view_month = st.selectbox(
             "Tampilan bulan (opsional)",
             options=options_vals,
-            format_func=lambda x: "Tahun penuh" if x == 0 else f"Bulan {x}",
+            format_func=lambda x: f"Bulan {x}",
             index=default_idx,
-            help="Pilih 'Tahun penuh' atau salah satu bulan Hijriah.",
+            help="Pilih salah satu bulan Hijriah."
         )
 
-    filtered = filter_rows(
-        rows,
-        only_labeled=only_labeled,
-        month_filter=view_month if view_month != 0 else None,
-    )
+    filtered = filter_rows(filter_rows(rows, only_labeled=only_labeled, month_filter=view_month)
 
-    # ---- Fallback isi bulan kalau filter kosong ----
     if not filtered:
         month_len = 30
         skeleton = []
@@ -502,14 +497,14 @@ def render_event():
         st.download_button(
             "⬇️ Unduh CSV Kalender (sesuai tampilan)",
             data=to_csv_bytes(export_rows),
-            file_name=f"kalender_hijriah_{year_h}{('_bulan'+str(view_month)) if view_month else ''}.csv",
+            file_name=f"kalender_hijriah_{year_h}_bulan{view_month}.csv",
             mime="text/csv",
         )
     with cold2:
         st.download_button(
             "📥 Ekspor .ICS (Google/Apple/Outlook)",
             data=to_ics_bytes(export_rows),
-            file_name=f"kalender_hijriah_{year_h}{('_bulan'+str(view_month)) if view_month else ''}.ics",
+            file_name=f"kalender_hijriah_{year_h}_bulan{view_month}.ics",
             mime="text/calendar",
         )
 
