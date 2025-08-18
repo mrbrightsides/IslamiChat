@@ -35,9 +35,9 @@ from components.murottal import (
 )
 
 # ===== Komponen: Event Hijriah =====
-#from components.event import (
- #   render_event
-#)
+from components.event import (
+    render_event
+)
 
 # ===== Komponen: Khutbah GPT =====
 from components.khutbah_gpt import render_khutbah_form 
@@ -144,15 +144,8 @@ with tabs[5]:
     show_nearby_mosques()
 
 # === Tab 6: Event Islam ===
-# === Tab 6: Event Islam ===
 with tabs[6]:
-    try:
-        from components.event import render_event
-        render_event()
-    except Exception as e:
-        st.warning(f"Gagal memuat kalender lengkap: {e}. Menampilkan kalender sederhana.")
-        from components.event import render_simple_hijri_calendar
-        render_simple_hijri_calendar()
+    render_events()
 
 # === Tab 7: KhutbahGPT ===
 with tabs[7]:
