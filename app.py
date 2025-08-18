@@ -4,13 +4,17 @@ import datetime as dt
 import pytz
 import streamlit as st
 from streamlit.components.v1 import iframe
+from math import radians, degrees, sin, cos, atan2
+from geopy.geocoders import Nominatim
 
 # ===== Import Komponen =====
 from components.waktu_sholat import (
     TZ, METHODS, fetch_timings_by_city, parse_today_times,
     to_local_datetime, next_prayer, fmt_delta
 )
-from components.kiblat import show_qibla_direction
+from components.kiblat import (
+    show_qibla_direction, geocode_cached, qibla_bearing, KAABA_LAT, KAABA_LON
+)
 from components.zakat import zakat_kalkulator
 from components.masjid import (
     get_user_location, show_nearby_mosques
