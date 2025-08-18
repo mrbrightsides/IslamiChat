@@ -34,11 +34,6 @@ from components.murottal import (
     RADIO_API, fetch_radios, show_murottal_tab
 )
 
-# ===== Komponen: Event Hijriah =====
-from components.event import (
-    render_event
-)
-
 # ===== Komponen: Khutbah GPT =====
 from components.khutbah_gpt import render_khutbah_form 
 
@@ -145,7 +140,13 @@ with tabs[5]:
 
 # === Tab 6: Event Islam ===
 with tabs[6]:
-    render_events()
+    try:
+        from components.event import render_event
+        render_event()
+    except Exception as e:
+        st.warning(f"Gagal memuat kalender lengkap: {e}. Menampilkan kalender sederhana.")
+        from components.event import render_simple_hijri_calendar
+        render_simple_hijri_calendar()
 
 # === Tab 7: KhutbahGPT ===
 with tabs[7]:
