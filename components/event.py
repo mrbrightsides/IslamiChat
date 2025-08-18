@@ -509,3 +509,4 @@ def render_event():
         )
 
     st.caption("Catatan: kalender berdasar perhitungan (Umm al-Qura) – bisa bergeser ±1 hari dari rukyat lokal.")
+__all__ = ["render_event", "render_simple_hijri_calendar"]
