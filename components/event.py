@@ -5,7 +5,39 @@ import streamlit as st
 from datetime import datetime, date
 from typing import Optional, List, Dict
 
+import math
+import pandas as pd
+import streamlit as st
+
 API_BASE = "https://api.aladhan.com/v1"
+
+def render_simple_hijri_calendar(month_len=30, first_weekday=0, event_days=None, title="Kalender Hijriah"):
+    """
+    month_len: 29 atau 30 (default 30)
+    first_weekday: 0=Senin, 6=Minggu (hanya untuk offset awal kolom)
+    event_days: set/list berisi integer hari yang ada event (mis. {2,5,9})
+    """
+    event_days = set(event_days or [])
+    first_weekday = int(first_weekday) % 7
+    cells = [""] * first_weekday + list(range(1, month_len + 1))
+    # pad sampai kelipatan 7
+    if len(cells) % 7 != 0:
+        cells += [""] * (7 - (len(cells) % 7))
+
+    rows = []
+    for i in range(0, len(cells), 7):
+        row = []
+        for d in cells[i:i+7]:
+            if d == "":
+                row.append("")
+            else:
+                mark = " *" if d in event_days else ""
+                row.append(f"{d}{mark}")
+        rows.append(row)
+
+    df = pd.DataFrame(rows, columns=["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"])
+    st.subheader(title)
+    st.table(df)
 
 # ===================== Helpers Tanggal =====================
 def _to_iso_gdate(val: str) -> str:
