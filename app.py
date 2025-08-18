@@ -46,7 +46,7 @@ from components.live_tv import render_live_tv_tab
 from components.chat_ustadz import show_chat_ustadz_tab
 
 # ===== Komponen: Hafalan =====
-from components.tab_hafalan import show_hafalan_tab
+from components.tab_hafalan_audio import show_hafalan_audio_tab
 
 # ===== Page setup =====
 st.set_page_config(page_title="IslamiChat 🤖🌸", layout="wide")
@@ -176,4 +176,4 @@ with tabs[9]:
 
 # === Tab 10: Hafalan ===
 with tabs[10]:
-    show_hafalan_tab()
+    show_hafalan_audio_tab()
