@@ -77,31 +77,54 @@ with tabs[0]:
         </script>
         """)
 
-# ===== Tab: Waktu Sholat =====
+# === Tab 1: Waktu Sholat ===
 with tabs[1]:
-    from components.event import show_prayer_times
-    show_prayer_times()
+    st.subheader("🕌 Waktu Sholat Harian")
+    try:
+        city = st.text_input("Kota", value="Palembang")
+        country = st.text_input("Negara", value="Indonesia")
+        method_name = st.selectbox("Metode perhitungan", list(METHODS.keys()), index=1)
+        method = METHODS[method_name]
 
-# ===== Tab: Murottal =====
+        payload = fetch_timings_by_city(city, country, method)
+        date_readable = payload["date"]["readable"]
+        timings = parse_today_times(payload["timings"])
+        times_local = {n: to_local_datetime(date_readable, t.split(" ")[0]) for n, t in timings.items()}
+
+        st.write(f"📅 **{date_readable}** — Zona: **{TZ.zone}** — Metode: **{method_name}**")
+        rows = [(n, timings[n]) for n in ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"] if n in timings]
+        st.table(rows)
+
+        now = dt.datetime.now(TZ)
+        name, tnext = next_prayer(now, times_local)
+        if name:
+            st.success(f"Sholat berikutnya: **{name}** — **{tnext.strftime('%H:%M')}** (≈ {fmt_delta(tnext - now)})")
+            st.caption("Hitung mundur diperbarui saat halaman di-run ulang.")
+        else:
+            st.info("Semua waktu sholat hari ini sudah lewat.")
+    except Exception as e:
+        st.error(f"Gagal mengambil data: {e}")
+
+# === Tab 2: Murottal ===
 with tabs[2]:
-    play_murottal()
+    show_murottal_tab()
 
-# ===== Tab: Kiblat =====
+# === Tab 3: Kiblat ===
 with tabs[3]:
     show_qibla_direction()
 
-# ===== Tab: Kalkulator Zakat =====
+# === Tab 4: Kalkulator Zakat ===
 with tabs[4]:
-    zakat_calculator()
+    zakat_kalkulator()
 
-# ===== Tab: Masjid Terdekat =====
+# === Tab 5: Masjid Terdekat ===
 with tabs[5]:
     show_nearby_mosques()
 
-# ===== Tab: Event Islam =====
+# === Tab 6: Event Islam ===
 with tabs[6]:
-    islamic_event_info()
+    render_event()
 
-# ===== Tab: KhutbahGPT =====
+# === Tab 7: KhutbahGPT ===
 with tabs[7]:
-    khutbah_generator_ui()
+    render_khutbah_form()
