@@ -416,17 +416,41 @@ def render_event():
         return df2
 
     # ===== Data setahun -> labelkan =====
-    rows = build_hijri_year_calendar(int(year_h), include_mon_thu, include_tasua)
-    if not rows:
-        st.warning("Kalender tahun ini belum tersedia lengkap dari API.")
-        return
-
-    rows_df = pd.DataFrame(rows, columns=["gregorian", "weekday", "hijri", "h_month_en", "labels"])
+    def _to_iso(s: str) -> str:
+        s = str(s)
+        # API bulanan biasanya "DD-MM-YYYY" → ubah ke "YYYY-MM-DD"
+        if len(s) == 10 and s[2] == "-" and s[5] == "-":
+            dd, mm, yyyy = s.split("-")
+            if len(yyyy) == 4:
+                return f"{yyyy}-{mm}-{dd}"
+        return s  # asumsi sudah ISO
+    
+    rows_all = []
+    for m in range(1, 13):
+        cal = h_to_g_calendar(int(year_h), m) or []
+        for it in cal:
+            g = it.get("gregorian", {})
+            h = it.get("hijri", {})
+            rows_all.append({
+                "gregorian": g.get("date", ""),                         # "DD-MM-YYYY"
+                "weekday":   g.get("weekday", {}).get("en", ""),
+                "hijri":     h.get("date", ""),                          # "DD-MM-YYYY"
+                "h_month_en":h.get("month", {}).get("en", ""),
+                "h_month_num": h.get("month", {}).get("number", None),   # penting utk filter_rows
+                "labels":    "",  # akan diisi kemudian
+            })
+    
+    import pandas as pd
+    rows_df = pd.DataFrame(rows_all)
     rows_df["gregorian"] = rows_df["gregorian"].apply(_to_iso)
-    if "h_month_num" not in rows_df.columns:
+    
+    # berjaga-jaga kalau h_month_num masih kosong:
+    if "h_month_num" not in rows_df.columns or rows_df["h_month_num"].isna().any():
         rows_df["h_month_num"] = (
             rows_df["hijri"].astype(str).str.split("-").str[1].astype("Int64")
         )
+    
+    # Tambah label (Senin/Kamis, Tasū‘a)
     rows_df = add_event_labels(rows_df, include_mon_thu, include_tasua)
     rows_labeled = rows_df.to_dict("records")
 
