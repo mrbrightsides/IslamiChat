@@ -1,30 +1,40 @@
-import time, math, requests, streamlit as st
+import requests, math, streamlit as st
 
 OZT_TO_GRAM = 31.1034768
-
-import requests, streamlit as st
 
 @st.cache_data(ttl=6*3600)
 def fetch_gold_price_idr_per_gram() -> tuple[float, str]:
     """
-    Balik (harga_emas_idr_per_gram, sumber_info)
+    Balik (harga_emas_idr_per_gram, sumber_info).
+    Prioritas:
+      1) price_gram_24k (jika ada)
+      2) price (IDR per ozt) / 31.1034768
     """
     key = st.secrets.get("GOLDAPI_KEY", "")
     if not key:
         raise Exception("GOLDAPI_KEY tidak ada di secrets")
 
-    # Langsung ke IDR, dan pakai price_gram_24k supaya tidak perlu konversi kurs
     r = requests.get(
         "https://www.goldapi.io/api/XAU/IDR",
         headers={"x-access-token": key, "User-Agent": "IslamiChat/1.0"},
         timeout=10,
     )
     r.raise_for_status()
-    data = r.json()
+    data = r.json() or {}
 
-    # GoldAPI menyediakan field ini langsung dalam IDR/gram
-    price_idr_per_gram = float(data["price_gram_24k"])
-    return price_idr_per_gram, "GoldAPI XAU/IDR (price_gram_24k)"
+    pg = data.get("price_gram_24k")
+    if pg is not None:
+        val = float(pg)
+        if math.isfinite(val) and val > 0:
+            return val, "GoldAPI XAU/IDR • price_gram_24k"
+
+    p_ozt = data.get("price")
+    if p_ozt is not None:
+        val = float(p_ozt) / OZT_TO_GRAM
+        if math.isfinite(val) and val > 0:
+            return val, "GoldAPI XAU/IDR • price/oz → /gram"
+
+    raise Exception(f"Payload GoldAPI tidak memuat harga yang dikenali: keys={list(data.keys())[:8]}")
 
 def format_rp(x: float) -> str:
     return f"Rp {x:,.0f}".replace(",", ".")
