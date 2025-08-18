@@ -16,7 +16,7 @@ from components.masjid import (
     get_user_location, show_nearby_mosques
 )
 from components.murottal import (
-    API_BASE, fetch_radios, show_murottal_tab
+    RADIO_API, fetch_radios, show_murottal_tab
 )
 from components.event import (
     render_event, check_important_event
