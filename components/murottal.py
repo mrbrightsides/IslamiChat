@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-RADIO_API = "https://mp3quran.net/api/v3/radios"
+RADIO_API = "https://mp3quran.net/api/v3/radios?language=id"
 
 @st.cache_data(ttl=86400)
 def fetch_radios():
