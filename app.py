@@ -39,6 +39,11 @@ from components.khutbah_gpt import (
     render_khutbah_form, generate_khutbah, generate_khutbah_gpt
 )
 
+# ===== Komponen: Live Stream =====
+from components.live_stream import (
+    TV_API, fetch_tv, show_tv_tab
+)
+
 # ===== Page setup =====
 st.set_page_config(page_title="IslamiChat 🤖🌸", layout="wide")
 st.title("IslamiChat = Tanya Jawab + Waktu Sholat")
@@ -153,3 +158,7 @@ with tabs[6]:
 # === Tab 7: KhutbahGPT ===
 with tabs[7]:
     render_khutbah_form()
+
+# === Tab 8: Live Stream ===
+with tabs[8]:
+    show_tv_tab()
