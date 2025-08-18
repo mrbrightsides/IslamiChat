@@ -88,12 +88,3 @@ def show_chat_ustadz_tab():
         _ustadz_card(NAMA_USTADZ_1, WA_LINK_1, key_prefix="u1")
     with c2:
         _ustadz_card(NAMA_USTADZ_2, WA_LINK_2, key_prefix="u2")
-
-    st.divider()
-    with st.expander("⚙️ Konfigurasi ringkas", expanded=False):
-        st.write(
-            "Ganti nilai `NAMA_USTADZ_1/2` dan `WA_LINK_1/2` di bagian atas file ini.\n"
-            "- Jika mengisi nomor, gunakan format internasional tanpa tanda + (contoh: `62xxxxxxxxxx`).\n"
-            "- Jika mengisi tautan, boleh `https://wa.me/62...` atau `https://api.whatsapp.com/send?phone=62...`.\n"
-            "- Pesan akan di-URL-encode otomatis."
-        )
