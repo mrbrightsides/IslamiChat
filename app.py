@@ -36,7 +36,7 @@ from components.murottal import (
 
 # ===== Komponen: Event Hijriah =====
 from components.event import (
-    render_simple_hijri_calendar
+    render_event
 )
 
 # ===== Komponen: Khutbah GPT =====
@@ -145,7 +145,7 @@ with tabs[5]:
 
 # === Tab 6: Event Islam ===
 with tabs[6]:
-    render_simple_hijri_calendar()
+    render_event()
 
 # === Tab 7: KhutbahGPT ===
 with tabs[7]:
