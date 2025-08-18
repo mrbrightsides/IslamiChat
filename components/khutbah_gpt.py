@@ -229,6 +229,32 @@ def render_khutbah_form():
         panjang = st.slider("Panjang Khutbah (kata, indikatif)", 300, 1500, 700, 100)
         audience = st.text_input("Target Jamaah (opsional)", placeholder="Contoh: Mahasiswa, Jamaah Remaja, Umum")
         tambahan = st.text_area("Catatan atau Permintaan Khusus (opsional)", placeholder="Misal: Sertakan QS Al-‘Asr di pengantar")
+        engine = st.radio(
+            "Mesin Pembuat Khutbah",
+            ["Template (offline)", "GPT (butuh API key)"],
+            horizontal=False,
+            index=0
+        )
+    if submitted:
+        try:
+            if engine.startswith("GPT"):
+                with st.spinner("🧠 Meminta GPT menyusun teks khutbah..."):
+                    text = generate_khutbah_gpt(jenis_khutbah, tema, gaya, panjang, audience, tanggal, tambahan)
+            else:
+                # panggil generator offline kamu yang sudah ada
+                text = generate_khutbah(jenis_khutbah, tema, gaya, panjang, audience, tanggal, tambahan)
+        except Exception as e:
+            st.warning(f"Gagal pakai GPT: {e}. Diproses dengan Template (offline).")
+            text = generate_khutbah(jenis_khutbah, tema, gaya, panjang, audience, tanggal, tambahan)
+    
+        st.success("📜 Khutbah berhasil dibuat.")
+        st.markdown(f"### {tema or 'Khutbah'}")
+        st.write(text)
+    
+        st.download_button("💾 Unduh Teks (.txt)",
+            data=text.encode("utf-8"),
+            file_name=f"Khutbah_{jenis_khutbah}_{tanggal.isoformat()}.txt",
+            mime="text/plain")
 
         submitted = st.form_submit_button("🎙️ Buat Khutbah Sekarang")
 
@@ -248,3 +274,74 @@ def render_khutbah_form():
     st.download_button("💾 Unduh Teks (.txt)", data=buf.getvalue(),
                        file_name=f"Khutbah_{jenis_khutbah}_{tanggal.isoformat()}.txt",
                        mime="text/plain")
+
+# --- GPT generator (opsional) ---
+import os
+from openai import OpenAI
+import streamlit as st
+
+def _build_prompt(jenis, tema, gaya, panjang, audience, tanggal, tambahan):
+    judul = tema or {
+        "Jumat":"Taqwa & Amanah",
+        "Idul Fitri":"Syukur & Silaturahim",
+        "Idul Adha":"Keteladanan Ibrahim & Makna Kurban",
+        "Istisqa":"Taubat & Doa Meminta Hujan",
+        "Nikah":"Mawaddah wa Rahmah",
+        "Umum":"Akhlak & Tanggung Jawab",
+    }.get(jenis,"Taqwa")
+
+    hint = {
+        "Formal": "",
+        "Lugas": "Gunakan kalimat pendek dan langsung pada inti.",
+        "Puitis": "Sisipkan majas ringan; jaga ritme.",
+        "Reflektif": "Ajak jamaah merenung dengan pertanyaan retoris.",
+        "Ringan untuk Remaja": "Pakai contoh dekat: sekolah, gadget, media sosial.",
+    }.get(gaya,"")
+
+    return f"""
+TULIS KHUTBAH berbahasa Indonesia, sopan, sesuai adab mimbar.
+Jenis: {jenis}
+Tema: {judul}
+Gaya: {gaya}  {('('+hint+')') if hint else ''}
+Target kata (indikatif): {int(panjang)}
+Target jamaah: {audience or 'Umum'}
+Tanggal: {tanggal.isoformat()}
+
+Struktur:
+- Pembukaan (hamdalah, shalawat, wasiat takwa)
+- Ayat/hadits singkat (tanpa kutip Arab panjang; cukup terjemah & rujukan ringkas)
+- 3–6 paragraf inti sesuai tema dan jenis khutbah
+- 3–6 poin aksi praktis bernomor atau bullet
+- Penutup (doa ma’tsur ringkas). Untuk Jumat, sertakan ringkasan khutbah kedua.
+
+Kaidah:
+- Hindari klaim sensitif/politik; utamakan nasihat akhlak & ibadah.
+- Gunakan rujukan Qur’an/Hadits secukupnya: mis. (QS. Al-Hasyr:18), (HR. Muslim).
+- Bahasa jelas, mudah dicerna.
+Tambahan dari panitia: {tambahan or '-'}
+""".strip()
+
+def generate_khutbah_gpt(jenis, tema, gaya, panjang, audience, tanggal, tambahan, model="gpt-4o-mini"):
+    # Ambil API key dari st.secrets / env
+    api_key = st.secrets.get("OPENAI_API_KEY", None) if hasattr(st, "secrets") else None
+    api_key = api_key or os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY tidak ditemukan.")
+
+    client = OpenAI(api_key=api_key)
+    system = (
+        "You are KhutbahGPT, an imam assistant that writes concise, responsible khutbah texts "
+        "in Indonesian for Muslim audiences. Keep it respectful, apolitical, and practical."
+    )
+    user = _build_prompt(jenis, tema, gaya, panjang, audience, tanggal, tambahan)
+
+    # gunakan Chat Completions (stabil & familier)
+    resp = client.chat.completions.create(
+        model=model,  # contoh: "gpt-4o-mini" / "gpt-4o"
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ],
+        temperature=0.7,
+    )
+    return resp.choices[0].message.content.strip()
