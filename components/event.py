@@ -299,7 +299,12 @@ def to_csv_bytes(rows: List[Dict]) -> bytes:
     ])
     writer.writeheader()
     for r in rows:
-        writer.writerow(r)
+        lab = r.get("labels", [])
+        if isinstance(lab, list):
+            r_out = {**r, "labels": ", ".join(lab)}
+        else:
+            r_out = r
+        writer.writerow(r_out)
     return buf.getvalue().encode("utf-8")
 
 def to_ics_bytes(rows: List[Dict]) -> bytes:
@@ -308,13 +313,24 @@ def to_ics_bytes(rows: List[Dict]) -> bytes:
     """
     lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//IslamiChat//Kalender Hijriah//ID"]
     for r in rows:
-        if not r.get("labels"):
+        lab = r.get("labels")
+        if not lab:
             continue
+
+        # Normalisasi labels -> string ringkas + gabungan
+        if isinstance(lab, list):
+            first_label = lab[0] if lab else ""
+            all_labels = ", ".join(lab)
+        else:  # string
+            first_label = lab.split(",")[0].strip()
+            all_labels = lab
+
         y, m, d = _to_iso_gdate(r["gregorian"]).split("-")
         dt = f"{y}{m}{d}"
-        summary = r["labels"].split(",")[0].strip()  # ambil label pertama
-        desc = f"Hijri: {r['hijri']} ({r['h_month_en']})\\nSemua label: {r['labels']}"
+        summary = first_label
+        desc = f"Hijri: {r['hijri']} ({r['h_month_en']})\\nSemua label: {all_labels}"
         uid = f"{dt}-{summary.replace(' ', '')}-{r['hijri']}"
+
         lines += [
             "BEGIN:VEVENT",
             f"UID:{uid}",
@@ -330,6 +346,8 @@ def to_ics_bytes(rows: List[Dict]) -> bytes:
 def render_event():
     import pandas as pd
     from datetime import datetime, date
+    def _labels_to_str(v):
+    return ", ".join(v) if isinstance(v, list) else (v or "")
 
     st.header("📅 Kalender Islam")
 
@@ -476,7 +494,8 @@ def render_event():
     if ups:
         for r in ups:
             left_txt = f" (tinggal {r['days_left']} hari)" if r["days_left"] > 0 else " (hari ini)"
-            st.write(f"- **{r['labels']}** — {r['gregorian']} (Hijri: {r['hijri']} / {r['h_month_en']}){left_txt}")
+            st.write(f"- **{_labels_to_str(r['labels'])}** — {r['gregorian']} (Hijri: {r['hijri']} / {r['h_month_en']}){left_txt}")
+
     else:
         st.caption("Belum ada event terdekat. Aktifkan penanda Senin/Kamis atau Tasu‘ā.")
     
@@ -511,16 +530,34 @@ def render_event():
         filtered = skeleton
 
     # ===== Render tabel =====
-    df = pd.DataFrame(filtered, columns=["gregorian", "weekday", "hijri", "h_month_en", "h_month_num", "labels"])
+    df = pd.DataFrame(
+        filtered,
+        columns=["gregorian", "weekday", "hijri", "h_month_en", "h_month_num", "labels"]
+    )
     df = add_event_labels(df, include_mon_thu, include_tasua)
+    
+    # filter "hanya bertanda" (labels = list)
     if only_labeled:
-        df = df[df["labels"].astype(str).str.len() > 0]
-
-    st.dataframe(df[["gregorian","weekday","hijri","h_month_en","labels"]],
-                 use_container_width=True, height=420)
+        df = df[df["labels"].apply(lambda v: isinstance(v, list) and len(v) > 0)]
+    
+    # UI: tampilkan labels sebagai string
+    def _labels_to_str(v):
+        return ", ".join(v) if isinstance(v, list) else (v or "")
+    
+    df_tbl = df.copy()
+    df_tbl["labels"] = df_tbl["labels"].apply(_labels_to_str)
+    
+    st.dataframe(
+        df_tbl[["gregorian", "weekday", "hijri", "h_month_en", "labels"]],
+        use_container_width=True, height=420
+    )
 
     # ===== Unduhan =====
-    export_rows = df.to_dict("records")
+    export_rows = []
+    for r in df.to_dict("records"):
+        rr = r.copy()
+        rr["labels"] = _labels_to_str(rr.get("labels"))
+        export_rows.append(rr)
     c1, c2 = st.columns(2)
     with c1:
         st.download_button(
