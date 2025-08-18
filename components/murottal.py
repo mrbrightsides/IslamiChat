@@ -21,7 +21,7 @@ def fetch_radios():
 def show_murottal_tab():
     st.header("📻 Murottal 24 Jam")
     st.markdown("""
-        Dengarkan bacaan Al-Qur'an nonstop dengan berbagai pilihan qori internasional.
+        Dengarkan bacaan Al-Qur'an nonstop dengan berbagai pilihan qori internasional.  
         Sumber audio streaming dari [mp3quran.net](https://mp3quran.net).
     """)
 
@@ -30,20 +30,18 @@ def show_murottal_tab():
         st.info("Belum ada data radio yang tersedia.")
         return
 
-    # Filter radio berbahasa Indonesia
-    indo_radios = [r for r in radios if "indonesia" in r.get("name", "").lower()]
+    # >>>> TANPA FILTER INDONESIA <<<<
+    options = radios
 
-    if not indo_radios:
-        st.warning("Radio berbahasa Indonesia tidak ditemukan. Menampilkan semua radio.")
-        options = radios
-    else:
-        options = indo_radios
+    selected = st.selectbox(
+        "Pilih channel radio:", 
+        options, 
+        format_func=lambda r: r.get("name", "Radio")
+    )
 
-    selected = st.selectbox("Pilih channel radio:", options, format_func=lambda r: r.get("name", "Radio"))
-
-    stream_url = selected.get("url")
+    stream_url = selected.get("url") or selected.get("radio_url")
     if stream_url:
         st.audio(stream_url, format="audio/mp3")
-        st.caption(f"Qori: {selected.get('name', 'Tanpa Nama')}")
+        st.caption(f"📻 Qori: {selected.get('name', 'Tanpa Nama')}")
     else:
         st.error("URL streaming tidak tersedia untuk channel ini.")
