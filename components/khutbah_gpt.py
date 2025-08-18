@@ -3,224 +3,248 @@ import textwrap
 from datetime import date
 import streamlit as st
 
-# ====== Helper GPT (opsional) ======
-import os
-try:
-    from openai import OpenAI
-except Exception:
-    OpenAI = None  # biar aman kalau lib belum terpasang
+# ====== BANK DALIL SINGKAT (ringkas, aman untuk khutbah) ======
+QURAN = {
+    "taqwa": [
+        ("Ali 'Imran 102", "Wahai orang-orang yang beriman! Bertakwalah kepada Allah sebenar-benar takwa kepada-Nya…"),
+        ("Al-Hasyr 18", "Wahai orang-orang yang beriman! Bertakwalah kepada Allah, dan hendaklah setiap orang memperhatikan apa yang telah diperbuatnya untuk hari esok…"),
+        ("An-Nahl 97", "Siapa beramal saleh—laki atau perempuan—dalam keadaan beriman, pasti Kami berikan kehidupan yang baik…"),
+    ],
+    "amanah": [
+        ("An-Nisa 58", "Sungguh, Allah menyuruhmu menyampaikan amanat kepada yang berhak menerimanya…"),
+        ("Al-Ahzab 72", "Sesungguhnya Kami telah menawarkan amanah kepada langit, bumi dan gunung-gunung…"),
+    ],
+    "ukhuwah": [
+        ("Al-Hujurat 10", "Sesungguhnya orang-orang mukmin itu bersaudara…"),
+        ("Al-Hujurat 13", "Wahai manusia! Sungguh Kami menciptakan kamu dari seorang laki-laki dan seorang perempuan…"),
+    ],
+    "ramadhan_idulfitri": [
+        ("Al-Baqarah 183", "Wahai orang-orang yang beriman, diwajibkan atas kamu berpuasa…"),
+        ("Al-Baqarah 185", "…agar kamu menyempurnakan bilangan (puasa) dan mengagungkan Allah…"),
+    ],
+    "iduladha": [
+        ("As-Saffat 102-107", "Kisah pengorbanan Nabi Ibrahim dan Ismail ‘alaihimassalam…"),
+        ("Al-Hajj 37", "Daging dan darah (hewan kurban) itu sekali-kali tidak sampai kepada Allah, tetapi ketakwaanmulah yang sampai kepada-Nya…"),
+    ],
+    "istisqa": [
+        ("Nuh 10-12", "Mohonlah ampun kepada Tuhanmu, sungguh Dia Maha Pengampun. Niscaya Dia kirimkan hujan lebat atasmu…"),
+        ("Hud 52", "Mohonlah ampun kepada Tuhanmu lalu bertaubatlah kepada-Nya, niscaya Dia menurunkan hujan lebat kepadamu…"),
+    ],
+    "nikah": [
+        ("Ar-Rum 21", "Di antara tanda-tanda (kebesaran)-Nya, Dia menciptakan untukmu pasangan-pasangan… agar kamu cenderung dan merasa tenteram kepadanya…"),
+        ("An-Nisa 1", "…bertakwalah kepada Allah yang dengan (mempergunakan) nama-Nya kamu saling meminta dan peliharalah hubungan silaturahim…"),
+    ],
+}
 
-def _has_openai_key() -> bool:
-    key = getattr(st, "secrets", {}).get("OPENAI_API_KEY", None) if hasattr(st, "secrets") else None
-    key = key or os.getenv("OPENAI_API_KEY")
-    return bool(key) and (OpenAI is not None)
+HADITH = {
+    "taqwa": [
+        ("Tirmidzi", "Bertakwalah kepada Allah di mana saja engkau berada; susullah keburukan dengan kebaikan yang akan menghapuskannya; dan pergaulilah manusia dengan akhlak yang baik."),
+    ],
+    "amanah": [
+        ("Bukhari Muslim", "Tanda munafik itu tiga: apabila berbicara ia berdusta, apabila berjanji ia mengingkari, dan apabila dipercaya ia berkhianat."),
+    ],
+    "ukhuwah": [
+        ("Muslim", "Janganlah kalian saling hasad, saling membenci, dan saling memutuskan; jadilah hamba-hamba Allah yang bersaudara."),
+    ],
+    "idulfitri": [
+        ("Bukhari", "Barang siapa berpuasa Ramadan karena iman dan mengharap pahala, diampuni dosa-dosanya yang telah lalu."),
+    ],
+    "iduladha": [
+        ("Ahmad", "Sebaik-baik amal pada hari-hari tasyriq adalah mengingat Allah dan menyembelih (kurban)."),
+    ],
+    "istisqa": [
+        ("Abu Dawud", "Sesungguhnya beristighfar dapat menurunkan hujan."),
+    ],
+    "nikah": [
+        ("Tirmidzi", "Sebaik-baik kalian adalah yang paling baik terhadap keluarganya…"),
+    ],
+}
 
-# ===== Offline fallback: generator khutbah sederhana =====
-import textwrap
+def _pick(pack, n=1):
+    out = []
+    for i, item in enumerate(pack):
+        if i >= n: break
+        out.append(item)
+    return out
 
-def generate_khutbah(jenis, tema, gaya, panjang, audience, tanggal, tambahan):
-    judul_default = {
+def _wrap(p):
+    return textwrap.fill(p, width=92)
+
+def _bullets(points):
+    return "\n".join([f"- {p}" for p in points])
+
+def _make_opening(jenis):
+    opener = (
+        "Alhamdulillāh, segala puji bagi Allah Rabb semesta alam. "
+        "Kita memuji-Nya, memohon pertolongan dan ampunan-Nya. "
+        "Ashhadu an lā ilāha illallāh, wa ashhadu anna Muḥammadan ‘abduhū wa rasūluh. "
+        "Allāhumma ṣalli ‘alā Muḥammad wa ‘alā ālihi wa ṣaḥbih."
+    )
+    wasiat = "Ma‘āsyiral muslimīn—marilah kita bertakwa kepada Allah dengan sebenar-benar takwa."
+    if jenis == "Jumat":
+        return _wrap(opener + " " + wasiat)
+    return _wrap(opener + " " + wasiat)
+
+def _make_closing(jenis):
+    doa1 = (
+        "Allāhumma ighfir lil-muslimīna wal-muslimāt, wal-mu’minīna wal-mu’mināt, "
+        "al-aḥyā’i minhum wal-amwāt. Allāhumma inna nas’aluka hudā, wa tuqā, "
+        "wal ‘afāfa wal ghina."
+    )
+    doa2 = "Rabbana ātinā fid-dunyā ḥasanah wa fil-ākhirati ḥasanah wa qinā ‘adzāban-nār."
+    if jenis == "Jumat":
+        return _wrap(doa1) + "\n\n" + _wrap(doa2) + "\n\n" + _wrap("Aqulu qawli hādzā, fastaghfirullāh li walakum.")
+    else:
+        return _wrap(doa1) + "\n\n" + _wrap(doa2)
+
+def _default_theme_for(jenis):
+    return {
         "Jumat": "Taqwa & Amanah",
         "Idul Fitri": "Syukur, Taqwa, dan Silaturahim",
         "Idul Adha": "Keteladanan Ibrahim & Makna Kurban",
         "Istisqa": "Taubat, Istighfar, dan Doa Meminta Hujan",
         "Nikah": "Mawaddah wa Rahmah dalam Rumah Tangga",
-        "Umum": "Akhlak Mulia & Tanggung Jawab",
+        "Umum": "Akhlak Mulia & Tanggung Jawab"
     }.get(jenis, "Taqwa")
-    judul = (tema or judul_default).strip()
 
-    hint = {
+def _theme_keys(jenis, tema):
+    tema_l = (tema or _default_theme_for(jenis)).lower()
+    keys = ["taqwa"]
+    if any(k in tema_l for k in ["amanah","jujur","integritas"]): keys += ["amanah"]
+    if any(k in tema_l for k in ["ukhuwah","persaudaraan","silatur"]): keys += ["ukhuwah"]
+    if "fitri" in tema_l: keys += ["ramadhan_idulfitri"]
+    if any(k in tema_l for k in ["adha","kurban","qurban","ibrahim"]): keys += ["iduladha"]
+    if any(k in tema_l for k in ["hujan","istisqa","kemarau"]): keys += ["istisqa"]
+    if any(k in tema_l for k in ["nikah","keluarga","rumah tangga"]): keys += ["nikah"]
+    return list(dict.fromkeys(keys))  # unik, urutan terjaga
+
+def _style_hint(gaya):
+    return {
         "Formal": "",
-        "Lugas": "Kalimat singkat dan langsung.",
-        "Puitis": "Majas ringan; jaga ritme.",
-        "Reflektif": "Pertanyaan retoris untuk merenung.",
-        "Ringan untuk Remaja": "Contoh dekat: sekolah, gadget, media sosial.",
+        "Lugas": "Gunakan kalimat singkat dan langsung pada intinya.",
+        "Puitis": "Sisipi majas seperlunya, jaga ritme dan rima ringan.",
+        "Reflektif": "Ajak jamaah merenung dengan pertanyaan retoris.",
+        "Ringan untuk Remaja": "Pakai contoh dekat keseharian: sekolah, gadget, media sosial."
     }.get(gaya, "")
 
-    def wrap(x): return textwrap.fill(x, 92)
+def generate_khutbah(jenis, tema, gaya, panjang, audience, tanggal, tambahan):
+    keys = _theme_keys(jenis, tema)
+    # ambil 1–2 ayat & 1 hadith sesuai tema
+    ayat = []
+    for k in keys:
+        ayat += _pick(QURAN.get(k, []), n=1)
+    hadis = []
+    base_hkey = {
+        "Jumat": "taqwa",
+        "Idul Fitri": "idulfitri",
+        "Idul Adha": "iduladha",
+        "Istisqa": "istisqa",
+        "Nikah": "nikah",
+        "Umum": "taqwa",
+    }[jenis]
+    hadis += _pick(HADITH.get(base_hkey, []), n=1)
 
-    pembuka = wrap(
-        "Alhamdulillāh, segala puji bagi Allah Rabb semesta alam. "
-        "Kita memuji-Nya, memohon pertolongan dan ampunan-Nya. "
-        "Ashhadu an lā ilāha illallāh, wa ashhadu anna Muḥammadan ‘abduhū wa rasūluh. "
-        "Allāhumma ṣalli ‘alā Muḥammad wa ‘alā ālihi wa ṣaḥbih. "
-        "Ma‘āsyiral muslimīn—marilah kita bertakwa kepada Allah dengan sebenar-benar takwa."
-    )
+    # outline butir pembahasan (disesuaikan panjang)
+    target = max(300, min(1500, int(panjang)))
+    n_points = 4 if target < 600 else (6 if target < 1000 else 8)
+    points = [
+        f"Menguatkan **takwa** sebagai poros amal dan solusi masalah umat.",
+        f"Memahami makna **{_default_theme_for(jenis)}** dalam kehidupan sehari-hari.",
+        "Contoh praktis dan langkah kecil yang bisa dimulai pekan ini.",
+        "Menjaga lisan, amanah, dan etika bermedia.",
+        "Peran keluarga/komunitas sebagai ekosistem kebajikan.",
+        "Menutup dengan doa, mohon ampun dan kekuatan untuk istiqamah."
+    ][:n_points]
 
+    # bagian pembuka
+    parts = []
+    parts.append(_make_opening(jenis))
+
+    # judul & metadata
+    judul = tema or _default_theme_for(jenis)
     meta = f"**Tema:** {judul}"
     if audience: meta += f" • **Target:** {audience}"
     meta += f" • **Tanggal:** {tanggal.strftime('%d %B %Y')}"
-    if hint: meta += f" • _Gaya_: {hint}"
+    if (hint := _style_hint(gaya)):
+        meta += f" • _Gaya_: {hint}"
+    parts.append(meta)
 
-    # jumlah poin sesuai slider panjang (indikatif)
-    target = max(300, min(1500, int(panjang)))
-    n_points = 4 if target < 600 else (6 if target < 1000 else 8)
-    poin = [
-        "Menguatkan ketakwaan sebagai poros amal.",
-        f"Memaknai '{judul}' dalam keseharian: ibadah, keluarga, kerja, dan ruang digital.",
-        "Menjaga amanah, lisan, dan etika bermedia.",
-        "Memulai langkah kecil pekan ini dan saling menasihati dalam kebaikan.",
-        "Merawat silaturahim dan kepedulian sosial.",
-        "Berdoa, beristighfar, dan menghidupkan salat berjamaah.",
-        "Membangun budaya belajar dan membaca Al-Qur’an di rumah.",
-        "Menjauhi perkara syubhat dan kebiasaan sia-sia.",
-    ][:n_points]
+    # sisipkan ayat & hadith
+    if ayat:
+        ay_lines = [f"> {n}: {t}" for (n, t) in ayat]
+        parts.append("**Dalil Al-Qur’an:**\n" + "\n".join(ay_lines))
+    if hadis:
+        hd_lines = [f"> {src}: {t}" for (src, t) in hadis]
+        parts.append("**Hadis:**\n" + "\n".join(hd_lines))
 
-    badan = "\n\n".join(map(wrap, [
-        f"Jamaah yang dimuliakan Allah, {judul} bukan sekadar slogan. Ia menuntut keyakinan yang benar, niat yang lurus, dan langkah nyata.",
-        "Mari kita mulai dari yang paling dekat: memperbaiki salat, menunaikan amanah, menahan lisan, serta berbuat baik kepada sesama.",
-        "Ketika pribadi-pribadi memperbaiki diri, Allah bukakan jalan kebaikan kolektif. Inilah sunnatullah yang tidak berubah."
-    ]))
+    # tubuh khutbah (ringkas tapi padat)
+    paragraf = [
+        f"Jamaah yang dimuliakan Allah, {judul} bukan sekadar jargon. Ia menuntut keyakinan yang benar, niat yang tulus, dan langkah nyata di rumah, di tempat kerja, dan di ruang digital.",
+        "Kita mulai dari hal yang paling dekat: memperbaiki salat, menjaga amanah, menahan lisan, dan menunaikan hak sesama.",
+        "Ketika individu-individu memperbaiki diri, Allah bukakan jalan kebaikan kolektif. Inilah sunnatullah: _InnaLlaha la yughayyiru ma biqawmin ḥattā yughayyirū mā bi-anfusihim_."
+    ]
+    parts.append("\n\n".join(map(_wrap, paragraf)))
 
-    bullets = "\n".join(f"- {p}" for p in poin)
+    # bullet aksi
+    parts.append("**Langkah praktis pekan ini:**\n" + _bullets(points))
 
-    doa1 = wrap(
-        "Allāhumma ighfir lil-muslimīna wal-muslimāt, wal-mu’minīna wal-mu’mināt, "
-        "al-aḥyā’i minhum wal-amwāt. Allāhumma inna nas’aluka hudā, wa tuqā, "
-        "wal ‘afāfa wal ghina."
-    )
-    doa2 = wrap("Rabbana ātinā fid-dunyā ḥasanah wa fil-ākhirati ḥasanah wa qinā ‘adzāban-nār.")
-    penutup = doa1 + "\n\n" + doa2
-    if jenis == "Jumat":
-        penutup += "\n\n" + wrap("Aqulu qawli hādzā, fastaghfirullāh li walakum.")
-
+    # tambahan pengguna
     if tambahan:
-        tambahan_txt = "\n\n" + "**Catatan khusus panitia/jamaah:** " + tambahan.strip()
-    else:
-        tambahan_txt = ""
+        parts.append("**Catatan khusus:** " + tambahan.strip())
 
-    teks = (
-        pembuka + "\n\n" +
-        meta + "\n\n" +
-        badan + "\n\n" +
-        "**Langkah praktis pekan ini:**\n" + bullets +
-        tambahan_txt + "\n\n" +
-        penutup + (
-            "\n\n---\n### Khutbah Kedua (ringkas)\n" +
-            wrap("Alhamdulillāh, shalawat dan salam untuk Rasulullah. "
-                 "Perbanyak istighfar dan shalawat; semoga Allah menjaga negeri ini, "
-                 "memudahkan rezeki yang halal, serta menguatkan persatuan kaum Muslimin.")
-            if jenis == "Jumat" else ""
-        )
-    )
-    return teks
+    # penutup (doa)
+    parts.append(_make_closing(jenis))
 
-def _build_prompt(jenis, tema, gaya, panjang, audience, tanggal, tambahan):
-    judul = tema or {
-        "Jumat":"Taqwa & Amanah",
-        "Idul Fitri":"Syukur & Silaturahim",
-        "Idul Adha":"Keteladanan Ibrahim & Makna Kurban",
-        "Istisqa":"Taubat & Doa Meminta Hujan",
-        "Nikah":"Mawaddah wa Rahmah",
-        "Umum":"Akhlak & Tanggung Jawab",
-    }.get(jenis,"Taqwa")
+    # khusus Jumat: tambahkan Khutbah Kedua (sangat ringkas)
+    if jenis == "Jumat":
+        parts.append("---\n### Khutbah Kedua (ringkas)\n" +
+                     _wrap("Alhamdulillāh, shalawat dan salam untuk Rasulullah. "
+                           "Marilah memperbanyak istighfar dan shalawat. "
+                           "Semoga Allah menjaga negeri ini, memudahkan rezeki yang halal, "
+                           "serta menguatkan persatuan kaum Muslimin."))
+        parts.append(_wrap("Allāhumma sholli ‘alā Muḥammad wa ‘alā āli Muḥammad… "
+                           "Rabbana taqabbal minnā, innaka Antas-Samī‘ul ‘Alīm."))
 
-    hint = {
-        "Formal": "",
-        "Lugas": "Kalimat pendek dan langsung.",
-        "Puitis": "Majas ringan; jaga ritme.",
-        "Reflektif": "Pertanyaan retoris untuk ajak merenung.",
-        "Ringan untuk Remaja": "Contoh dekat: sekolah, gadget, media sosial.",
-    }.get(gaya,"")
+    text = "\n\n".join(parts)
 
-    return f"""
-TULIS KHUTBAH berbahasa Indonesia, sopan, sesuai adab mimbar.
-Jenis: {jenis}
-Tema: {judul}
-Gaya: {gaya} {('('+hint+')') if hint else ''}
-Target kata (indikatif): {int(panjang)}
-Target jamaah: {audience or 'Umum'}
-Tanggal: {tanggal.isoformat()}
-
-Struktur:
-- Pembukaan (hamdalah, shalawat, wasiat takwa)
-- Ayat/hadits singkat (cukup terjemah & rujukan ringkas)
-- 3–6 paragraf inti sesuai tema/jenis khutbah
-- 3–6 poin aksi praktis
-- Penutup (doa ma’tsur ringkas). Untuk Jumat, sertakan ringkasan khutbah kedua.
-
-Kaidah:
-- Hindari konten sensitif/politis; tekankan akhlak & ibadah.
-- Rujukan Qur’an/Hadits singkat: (QS. Al-Hasyr:18), (HR. Muslim).
-- Bahasa jelas dan mudah.
-Tambahan: {tambahan or '-'}
-""".strip()
-
-def generate_khutbah_gpt(jenis, tema, gaya, panjang, audience, tanggal, tambahan, model="gpt-4o-mini") -> str:
-    if not _has_openai_key():
-        raise RuntimeError("OPENAI_API_KEY atau library openai belum tersedia.")
-    api_key = st.secrets.get("OPENAI_API_KEY", None) if hasattr(st, "secrets") else None
-    api_key = api_key or os.getenv("OPENAI_API_KEY")
-    client = OpenAI(api_key=api_key)
-
-    system = ("You are KhutbahGPT, an imam assistant that writes concise, responsible khutbah texts "
-              "in Indonesian. Keep it respectful, apolitical, and practical.")
-    prompt = _build_prompt(jenis, tema, gaya, panjang, audience, tanggal, tambahan)
-
-    resp = client.chat.completions.create(
-        model=model,
-        messages=[{"role":"system","content":system},
-                  {"role":"user","content":prompt}],
-        temperature=0.7,
-    )
-    return resp.choices[0].message.content.strip()
+    # jaga target panjang kira-kira (tanpa over-engineering)
+    # biarkan slider jadi _indikasi_ level detail, bukan angka presisi
+    return text
 
 
-# ====== UI: tampilan persis seperti punyamu, hasil Offline di bawah GPT ======
+# ====== UI ======
 def render_khutbah_form():
-    from datetime import date
     st.title("🕌 KhutbahGPT - Generator Khutbah Otomatis")
-    st.markdown("Masukkan informasi di bawah ini untuk membuat teks khutbah yang sesuai:")
+    st.markdown("Masukkan informasi di bawah ini untuk membuat teks khutbah:")
 
     with st.form("khutbah_form"):
         tanggal = st.date_input("Tanggal Khutbah", value=date.today())
-        jenis_khutbah = st.radio("Jenis Khutbah", ["Jumat", "Idul Fitri", "Idul Adha", "Istisqa", "Nikah", "Umum"], index=0)
+        jenis_khutbah = st.radio(
+            "Jenis Khutbah",
+            ["Jumat", "Idul Fitri", "Idul Adha", "Istisqa", "Nikah", "Umum"],
+            index=0
+        )
         tema = st.text_input("Tema Khutbah (opsional)", placeholder="Contoh: Pentingnya Menjaga Amanah")
-        gaya = st.selectbox("Gaya Bahasa", ["Formal", "Lugas", "Puitis", "Reflektif", "Ringan untuk Remaja"])
-        panjang = st.slider("Panjang Khutbah (kata)", min_value=300, max_value=1500, value=700, step=100)
+        gaya = st.selectbox("Gaya Bahasa", ["Formal", "Lugas", "Puitis", "Reflektif", "Ringan untuk Remaja"], index=0)
+        panjang = st.slider("Panjang Khutbah (kata, indikatif)", 300, 1500, 700, 100)
         audience = st.text_input("Target Jamaah (opsional)", placeholder="Contoh: Mahasiswa, Jamaah Remaja, Umum")
-        tambahan = st.text_area("Catatan atau Permintaan Khusus (opsional)", placeholder="Misal: Sertakan kutipan dari QS Al-Ashr")
+        tambahan = st.text_area("Catatan atau Permintaan Khusus (opsional)", placeholder="Misal: Sertakan QS Al-‘Asr di pengantar")
+
         submitted = st.form_submit_button("🎙️ Buat Khutbah Sekarang")
 
     if not submitted:
+        st.caption("👉 Setelah klik **Buat Khutbah Sekarang**, teks khutbah akan muncul di bawah.")
         return
 
-    st.success("📜 Sedang membuat khutbah...")
-    st.info(f"Jenis khutbah: **{jenis_khutbah}** • Tema: **{tema or '(otomatis oleh AI)'}**")
+    # generate
+    text = generate_khutbah(jenis_khutbah, tema, gaya, panjang, audience, tanggal, tambahan)
 
-    # === 1) Coba GPT dulu (jika tersedia), tampil sebagai hasil utama ===
-    gpt_text = None
-    gpt_error = None
-    if _has_openai_key():
-        with st.spinner("🧠 GPT sedang menyusun teks..."):
-            try:
-                gpt_text = generate_khutbah_gpt(jenis_khutbah, tema, gaya, panjang, audience, tanggal, tambahan)
-            except Exception as e:
-                gpt_error = str(e)
+    st.success("📜 Khutbah berhasil dibuat.")
+    st.markdown(f"### {tema or _default_theme_for(jenis_khutbah)}")
+    st.write(text)
 
-    if gpt_text:
-        st.subheader("✳️ Hasil (GPT)")
-        st.write(gpt_text)
-        st.download_button(
-            "💾 Unduh Teks GPT (.txt)",
-            data=gpt_text.encode("utf-8"),
-            file_name=f"Khutbah_{jenis_khutbah}_{tanggal.isoformat()}_GPT.txt",
-            mime="text/plain",
-            use_container_width=True
-        )
-    else:
-        if gpt_error:
-            st.warning(f"Gagal menggunakan GPT: {gpt_error}. Menampilkan versi Offline.")
-
-    # === 2) Selalu tampilkan versi Offline di bawahnya ===
-    # NOTE: pastikan kamu punya fungsi offline: generate_khutbah(...)
-    offline_text = generate_khutbah(jenis_khutbah, tema, gaya, panjang, audience, tanggal, tambahan)
-    st.subheader("🧩 Versi Template (Offline)")
-    st.write(offline_text)
-    st.download_button(
-        "💾 Unduh Teks Offline (.txt)",
-        data=offline_text.encode("utf-8"),
-        file_name=f"Khutbah_{jenis_khutbah}_{tanggal.isoformat()}_Offline.txt",
-        mime="text/plain",
-        use_container_width=True
-    )
+    # download .txt
+    buf = io.BytesIO(text.encode("utf-8"))
+    st.download_button("💾 Unduh Teks (.txt)", data=buf.getvalue(),
+                       file_name=f"Khutbah_{jenis_khutbah}_{tanggal.isoformat()}.txt",
+                       mime="text/plain")
