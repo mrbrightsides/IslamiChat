@@ -1,3 +1,9 @@
 streamlit
 requests
 pytz
+geopy
+folium
+streamlit-folium
+openai
+pandas
+markdownify
