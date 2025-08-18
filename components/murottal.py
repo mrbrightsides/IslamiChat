@@ -34,7 +34,7 @@ def show_murottal_tab():
     options = radios
 
     selected = st.selectbox(
-        "Pilih channel radio:", 
+        "Pilih qori:", 
         options, 
         format_func=lambda r: r.get("name", "Radio")
     )
