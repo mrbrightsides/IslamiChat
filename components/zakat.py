@@ -2,35 +2,29 @@ import time, math, requests, streamlit as st
 
 OZT_TO_GRAM = 31.1034768
 
+import requests, streamlit as st
+
 @st.cache_data(ttl=6*3600)
 def fetch_gold_price_idr_per_gram() -> tuple[float, str]:
     """
-    Balik (harga_emas_idr_per_gram, sumber_info).
-    Melempar Exception kalau semua sumber gagal (biar UI bisa fallback).
+    Balik (harga_emas_idr_per_gram, sumber_info)
     """
-    # 1) GoldAPI: XAU/USD per ozt  -> butuh API key
     key = st.secrets.get("GOLDAPI_KEY", "")
-    if key:
-        r = requests.get(
-            "https://www.goldapi.io/api/XAU/USD",
-            headers={"x-access-token": key, "User-Agent": "IslamiChat/1.0"},
-            timeout=10,
-        )
-        if r.ok:
-            data = r.json()
-            price_usd_per_ozt = float(data.get("price"))
-            # 2) USD→IDR
-            fx = requests.get(
-                "https://api.exchangerate.host/latest",
-                params={"base": "USD", "symbols": "IDR"},
-                timeout=10,
-            ).json()
-            usd_idr = float(fx["rates"]["IDR"])
-            price_idr_per_gram = price_usd_per_ozt * usd_idr / OZT_TO_GRAM
-            return price_idr_per_gram, "GoldAPI + exchangerate.host"
+    if not key:
+        raise Exception("GOLDAPI_KEY tidak ada di secrets")
 
-    # 3) (opsional) tambahkan sumber lain kalau punya API key lain
-    raise Exception("Semua sumber otomatis gagal.")
+    # Langsung ke IDR, dan pakai price_gram_24k supaya tidak perlu konversi kurs
+    r = requests.get(
+        "https://www.goldapi.io/api/XAU/IDR",
+        headers={"x-access-token": key, "User-Agent": "IslamiChat/1.0"},
+        timeout=10,
+    )
+    r.raise_for_status()
+    data = r.json()
+
+    # GoldAPI menyediakan field ini langsung dalam IDR/gram
+    price_idr_per_gram = float(data["price_gram_24k"])
+    return price_idr_per_gram, "GoldAPI XAU/IDR (price_gram_24k)"
 
 def format_rp(x: float) -> str:
     return f"Rp {x:,.0f}".replace(",", ".")
