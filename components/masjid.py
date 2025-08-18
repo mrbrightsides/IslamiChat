@@ -6,38 +6,38 @@ from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
 from geopy.geocoders import Nominatim
 
+# ── Endpoint: pakai yang stabil dulu
 OVERPASS_ENDPOINTS = [
-    "https://overpass-api.de/api/interpreter",
     "https://overpass.kumi.systems/api/interpreter",
-    "https://overpass.openstreetmap.ru/api/interpreter",
+    "https://overpass-api.de/api/interpreter",
 ]
 
-def _run_overpass(endpoint: str, q: str, use_get: bool):
-    headers = {"User-Agent": "IslamiChat/1.0"}
-    if use_get:
-        return requests.get(endpoint, params={"data": q}, headers=headers, timeout=45)
-    else:
-        return requests.post(endpoint, data={"data": q}, headers=headers, timeout=45)
+def _run_overpass(endpoint: str, q: str):
+    # GET dengan timeout terpisah connect/read
+    return requests.get(
+        endpoint,
+        params={"data": q},
+        headers={"User-Agent": "IslamiChat/1.0"},
+        timeout=(6, 14),  # (connect, read) -> total maks ~20s
+    )
 
 def build_query(lat: float, lon: float, radius: int, lite: bool) -> str:
+    # turunkan timeout server Overpass supaya gak kerja terlalu lama
     if lite:
         return f"""
-        [out:json][timeout:30];
+        [out:json][timeout:15];
         (
           node["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
-          way["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
           node["amenity"="place_of_worship"]["name"~"(?i)masjid|mushol+a|musala|surau"](around:{radius},{lat},{lon});
-          way["amenity"="place_of_worship"]["name"~"(?i)masjid|mushol+a|musala|surau"](around:{radius},{lat},{lon});
         );
         out center;
         """
     return f"""
-    [out:json][timeout:50];
+    [out:json][timeout:20];
     (
       node["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
       way["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
       relation["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
-
       node["amenity"="place_of_worship"]["name"~"(?i)masjid|mushol+a|musala|surau"](around:{radius},{lat},{lon});
       way["amenity"="place_of_worship"]["name"~"(?i)masjid|mushol+a|musala|surau"](around:{radius},{lat},{lon});
       relation["amenity"="place_of_worship"]["name"~"(?i)masjid|mushol+a|musala|surau"](around:{radius},{lat},{lon});
@@ -47,24 +47,25 @@ def build_query(lat: float, lon: float, radius: int, lite: bool) -> str:
 
 @st.cache_data(ttl=300)
 def fetch_mosques(lat: float, lon: float, radius: int, lite: bool):
-    q = build_query(lat, lon, radius, lite)   # <-- INI YANG KURANG
+    q = build_query(lat, lon, radius, lite)
     last_err = []
     for ep in OVERPASS_ENDPOINTS:
-        for use_get in (False, True):
-            delay = 1.5
-            for attempt in range(4):
-                try:
-                    resp = _run_overpass(ep, q, use_get)
-                    if resp.status_code == 429:
-                        time.sleep(delay); delay *= 1.8
-                        continue
-                    resp.raise_for_status()
-                    data = resp.json()
-                    return data.get("elements", [])
-                except Exception as e:
-                    last_err.append(f"{ep} {'GET' if use_get else 'POST'} try{attempt+1}: {e}")
-                    time.sleep(delay); delay *= 1.5
-    raise RuntimeError("Semua endpoint Overpass gagal. Detail: " + " | ".join(last_err[:3]) + " ...")
+        # dua percobaan saja biar cepat gagal (fail-fast)
+        delay = 1.2
+        for attempt in range(2):
+            try:
+                resp = _run_overpass(ep, q)
+                # kalau rate limited, tunggu sebentar lalu ulang
+                if resp.status_code == 429:
+                    time.sleep(delay); delay *= 1.6
+                    continue
+                resp.raise_for_status()
+                data = resp.json()
+                return data.get("elements", [])
+            except Exception as e:
+                last_err.append(f"{ep} try{attempt+1}: {e}")
+                time.sleep(delay); delay *= 1.6
+    raise RuntimeError("Overpass gagal: " + " | ".join(last_err[:3]) + " …")
 
 # ---------- Lokasi ----------
 @st.cache_data(ttl=600)
