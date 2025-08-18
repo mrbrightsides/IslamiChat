@@ -24,11 +24,50 @@ from components.event import (
 from components.khutbah_gpt import render_khutbah_form
 
 import os
+import pandas as pd  # untuk tampilan tabel lebih rapi
 
 # ===== Page setup =====
 st.set_page_config(page_title="IslamiChat 🤖🌸", layout="wide")
 st.title("IslamiChat = Tanya Jawab + Waktu Sholat")
 st.caption("Powered by ArtiBot / Botsonic • Waktu sholat dari Aladhan API")
+
+# ===== Siapkan HTML embed untuk chatbot =====
+ARTIBOT_HTML = """
+<script>
+window.embeddedChatbotConfig = {
+  chatbotId: "64cb9adf-1b62-4b7e-a6b2-c5c037a206c6",
+  domain: "www.chatbase.co"
+};
+</script>
+<script src="https://www.chatbase.co/embed.min.js"
+        chatbotId="64cb9adf-1b62-4b7e-a6b2-c5c037a206c6"
+        domain="www.chatbase.co" defer></script>
+"""
+
+BOTSONIC_HTML = """
+<iframe src="https://app.writesonic.com/embed/6405adfa-3c32-4ef8-93f5-300e8a1f1c68"
+        frameborder="0" width="100%" height="600"></iframe>
+"""
+
+TAWKTO_HTML = """
+<script type="text/javascript">
+var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+(function(){
+  var s1=document.createElement("script"), s0=document.getElementsByTagName("script")[0];
+  s1.async=true;
+  s1.src='https://embed.tawk.to/654db338f2439e1631eb5a7f/1hei8nfp7';
+  s1.charset='UTF-8';
+  s1.setAttribute('crossorigin','*');
+  s0.parentNode.insertBefore(s1,s0);
+})();
+</script>
+"""
+
+WIDGET_MAP = {
+    "ArtiBot": ARTIBOT_HTML,
+    "BotSonic": BOTSONIC_HTML,
+    "TawkTo": TAWKTO_HTML,
+}
 
 # ===== Tab utama =====
 tabs = st.tabs([
@@ -50,41 +89,9 @@ with tabs[0]:
         ["ArtiBot", "BotSonic", "TawkTo"],
         horizontal=True, label_visibility="collapsed"
     )
-    if widget_opt == "ArtiBot":
-        html("""
-        <script>
-        window.embeddedChatbotConfig = {
-        chatbotId: "64cb9adf-1b62-4b7e-a6b2-c5c037a206c6",
-        domain: "www.chatbase.co"
-        };
-        </script>
-        <script src="https://www.chatbase.co/embed.min.js" chatbotId="64cb9adf-1b62-4b7e-a6b2-c5c037a206c6" domain="www.chatbase.co" defer></script>
-        """, height=600)
-    elif widget_opt == "BotSonic":
-        html("""
-        <iframe src="https://app.writesonic.com/embed/6405adfa-3c32-4ef8-93f5-300e8a1f1c68" frameborder="0" width="100%" height="600"></iframe>
-        """)
-    elif widget_opt == "TawkTo":
-        html("""
-        <script type="text/javascript">
-        var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-        (function(){
-        var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-        s1.async=true;
-        s1.src='https://embed.tawk.to/654db338f2439e1631eb5a7f/1hei8nfp7';
-        s1.charset='UTF-8';
-        s1.setAttribute('crossorigin','*');
-        s0.parentNode.insertBefore(s1,s0);
-        })();
-        </script>
-        """
-        html_map = {
-            "ArtiBot": ARTIBOT,
-            "BotSonic": BOTSONIC,
-            "TawkTo": TAWKTO
-        }
-    
-        html(container_css.replace("{WIDGET}", html_map[widget_opt]), height=750)
+    embed_html = WIDGET_MAP.get(widget_opt, ARTIBOT_HTML)
+    # Bungkus biar ada tinggi kontainer yang konsisten
+    html(f"<div style='width:100%; height:650px;'>{embed_html}</div>", height=650)
 
 # === Tab 1: Waktu Sholat ===
 with tabs[1]:
@@ -98,11 +105,16 @@ with tabs[1]:
         payload = fetch_timings_by_city(city, country, method)
         date_readable = payload["date"]["readable"]
         timings = parse_today_times(payload["timings"])
-        times_local = {n: to_local_datetime(date_readable, t.split(" ")[0]) for n, t in timings.items()}
+
+        # Hilangkan anotasi seperti " (WIB)" jika ada
+        times_local = {
+            n: to_local_datetime(date_readable, t.split(" ")[0])
+            for n, t in timings.items()
+        }
 
         st.write(f"📅 **{date_readable}** — Zona: **{TZ.zone}** — Metode: **{method_name}**")
         rows = [(n, timings[n]) for n in ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"] if n in timings]
-        st.table(rows)
+        st.dataframe(pd.DataFrame(rows, columns=["Sholat", "Waktu"]), hide_index=True, use_container_width=True)
 
         now = dt.datetime.now(TZ)
         name, tnext = next_prayer(now, times_local)
