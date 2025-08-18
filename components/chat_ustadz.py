@@ -54,7 +54,7 @@ def show_chat_ustadz_tab():
     st.title("📞 Chat Ustadz")
     st.caption(
         "Klik tombol untuk membuka WhatsApp dengan pesan awal. "
-        "Catatan: aplikasi ini **tidak** mengirim pesan otomatis."
+        "Catatan: aplikasi ini **tidak** mengirim pesan otomatis. "
         "Mohon hargai waktu. Jangan menghubungi di jam istirahat."
     )
 
