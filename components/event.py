@@ -330,6 +330,7 @@ def to_ics_bytes(rows: List[Dict]) -> bytes:
 def render_event():
     import pandas as pd
     from datetime import datetime, date
+
     st.header("📅 Kalender Islam")
 
     # ===== Hari ini =====
@@ -354,7 +355,7 @@ def render_event():
 
     st.success(f"Hari ini (Hijri): **{h_weekday_ar}, {h_date_str} {h_month_en} H**")
 
-    # ===== Controls =====
+    # ===== Controls (DITAMPILKAN lebih dulu; view_month didefinisikan DI SINI) =====
     st.subheader("⚙️ Pengaturan Tampilan")
     c1, c2, c3, c4 = st.columns([1, 1, 1, 2])
     with c1:
@@ -367,6 +368,19 @@ def render_event():
     with c4:
         only_labeled    = st.checkbox("Tampilkan hanya hari bertanda (event/puasa)", value=False)
 
+    st.subheader("📋 Kalender")
+    vm1, _ = st.columns([1, 3])
+    options_vals = list(range(1, 13))
+    default_idx  = max(min(h_month_num, 12), 1) - 1
+    with vm1:
+        view_month = st.selectbox(
+            "Tampilan bulan (opsional)",
+            options=options_vals,
+            format_func=lambda x: f"Bulan {x}",
+            index=default_idx,
+            help="Pilih salah satu bulan Hijriah."
+        )
+
     # ===== Helpers =====
     def _to_iso(s: str):
         s = str(s)
@@ -377,7 +391,7 @@ def render_event():
 
     def _parse_hijri_day(hijri_str: str):
         try:
-            return int(str(hijri_str).split("-")[0])  # ambil DD
+            return int(str(hijri_str).split("-")[0])  # DD
         except Exception:
             return None
 
@@ -401,7 +415,7 @@ def render_event():
         df2["labels"] = labels
         return df2
 
-    # ===== Data setahun (base) =====
+    # ===== Data setahun -> labelkan =====
     rows = build_hijri_year_calendar(int(year_h), include_mon_thu, include_tasua)
     if not rows:
         st.warning("Kalender tahun ini belum tersedia lengkap dari API.")
@@ -412,7 +426,7 @@ def render_event():
     rows_df = add_event_labels(rows_df, include_mon_thu, include_tasua)
     rows_labeled = rows_df.to_dict("records")
 
-    # ===== Event Terdekat (pakai rows_labeled) =====
+    # ===== Event Terdekat (PAKAI rows_labeled) =====
     st.subheader("🗓️ Event Terdekat")
     ups = find_upcoming(rows_labeled, from_g=date.today(), limit=8)
     if ups:
@@ -422,25 +436,10 @@ def render_event():
     else:
         st.caption("Belum ada event terdekat. Aktifkan penanda Senin/Kamis atau Tasu‘ā.")
 
-    # ===== Tampilan Bulan =====
-    st.subheader("📋 Kalender")
-    vm1, _ = st.columns([1, 3])
-    options_vals = list(range(1, 13))
-    default_idx  = max(min(h_month_num, 12), 1) - 1
-
-    with vm1:
-        view_month = st.selectbox(
-            "Tampilan bulan (opsional)",
-            options=options_vals,
-            format_func=lambda x: f"Bulan {x}",
-            index=default_idx,
-            help="Pilih salah satu bulan Hijriah."
-        )
-
-    # Filter baris bulan terpilih dari rows_labeled (yang sudah ber-label)
+    # ===== Data untuk tabel bulan (juga dari rows_labeled) =====
     filtered = filter_rows(rows_labeled, only_labeled=only_labeled, month_filter=view_month)
 
-    # Fallback: kalau kosong, generate skeleton bulan (29/30 hari) dari API harian
+    # Fallback jika kosong → generate skeleton satu bulan
     if not filtered:
         month_len = 30
         skeleton = []
@@ -464,16 +463,12 @@ def render_event():
 
     # ===== Render tabel =====
     df = pd.DataFrame(filtered, columns=["gregorian", "weekday", "hijri", "h_month_en", "labels"])
-    # (jaga-jaga: kalau barusan skeleton -> tambahkan label)
     df = add_event_labels(df, include_mon_thu, include_tasua)
-
     if only_labeled:
         df = df[df["labels"].astype(str).str.len() > 0]
 
-    st.dataframe(
-        df[["gregorian", "weekday", "hijri", "h_month_en", "labels"]],
-        use_container_width=True, height=420
-    )
+    st.dataframe(df[["gregorian","weekday","hijri","h_month_en","labels"]],
+                 use_container_width=True, height=420)
 
     # ===== Unduhan =====
     export_rows = df.to_dict("records")
