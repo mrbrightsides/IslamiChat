@@ -23,6 +23,9 @@ from components.event import (
 )
 from components.khutbah_gpt import render_khutbah_form
 
+import os
+print("Files in components:", os.listdir("components"))
+
 # ===== Page setup =====
 st.set_page_config(page_title="IslamiChat 🤖🌸", layout="wide")
 st.title("IslamiChat = Tanya Jawab + Waktu Sholat")
