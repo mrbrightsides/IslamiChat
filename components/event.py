@@ -504,6 +504,41 @@ def render_event():
             month_filter=view_month  # dari selectbox "Bulan ..."
         )
 
+    if not filtered:
+        # kalau user centang "hanya hari bertanda", wajar kosong
+        if only_labeled:
+            st.info("Tidak ada hari bertanda di bulan ini.")
+        else:
+            # Fallback minimal: generate 1 bulan dari API harian
+            month_len = 30
+            mm = int(view_month)
+            yyyy = int(year_h)
+            skeleton = []
+            for d in range(1, month_len + 1):
+                dd = f"{d:02d}"
+                payload = h_to_g_single(f"{dd}-{mm:02d}-{yyyy}")
+                if payload:
+                    g = payload.get("gregorian", {}); h = payload.get("hijri", {})
+                    skeleton.append({
+                        "gregorian": _to_iso(g.get("date", "—")),                  # YYYY-MM-DD
+                        "weekday":   g.get("weekday", {}).get("en", ""),
+                        "hijri":     h.get("date", f"{dd}-{mm:02d}-{yyyy} H"),     # DD-MM-YYYY
+                        "h_month_en":h.get("month", {}).get("en", ""),
+                        "h_month_num": mm,                                         # penting utk filter_rows
+                        "labels":    [],                                            # list, bukan string
+                    })
+                else:
+                    # kalau API gagal, tetap isi baris minimal
+                    skeleton.append({
+                        "gregorian": "—",
+                        "weekday": "",
+                        "hijri": f"{dd}-{mm:02d}-{yyyy} H",
+                        "h_month_en": "",
+                        "h_month_num": mm,
+                        "labels": [],
+                    })
+            filtered = skeleton
+
     # ===== Render tabel =====
     df = pd.DataFrame(
         filtered,
