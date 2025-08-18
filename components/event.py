@@ -144,26 +144,39 @@ FIXED_EVENTS = {
 AYYAM_AL_BID_DAYS = {13, 14, 15}
 MON_THU = {"Monday": "Puasa Senin", "Thursday": "Puasa Kamis"}
 
+from typing import List
+
 def labels_for_day(
     h_day: int,
     h_month_num: int,
     weekday_en: str,
     include_mon_thu: bool,
-    include_tasua: bool
+    include_tasua: bool,
 ) -> List[str]:
-    labels = []
-    # fixed events
-    if (h_day, h_month_num) in FIXED_EVENTS:
-        if not include_tasua and (h_day, h_month_num) == (9, 1):
-            pass
-        else:
-            labels.append(FIXED_EVENTS[(h_day, h_month_num)])
-    # ayyam al-bid (selalu ditampilkan)
-    if h_day in AYYAM_AL_BID_DAYS:
-        labels.append("Ayyām al-Bīḍ (puasa 13–15)")
-    # monday-thursday (opsional)
-    if include_mon_thu and weekday_en in MON_THU:
-        labels.append(MON_THU[weekday_en])
+    labels: List[str] = []
+
+    # --- Normalisasi ---
+    try:
+        d = int(h_day)
+        m = int(h_month_num)
+    except Exception:
+        return labels  # kalau datanya aneh, jangan paksa
+
+    w = (weekday_en or "").strip()  # buang spasi
+
+    # --- Fixed events (Tasū‘ā, ‘Āsyūrā, dst) ---
+    if (d, m) in FIXED_EVENTS:
+        if include_tasua or (d, m) != (9, 1):  # (9,1)=Tasū‘ā
+            labels.append(FIXED_EVENTS[(d, m)])
+
+    # --- Ayyām al-Bīḍ (selalu tampil) ---
+    if d in AYYAM_AL_BID_DAYS:
+        labels.append("Ayyām al-Bīḍ (13–15)")
+
+    # --- Senin/Kamis (opsional) ---
+    if include_mon_thu and w in MON_THU:
+        labels.append(MON_THU[w])
+
     return labels
 
 # ===================== BUILD KALENDER =====================
