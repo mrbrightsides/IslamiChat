@@ -437,18 +437,6 @@ def render_event():
                 "h_month_num": h.get("month", {}).get("number", None),  
                 "labels":    "",  
             })
-    
-    import pandas as pd
-    rows_df = pd.DataFrame(rows_all)
-    rows_df["gregorian"] = rows_df["gregorian"].apply(_to_iso)
-    
-    if "h_month_num" not in rows_df.columns or rows_df["h_month_num"].isna().any():
-        rows_df["h_month_num"] = (
-            rows_df["hijri"].astype(str).str.split("-").str[1].astype("Int64")
-        )
-    
-    rows_df = add_event_labels(rows_df, include_mon_thu, include_tasua)
-    rows_labeled = rows_df.to_dict("records")
 
     # ===== Event Terdekat (PAKAI rows_labeled) =====
     st.subheader("🗓️ Event Terdekat")
