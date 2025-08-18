@@ -136,6 +136,85 @@ def labels_for_day(
 
 # ===================== BUILD KALENDER =====================
 @st.cache_data(ttl=6 * 60 * 60)
+def build_hijri_year_calendar(year_h: int, include_mon_thu: bool, include_tasua: bool) -> List[Dict]:
+    rows: List[Dict] = []
+    for m in range(1, 13):
+        data = h_to_g_calendar(year_h, m)
+        # -------- Fallback kalau bulan ini tidak tersedia dari hToGCalendar --------
+        if not data:
+            synth_days = set()
+            # event tetap yang jatuh di bulan m
+            for (d_fixed, m_fixed), _label in FIXED_EVENTS.items():
+                if m_fixed == m:
+                    synth_days.add(d_fixed)
+            # ayyam al-bid 13-15 setiap bulan
+            synth_days.update({13, 14, 15})
+
+            for d in sorted(synth_days):
+                dd = f"{d:02d}"
+                mm = f"{m:02d}"
+                yyyy = f"{year_h}"
+                payload = h_to_g_single(f"{dd}-{mm}-{yyyy}")
+                if not payload:
+                    continue
+                g = payload.get("gregorian", {})
+                h = payload.get("hijri", {})
+                try:
+                    g_date = _to_iso_gdate(g["date"])
+                    w_en = g["weekday"]["en"]
+                    h_date = h["date"]
+                    h_day = int(h["day"])
+                    h_month_num = int(h["month"]["number"])
+                    h_month_en = h["month"]["en"]
+                except Exception:
+                    continue
+
+                lbls = ", ".join(
+                    labels_for_day(h_day, h_month_num, w_en, include_mon_thu, include_tasua)
+                )
+                rows.append({
+                    "gregorian": g_date,
+                    "weekday": w_en,
+                    "hijri": h_date,
+                    "h_day": h_day,
+                    "h_month_num": h_month_num,
+                    "h_month_en": h_month_en,
+                    "labels": lbls
+                })
+            # lanjut ke bulan berikutnya
+            continue
+
+        # -------- Jalur normal: pakai hToGCalendar --------
+        for item in data:
+            h = item.get("hijri", {})
+            g = item.get("gregorian", {})
+            try:
+                g_date = _to_iso_gdate(g["date"])
+                h_date = h["date"]
+                h_day = int(h["day"])
+                h_month_num = int(h["month"]["number"])
+                h_month_en = h["month"]["en"]
+                w_en = g["weekday"]["en"]
+            except Exception:
+                continue
+
+            lbls = ", ".join(
+                labels_for_day(h_day, h_month_num, w_en, include_mon_thu, include_tasua)
+            )
+            rows.append({
+                "gregorian": g_date,
+                "weekday": w_en,
+                "hijri": h_date,
+                "h_day": h_day,
+                "h_month_num": h_month_num,
+                "h_month_en": h_month_en,
+                "labels": lbls
+            })
+
+    rows.sort(key=lambda r: (_safe_fromiso(r["gregorian"]) or date.max))
+    return rows
+
+@st.cache_data(ttl=6 * 60 * 60)
 def h_to_g_single(dd_mm_yyyy_h: str) -> Optional[dict]:
     """
     Konversi satu tanggal Hijriah (DD-MM-YYYY) ke Gregorian.
