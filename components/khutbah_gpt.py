@@ -1,7 +1,9 @@
 import io
+import os
 import textwrap
 from datetime import date
 import streamlit as st
+from openai import OpenAI  # sudah terpasang (sebelumnya sempat berhasil dipanggil)
 
 # ====== BANK DALIL SINGKAT (ringkas, aman untuk khutbah) ======
 QURAN = {
@@ -81,8 +83,6 @@ def _make_opening(jenis):
         "Allāhumma ṣalli ‘alā Muḥammad wa ‘alā ālihi wa ṣaḥbih."
     )
     wasiat = "Ma‘āsyiral muslimīn—marilah kita bertakwa kepada Allah dengan sebenar-benar takwa."
-    if jenis == "Jumat":
-        return _wrap(opener + " " + wasiat)
     return _wrap(opener + " " + wasiat)
 
 def _make_closing(jenis):
@@ -94,8 +94,7 @@ def _make_closing(jenis):
     doa2 = "Rabbana ātinā fid-dunyā ḥasanah wa fil-ākhirati ḥasanah wa qinā ‘adzāban-nār."
     if jenis == "Jumat":
         return _wrap(doa1) + "\n\n" + _wrap(doa2) + "\n\n" + _wrap("Aqulu qawli hādzā, fastaghfirullāh li walakum.")
-    else:
-        return _wrap(doa1) + "\n\n" + _wrap(doa2)
+    return _wrap(doa1) + "\n\n" + _wrap(doa2)
 
 def _default_theme_for(jenis):
     return {
@@ -116,7 +115,7 @@ def _theme_keys(jenis, tema):
     if any(k in tema_l for k in ["adha","kurban","qurban","ibrahim"]): keys += ["iduladha"]
     if any(k in tema_l for k in ["hujan","istisqa","kemarau"]): keys += ["istisqa"]
     if any(k in tema_l for k in ["nikah","keluarga","rumah tangga"]): keys += ["nikah"]
-    return list(dict.fromkeys(keys))  # unik, urutan terjaga
+    return list(dict.fromkeys(keys))
 
 def _style_hint(gaya):
     return {
@@ -127,24 +126,18 @@ def _style_hint(gaya):
         "Ringan untuk Remaja": "Pakai contoh dekat keseharian: sekolah, gadget, media sosial."
     }.get(gaya, "")
 
+# ===== Offline (template) =====
 def generate_khutbah(jenis, tema, gaya, panjang, audience, tanggal, tambahan):
     keys = _theme_keys(jenis, tema)
-    # ambil 1–2 ayat & 1 hadith sesuai tema
     ayat = []
     for k in keys:
         ayat += _pick(QURAN.get(k, []), n=1)
-    hadis = []
     base_hkey = {
-        "Jumat": "taqwa",
-        "Idul Fitri": "idulfitri",
-        "Idul Adha": "iduladha",
-        "Istisqa": "istisqa",
-        "Nikah": "nikah",
-        "Umum": "taqwa",
+        "Jumat": "taqwa", "Idul Fitri": "idulfitri", "Idul Adha": "iduladha",
+        "Istisqa": "istisqa", "Nikah": "nikah", "Umum": "taqwa",
     }[jenis]
-    hadis += _pick(HADITH.get(base_hkey, []), n=1)
+    hadis = _pick(HADITH.get(base_hkey, []), n=1)
 
-    # outline butir pembahasan (disesuaikan panjang)
     target = max(300, min(1500, int(panjang)))
     n_points = 4 if target < 600 else (6 if target < 1000 else 8)
     points = [
@@ -156,20 +149,16 @@ def generate_khutbah(jenis, tema, gaya, panjang, audience, tanggal, tambahan):
         "Menutup dengan doa, mohon ampun dan kekuatan untuk istiqamah."
     ][:n_points]
 
-    # bagian pembuka
     parts = []
     parts.append(_make_opening(jenis))
 
-    # judul & metadata
     judul = tema or _default_theme_for(jenis)
     meta = f"**Tema:** {judul}"
     if audience: meta += f" • **Target:** {audience}"
     meta += f" • **Tanggal:** {tanggal.strftime('%d %B %Y')}"
-    if (hint := _style_hint(gaya)):
-        meta += f" • _Gaya_: {hint}"
+    if (hint := _style_hint(gaya)): meta += f" • _Gaya_: {hint}"
     parts.append(meta)
 
-    # sisipkan ayat & hadith
     if ayat:
         ay_lines = [f"> {n}: {t}" for (n, t) in ayat]
         parts.append("**Dalil Al-Qur’an:**\n" + "\n".join(ay_lines))
@@ -177,7 +166,6 @@ def generate_khutbah(jenis, tema, gaya, panjang, audience, tanggal, tambahan):
         hd_lines = [f"> {src}: {t}" for (src, t) in hadis]
         parts.append("**Hadis:**\n" + "\n".join(hd_lines))
 
-    # tubuh khutbah (ringkas tapi padat)
     paragraf = [
         f"Jamaah yang dimuliakan Allah, {judul} bukan sekadar jargon. Ia menuntut keyakinan yang benar, niat yang tulus, dan langkah nyata di rumah, di tempat kerja, dan di ruang digital.",
         "Kita mulai dari hal yang paling dekat: memperbaiki salat, menjaga amanah, menahan lisan, dan menunaikan hak sesama.",
@@ -185,17 +173,13 @@ def generate_khutbah(jenis, tema, gaya, panjang, audience, tanggal, tambahan):
     ]
     parts.append("\n\n".join(map(_wrap, paragraf)))
 
-    # bullet aksi
     parts.append("**Langkah praktis pekan ini:**\n" + _bullets(points))
 
-    # tambahan pengguna
     if tambahan:
         parts.append("**Catatan khusus:** " + tambahan.strip())
 
-    # penutup (doa)
     parts.append(_make_closing(jenis))
 
-    # khusus Jumat: tambahkan Khutbah Kedua (sangat ringkas)
     if jenis == "Jumat":
         parts.append("---\n### Khutbah Kedua (ringkas)\n" +
                      _wrap("Alhamdulillāh, shalawat dan salam untuk Rasulullah. "
@@ -205,85 +189,9 @@ def generate_khutbah(jenis, tema, gaya, panjang, audience, tanggal, tambahan):
         parts.append(_wrap("Allāhumma sholli ‘alā Muḥammad wa ‘alā āli Muḥammad… "
                            "Rabbana taqabbal minnā, innaka Antas-Samī‘ul ‘Alīm."))
 
-    text = "\n\n".join(parts)
-
-    # jaga target panjang kira-kira (tanpa over-engineering)
-    # biarkan slider jadi _indikasi_ level detail, bukan angka presisi
-    return text
-
-# ====== UI ======
-def render_khutbah_form():
-    st.title("🕌 KhutbahGPT - Generator Khutbah Otomatis")
-    st.markdown("Masukkan informasi di bawah ini untuk membuat teks khutbah:")
-
-    with st.form("khutbah_form"):
-        tanggal = st.date_input("Tanggal Khutbah", value=date.today())
-        jenis_khutbah = st.radio(
-            "Jenis Khutbah",
-            ["Jumat", "Idul Fitri", "Idul Adha", "Istisqa", "Nikah", "Umum"],
-            index=0
-        )
-        tema = st.text_input("Tema Khutbah (opsional)", placeholder="Contoh: Pentingnya Menjaga Amanah")
-        gaya = st.selectbox("Gaya Bahasa", ["Formal", "Lugas", "Puitis", "Reflektif", "Ringan untuk Remaja"], index=0)
-        panjang = st.slider("Panjang Khutbah (kata, indikatif)", 300, 1500, 700, 100)
-        audience = st.text_input("Target Jamaah (opsional)", placeholder="Contoh: Mahasiswa, Jamaah Remaja, Umum")
-        tambahan = st.text_area("Catatan atau Permintaan Khusus (opsional)", placeholder="Misal: Sertakan QS Al-‘Asr di pengantar")
-        engine = st.radio(
-            "Mesin Pembuat Khutbah",
-            ["Template (offline)", "GPT (butuh API key)"],
-            horizontal=False,
-            index=0
-        )
-        if engine.startswith("GPT"):
-            model = st.selectbox("Model", ["gpt-4o-mini", "gpt-4o"], index=0)
-        else:
-            model = None
-
-         submitted = st.form_submit_button("🎙️ Buat Khutbah Sekarang")
-
-    if submitted:
-        try:
-            if engine.startswith("GPT"):
-                with st.spinner("🧠 Meminta GPT menyusun teks khutbah..."):
-                    text = generate_khutbah_gpt(jenis_khutbah, tema, gaya, panjang, audience, tanggal, tambahan)
-            else:
-                # panggil generator offline kamu yang sudah ada
-                text = generate_khutbah(jenis_khutbah, tema, gaya, panjang, audience, tanggal, tambahan)
-        except Exception as e:
-            st.warning(f"Gagal pakai GPT: {e}. Diproses dengan Template (offline).")
-            text = generate_khutbah(jenis_khutbah, tema, gaya, panjang, audience, tanggal, tambahan)
-    
-        st.success("📜 Khutbah berhasil dibuat.")
-        st.markdown(f"### {tema or 'Khutbah'}")
-        st.write(text)
-    
-        st.download_button("💾 Unduh Teks (.txt)",
-            data=text.encode("utf-8"),
-            file_name=f"Khutbah_{jenis_khutbah}_{tanggal.isoformat()}.txt",
-            mime="text/plain")
-
-    if not submitted:
-        st.caption("👉 Setelah klik **Buat Khutbah Sekarang**, teks khutbah akan muncul di bawah.")
-        return
-
-    # generate
-    text = generate_khutbah(jenis_khutbah, tema, gaya, panjang, audience, tanggal, tambahan)
-
-    st.success("📜 Khutbah berhasil dibuat.")
-    st.markdown(f"### {tema or _default_theme_for(jenis_khutbah)}")
-    st.write(text)
-
-    # download .txt
-    buf = io.BytesIO(text.encode("utf-8"))
-    st.download_button("💾 Unduh Teks (.txt)", data=buf.getvalue(),
-                       file_name=f"Khutbah_{jenis_khutbah}_{tanggal.isoformat()}.txt",
-                       mime="text/plain")
+    return "\n\n".join(parts)
 
 # --- GPT generator (opsional) ---
-import os
-from openai import OpenAI
-import streamlit as st
-
 def _build_prompt(jenis, tema, gaya, panjang, audience, tanggal, tambahan):
     judul = tema or {
         "Jumat":"Taqwa & Amanah",
@@ -319,14 +227,13 @@ Struktur:
 - Penutup (doa ma’tsur ringkas). Untuk Jumat, sertakan ringkasan khutbah kedua.
 
 Kaidah:
-- Hindari klaim sensitif/politik; utamakan nasihat akhlak & ibadah.
-- Gunakan rujukan Qur’an/Hadits secukupnya: mis. (QS. Al-Hasyr:18), (HR. Muslim).
+- Hindari konten sensitif/politis; tekankan akhlak & ibadah.
+- Gunakan rujukan Qur’an/Hadits singkat: (QS. Al-Hasyr:18), (HR. Muslim).
 - Bahasa jelas, mudah dicerna.
 Tambahan dari panitia: {tambahan or '-'}
 """.strip()
 
 def generate_khutbah_gpt(jenis, tema, gaya, panjang, audience, tanggal, tambahan, model="gpt-4o-mini"):
-    # Ambil API key dari st.secrets / env
     api_key = st.secrets.get("OPENAI_API_KEY", None) if hasattr(st, "secrets") else None
     api_key = api_key or os.getenv("OPENAI_API_KEY")
     if not api_key:
@@ -339,13 +246,64 @@ def generate_khutbah_gpt(jenis, tema, gaya, panjang, audience, tanggal, tambahan
     )
     user = _build_prompt(jenis, tema, gaya, panjang, audience, tanggal, tambahan)
 
-    # gunakan Chat Completions (stabil & familier)
     resp = client.chat.completions.create(
-        model=model,  # contoh: "gpt-4o-mini" / "gpt-4o"
-        messages=[
-            {"role": "system", "content": system},
-            {"role": "user", "content": user},
-        ],
+        model=model,
+        messages=[{"role": "system", "content": system},
+                  {"role": "user", "content": user}],
         temperature=0.7,
     )
     return resp.choices[0].message.content.strip()
+
+# ====== UI ======
+def render_khutbah_form():
+    st.title("🕌 KhutbahGPT - Generator Khutbah Otomatis")
+    st.markdown("Masukkan informasi di bawah ini untuk membuat teks khutbah:")
+
+    with st.form("khutbah_form"):
+        tanggal = st.date_input("Tanggal Khutbah", value=date.today())
+        jenis_khutbah = st.radio(
+            "Jenis Khutbah",
+            ["Jumat", "Idul Fitri", "Idul Adha", "Istisqa", "Nikah", "Umum"],
+            index=0
+        )
+        tema = st.text_input("Tema Khutbah (opsional)", placeholder="Contoh: Pentingnya Menjaga Amanah")
+        gaya = st.selectbox("Gaya Bahasa", ["Formal", "Lugas", "Puitis", "Reflektif", "Ringan untuk Remaja"], index=0)
+        panjang = st.slider("Panjang Khutbah (kata, indikatif)", 300, 1500, 700, 100)
+        audience = st.text_input("Target Jamaah (opsional)", placeholder="Contoh: Mahasiswa, Jamaah Remaja, Umum")
+        tambahan = st.text_area("Catatan atau Permintaan Khusus (opsional)", placeholder="Misal: Sertakan QS Al-‘Asr di pengantar")
+        engine = st.radio(
+            "Mesin Pembuat Khutbah",
+            ["Template (offline)", "GPT (butuh API key)"],
+            index=0
+        )
+        model = st.selectbox("Model", ["gpt-4o-mini", "gpt-4o"], index=0) if engine.startswith("GPT") else None
+
+        submitted = st.form_submit_button("🎙️ Buat Khutbah Sekarang")
+
+    if not submitted:
+        st.caption("👉 Setelah klik **Buat Khutbah Sekarang**, teks khutbah akan muncul di bawah.")
+        return
+
+    st.success("📜 Sedang membuat khutbah...")
+    st.info(f"Jenis khutbah: **{jenis_khutbah}** • Tema: **{tema or '(otomatis oleh AI)'}**")
+
+    # Generate sekali saja (tanpa duplikasi)
+    try:
+        if engine.startswith("GPT"):
+            with st.spinner("🧠 Meminta GPT menyusun teks khutbah..."):
+                text = generate_khutbah_gpt(jenis_khutbah, tema, gaya, panjang, audience, tanggal, tambahan, model=model)
+        else:
+            text = generate_khutbah(jenis_khutbah, tema, gaya, panjang, audience, tanggal, tambahan)
+    except Exception as e:
+        st.warning(f"Gagal pakai GPT: {e}. Diproses dengan Template (offline).")
+        text = generate_khutbah(jenis_khutbah, tema, gaya, panjang, audience, tanggal, tambahan)
+
+    st.markdown(f"### {tema or _default_theme_for(jenis_khutbah)}")
+    st.write(text)
+
+    st.download_button(
+        "💾 Unduh Teks (.txt)",
+        data=text.encode("utf-8"),
+        file_name=f"Khutbah_{jenis_khutbah}_{tanggal.isoformat()}.txt",
+        mime="text/plain"
+    )
