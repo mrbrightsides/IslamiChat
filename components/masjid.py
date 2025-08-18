@@ -1,3 +1,4 @@
+import time
 import streamlit as st
 import requests
 import folium
@@ -5,10 +6,6 @@ from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
 from geopy.geocoders import Nominatim
 
-OVERPASS_PRIMARY = "https://overpass-api.de/api/interpreter"
-OVERPASS_FALLBACK = "https://overpass.kumi.systems/api/interpreter"
-
-# --- di atas: tambahkan daftar endpoint & helper ---
 OVERPASS_ENDPOINTS = [
     "https://overpass-api.de/api/interpreter",
     "https://overpass.kumi.systems/api/interpreter",
@@ -18,14 +15,12 @@ OVERPASS_ENDPOINTS = [
 def _run_overpass(endpoint: str, q: str, use_get: bool):
     headers = {"User-Agent": "IslamiChat/1.0"}
     if use_get:
-        # encode query di URL
         return requests.get(endpoint, params={"data": q}, headers=headers, timeout=45)
     else:
         return requests.post(endpoint, data={"data": q}, headers=headers, timeout=45)
 
 def build_query(lat: float, lon: float, radius: int, lite: bool) -> str:
     if lite:
-        # lebih ringan: fokus ke masjid/musholla via name OR religion=muslim (lebih sedikit clause)
         return f"""
         [out:json][timeout:30];
         (
@@ -36,7 +31,6 @@ def build_query(lat: float, lon: float, radius: int, lite: bool) -> str:
         );
         out center;
         """
-    # versi lengkap (lebih berat)
     return f"""
     [out:json][timeout:50];
     (
@@ -55,14 +49,13 @@ def build_query(lat: float, lon: float, radius: int, lite: bool) -> str:
 def fetch_mosques(lat: float, lon: float, radius: int, lite: bool):
     q = build_query(lat, lon, radius, lite)
     last_err = []
-    # coba tiap endpoint, POST dulu lalu GET sebagai fallback, dengan retry backoff
     for ep in OVERPASS_ENDPOINTS:
         for use_get in (False, True):
             delay = 1.5
-            for attempt in range(4):  # max 4 percobaan per (endpoint,method)
+            for attempt in range(4):
                 try:
                     resp = _run_overpass(ep, q, use_get)
-                    if resp.status_code == 429:  # rate-limited
+                    if resp.status_code == 429:
                         time.sleep(delay); delay *= 1.8
                         continue
                     resp.raise_for_status()
@@ -91,29 +84,9 @@ def geocode_place(q: str):
         return None
     return float(loc.latitude), float(loc.longitude), loc.address
 
-# ---------- Overpass ----------
-def build_query(lat: float, lon: float, radius: int) -> str:
-    # cari masjid: amenity=place_of_worship + religion=muslim
-    # plus fallback nama mengandung masjid/musholla (beberapa data tidak isi 'religion')
-    return f"""
-    [out:json][timeout:30];
-    (
-      node["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
-      way["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
-      relation["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
-
-      node["amenity"="place_of_worship"]["name"~"(?i)masjid|musholla|mushola|musala|surau"](around:{radius},{lat},{lon});
-      way["amenity"="place_of_worship"]["name"~"(?i)masjid|musholla|mushola|musala|surau"](around:{radius},{lat},{lon});
-      relation["amenity"="place_of_worship"]["name"~"(?i)masjid|musholla|mushola|musala|surau"](around:{radius},{lat},{lon});
-    );
-    out center;
-    """
-# ---------- UI ----------
 def get_user_location():
-    """Kompat: tetap sediakan fungsi lama (IP only)."""
     try:
-        lat, lon = ip_lookup()
-        return lat, lon
+        return ip_lookup()
     except Exception:
         return None, None
 
@@ -153,7 +126,6 @@ def show_nearby_mosques():
         st.warning("Tidak dapat menentukan koordinat lokasi.")
         return
 
-    # Ambil data masjid
     try:
         elements = fetch_mosques(lat, lon, radius, lite)
     except Exception as e:
@@ -161,10 +133,8 @@ def show_nearby_mosques():
         st.caption("Coba kecilkan radius, aktifkan 'Lite query', lalu klik Rerun.")
         return
 
-    # Peta
     m = folium.Map(location=[lat, lon], zoom_start=14, control_scale=True)
-    folium.Marker([lat, lon],
-                  tooltip=label or "Lokasi Anda",
+    folium.Marker([lat, lon], tooltip=label or "Lokasi Anda",
                   icon=folium.Icon(color="blue", icon="user")).add_to(m)
 
     cluster = MarkerCluster(name="Masjid").add_to(m)
@@ -172,14 +142,12 @@ def show_nearby_mosques():
     for el in elements:
         tags = el.get("tags", {})
         name = tags.get("name") or "Masjid"
-        # koordinat node langsung, atau ambil 'center' utk way/relation
         lat_m = el.get("lat") or el.get("center", {}).get("lat")
         lon_m = el.get("lon") or el.get("center", {}).get("lon")
         if lat_m and lon_m:
-            popup = folium.Popup(name, max_width=300)
             folium.Marker([lat_m, lon_m],
                           tooltip=name,
-                          popup=popup,
+                          popup=folium.Popup(name, max_width=300),
                           icon=folium.Icon(color="green", icon="info-sign")).add_to(cluster)
             count += 1
 
