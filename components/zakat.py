@@ -65,7 +65,6 @@ def fetch_gold_price_idr_per_gram() -> tuple[float, str]:
 
     # --- Semua gagal ---
     raise Exception(f"Gagal ambil harga emas otomatis. A: {last_err_A} | B: {last_err_B}")
-st.caption(f"🔑 GOLDAPI_KEY loaded: {len(st.secrets.get('GOLDAPI_KEY',''))} chars")
 
 def format_rp(x: float) -> str:
     return f"Rp {x:,.0f}".replace(",", ".")
