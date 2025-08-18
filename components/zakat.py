@@ -5,36 +5,67 @@ OZT_TO_GRAM = 31.1034768
 @st.cache_data(ttl=6*3600)
 def fetch_gold_price_idr_per_gram() -> tuple[float, str]:
     """
-    Balik (harga_emas_idr_per_gram, sumber_info).
-    Prioritas:
-      1) price_gram_24k (jika ada)
-      2) price (IDR per ozt) / 31.1034768
+    Ambil harga emas/gram (IDR). Urutan:
+      A) GoldAPI XAU/IDR: price_gram_24k -> fallback price/ozt / 31.1034768
+      B) GoldAPI XAU/USD + kurs USD→IDR (open.er-api.com)
+    Return: (harga_idr_per_gram, sumber_info)
+    Raise Exception bila seluruh langkah gagal.
     """
     key = st.secrets.get("GOLDAPI_KEY", "")
     if not key:
         raise Exception("GOLDAPI_KEY tidak ada di secrets")
 
-    r = requests.get(
-        "https://www.goldapi.io/api/XAU/IDR",
-        headers={"x-access-token": key, "User-Agent": "IslamiChat/1.0"},
-        timeout=10,
-    )
-    r.raise_for_status()
-    data = r.json() or {}
+    headers = {"x-access-token": key, "User-Agent": "IslamiChat/1.0"}
 
-    pg = data.get("price_gram_24k")
-    if pg is not None:
-        val = float(pg)
-        if math.isfinite(val) and val > 0:
-            return val, "GoldAPI XAU/IDR • price_gram_24k"
+    # --- A) Langsung XAU/IDR ---
+    try:
+        r = requests.get("https://www.goldapi.io/api/XAU/IDR", headers=headers, timeout=10)
+        data = r.json()
+        if "error" in data:
+            # tampilkan error aslinya untuk debugging di UI
+            raise Exception(f"GoldAPI XAU/IDR error: {data.get('error')}")
+        pg = data.get("price_gram_24k")
+        if pg:
+            val = float(pg)
+            if math.isfinite(val) and val > 0:
+                return val, "GoldAPI XAU/IDR • price_gram_24k"
+        p_ozt = data.get("price")
+        if p_ozt:
+            val = float(p_ozt) / OZT_TO_GRAM
+            if math.isfinite(val) and val > 0:
+                return val, "GoldAPI XAU/IDR • price/oz → /gram"
+    except Exception as e:
+        # biarkan lanjut ke fallback, tapi catat pesan
+        last_err_A = str(e)
+    else:
+        last_err_A = "Tidak ada field harga yang valid dari XAU/IDR"
 
-    p_ozt = data.get("price")
-    if p_ozt is not None:
-        val = float(p_ozt) / OZT_TO_GRAM
-        if math.isfinite(val) and val > 0:
-            return val, "GoldAPI XAU/IDR • price/oz → /gram"
+    # --- B) XAU/USD + konversi kurs ---
+    try:
+        r = requests.get("https://www.goldapi.io/api/XAU/USD", headers=headers, timeout=10)
+        data = r.json()
+        if "error" in data:
+            raise Exception(f"GoldAPI XAU/USD error: {data.get('error')}")
+        # ambil harga per ozt dalam USD, atau langsung per gram jika tersedia
+        pg_usd = data.get("price_gram_24k")
+        if pg_usd:
+            usd_per_gram = float(pg_usd)
+        else:
+            p_ozt_usd = float(data["price"])  # naikkan KeyError bila tak ada → ketangkap except
+            usd_per_gram = p_ozt_usd / OZT_TO_GRAM
 
-    raise Exception(f"Payload GoldAPI tidak memuat harga yang dikenali: keys={list(data.keys())[:8]}")
+        fx = requests.get("https://open.er-api.com/v6/latest/USD", timeout=10).json()
+        usd_idr = float(fx["rates"]["IDR"])
+        idr_per_gram = usd_per_gram * usd_idr
+        if math.isfinite(idr_per_gram) and idr_per_gram > 0:
+            return idr_per_gram, "GoldAPI XAU/USD + open.er-api.com"
+        raise Exception("Nilai kurs/konversi tidak valid")
+    except Exception as e:
+        last_err_B = str(e)
+
+    # --- Semua gagal ---
+    raise Exception(f"Gagal ambil harga emas otomatis. A: {last_err_A} | B: {last_err_B}")
+st.caption(f"🔑 GOLDAPI_KEY loaded: {len(st.secrets.get('GOLDAPI_KEY',''))} chars")
 
 def format_rp(x: float) -> str:
     return f"Rp {x:,.0f}".replace(",", ".")
