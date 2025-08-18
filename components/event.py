@@ -415,28 +415,20 @@ def render_event():
         df2["labels"] = labels
         return df2
 
-    def _to_iso(s: str) -> str:
-        s = str(s)
-        if len(s) == 10 and s[2] == "-" and s[5] == "-":
-            dd, mm, yyyy = s.split("-")
-            if len(yyyy) == 4:
-                return f"{yyyy}-{mm}-{dd}"
-        return s
-    
-    rows_all = []
-    for m in range(1, 13):
-        cal = h_to_g_calendar(int(year_h), m) or []
-        for it in cal:
-            g = it.get("gregorian", {})
-            h = it.get("hijri", {})
-            rows_all.append({
-                "gregorian": g.get("date", ""),                      
-                "weekday":   g.get("weekday", {}).get("en", ""),
-                "hijri":     h.get("date", ""),                         
-                "h_month_en":h.get("month", {}).get("en", ""),
-                "h_month_num": h.get("month", {}).get("number", None),  
-                "labels":    "",  
-            })
+    # ===== Data setahun -> labelkan =====
+    rows = build_hijri_year_calendar(int(year_h), include_mon_thu, include_tasua)
+    if not rows:
+        st.warning("Kalender tahun ini belum tersedia lengkap dari API.")
+        return
+
+    rows_df = pd.DataFrame(rows, columns=["gregorian", "weekday", "hijri", "h_month_en", "labels"])
+    rows_df["gregorian"] = rows_df["gregorian"].apply(_to_iso)
+    if "h_month_num" not in rows_df.columns:
+        rows_df["h_month_num"] = (
+            rows_df["hijri"].astype(str).str.split("-").str[1].astype("Int64")
+        )
+    rows_df = add_event_labels(rows_df, include_mon_thu, include_tasua)
+    rows_labeled = rows_df.to_dict("records")
 
     # ===== Event Terdekat (PAKAI rows_labeled) =====
     st.subheader("🗓️ Event Terdekat")
