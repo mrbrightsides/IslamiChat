@@ -359,9 +359,7 @@ def to_ics_bytes(rows: List[Dict]) -> bytes:
 def render_event():
     import pandas as pd
     from datetime import datetime, date
-    def _labels_to_str(v):
-    return ", ".join(v) if isinstance(v, list) else (v or "")
-
+    
     st.header("📅 Kalender Islam")
 
     # ===== Hari ini =====
