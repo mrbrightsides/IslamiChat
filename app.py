@@ -77,7 +77,14 @@ with tabs[0]:
         s0.parentNode.insertBefore(s1,s0);
         })();
         </script>
-        """)
+        """
+        html_map = {
+            "ArtiBot": ARTIBOT,
+            "BotSonic": BOTSONIC,
+            "TawkTo": TAWKTO
+        }
+    
+        html(container_css.replace("{WIDGET}", html_map[widget_opt]), height=750)
 
 # === Tab 1: Waktu Sholat ===
 with tabs[1]:
