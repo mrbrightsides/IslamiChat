@@ -11,14 +11,8 @@ DEFAULT_MESSAGE = (
     "Assalamu'alaikum Ustadz, saya ingin bertanya: "
 )
 
-# ===============================================================
-# Util
-# ===============================================================
-
+# ---------------- util ----------------
 def _normalize_wa_base(raw: str) -> str:
-    """Terima input berupa link penuh atau nomor, lalu hasilkan base URL wa.me.
-    Contoh keluaran: "https://wa.me/62xxxxxxxxxx"
-    """
     if not raw:
         return ""
     raw = raw.strip()
@@ -29,18 +23,13 @@ def _normalize_wa_base(raw: str) -> str:
         return ""
     return f"https://wa.me/{digits}"
 
-
 def _with_prefill_message(base_url: str, message: str) -> str:
     if not base_url:
         return ""
     sep = '&' if ('?' in base_url) else '?'
     return f"{base_url}{sep}text={quote_plus(message or '')}"
 
-
-# ===============================================================
-# UI — Card komponen
-# ===============================================================
-
+# ---------------- card ustadz ----------------
 def _ustadz_card(nama: str, wa_raw: str, key_prefix: str):
     base = _normalize_wa_base(wa_raw)
 
@@ -54,28 +43,21 @@ def _ustadz_card(nama: str, wa_raw: str, key_prefix: str):
         )
 
         link = _with_prefill_message(base, msg)
-
-        col1, col2 = st.columns([1, 1])
-        with col1:
-            disabled = not bool(link)
-            try:
-                st.link_button("💬 Chat via WhatsApp", link if link else "#", use_container_width=True, disabled=disabled)
-            except Exception:
-                if disabled:
-                    st.button("💬 Chat via WhatsApp (isi nomor dulu)", disabled=True, use_container_width=True)
-                else:
-                    st.markdown(f"[💬 Chat via WhatsApp]({link})", unsafe_allow_html=True)
-        with col2:
-            if base:
-                st.code(link, language="text")
+        disabled = not bool(link)
+        try:
+            st.link_button(
+                "💬 Chat via WhatsApp",
+                link if link else "#",
+                use_container_width=True,
+                disabled=disabled
+            )
+        except Exception:
+            if disabled:
+                st.button("💬 Chat via WhatsApp (isi nomor dulu)", disabled=True, use_container_width=True)
             else:
-                st.info("Isi nomor/tautan WA di konfigurasi untuk mengaktifkan tombol.")
+                st.markdown(f"[💬 Chat via WhatsApp]({link})", unsafe_allow_html=True)
 
-
-# ===============================================================
-# Public API — panggil fungsi ini di tab utama
-# ===============================================================
-
+# ---------------- main tab ----------------
 def show_chat_ustadz_tab():
     st.title("📞 Chat Ustadz")
     st.caption(
@@ -83,8 +65,6 @@ def show_chat_ustadz_tab():
         "Catatan: aplikasi ini *tidak* mengirim pesan otomatis; tombol hanya membuka WA dengan pesan terisi."
     )
 
-    c1, c2 = st.columns(2)
-    with c1:
-        _ustadz_card(NAMA_USTADZ_1, WA_LINK_1, key_prefix="u1")
-    with c2:
-        _ustadz_card(NAMA_USTADZ_2, WA_LINK_2, key_prefix="u2")
+    _ustadz_card(NAMA_USTADZ_1, WA_LINK_1, key_prefix="u1")
+    st.markdown("---")
+    _ustadz_card(NAMA_USTADZ_2, WA_LINK_2, key_prefix="u2")
