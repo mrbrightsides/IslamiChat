@@ -3,7 +3,7 @@ import requests
 import datetime as dt
 import pytz
 import streamlit as st
-from streamlit.components.v1 import html
+from streamlit.components.v1 import iframe
 
 # ===== Import Komponen =====
 from components.waktu_sholat import (
@@ -31,43 +31,26 @@ st.set_page_config(page_title="IslamiChat 🤖🌸", layout="wide")
 st.title("IslamiChat = Tanya Jawab + Waktu Sholat")
 st.caption("Powered by ArtiBot / Botsonic • Waktu sholat dari Aladhan API")
 
-# ===== Siapkan HTML embed untuk chatbot =====
-ARTIBOT_HTML = """
-<script>
-window.embeddedChatbotConfig = {
-  chatbotId: "64cb9adf-1b62-4b7e-a6b2-c5c037a206c6",
-  domain: "www.chatbase.co"
-};
-</script>
-<script src="https://www.chatbase.co/embed.min.js"
-        chatbotId="64cb9adf-1b62-4b7e-a6b2-c5c037a206c6"
-        domain="www.chatbase.co" defer></script>
-"""
+from streamlit.components.v1 import iframe
 
-BOTSONIC_HTML = """
-<iframe src="https://app.writesonic.com/embed/6405adfa-3c32-4ef8-93f5-300e8a1f1c68"
-        frameborder="0" width="100%" height="600"></iframe>
-"""
+# ===== Tab: Chatbot =====
+with tabs[0]:
+    st.subheader("Pilih widget:")
+    widget_opt = st.radio(
+        " ",
+        ["ArtiBot", "TawkTo"],
+        horizontal=True, label_visibility="collapsed"
+    )
 
-TAWKTO_HTML = """
-<script type="text/javascript">
-var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-(function(){
-  var s1=document.createElement("script"), s0=document.getElementsByTagName("script")[0];
-  s1.async=true;
-  s1.src='https://embed.tawk.to/654db338f2439e1631eb5a7f/1hei8nfp7';
-  s1.charset='UTF-8';
-  s1.setAttribute('crossorigin','*');
-  s0.parentNode.insertBefore(s1,s0);
-})();
-</script>
-"""
+    URLS = {
+        "ArtiBot": "https://my.artibot.ai/islamichat",
+        "TawkTo": "https://tawk.to/chat/63f1709c4247f20fefe15b12/1gpjhvpnb"
+    }
 
-WIDGET_MAP = {
-    "ArtiBot": ARTIBOT_HTML,
-    "BotSonic": BOTSONIC_HTML,
-    "TawkTo": TAWKTO_HTML,
-}
+    chosen_url = URLS[widget_opt]
+
+    st.write(f"💬 Chat aktif: **{widget_opt}**")
+    iframe(src=chosen_url, height=700)
 
 # ===== Tab utama =====
 tabs = st.tabs([
