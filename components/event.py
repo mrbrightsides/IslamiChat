@@ -444,6 +444,59 @@ def render_event():
                 "labels": "Data tahun penuh tidak tersedia"
             }]
 
+    import pandas as pd
+
+    def _parse_hijri_day(hijri_str: str) -> int | None:
+        # format "DD-MM-YYYY" -> ambil DD
+        try:
+            d = str(hijri_str).split("-")[0]
+            return int(d)
+        except Exception:
+            return None
+    
+    def add_event_labels(df: pd.DataFrame, mark_mk: bool, mark_tasua: bool) -> pd.DataFrame:
+        """
+        mark_mk: True kalau toggle 'Tandai puasa Senin & Kamis' aktif
+        mark_tasua: True kalau toggle 'Tandai Tasū‘a (9 Muharram)' aktif
+        """
+        if df is None or df.empty:
+            return df
+    
+        df = df.copy()
+        lab = []
+    
+        for _, r in df.iterrows():
+            tags = []
+    
+            # Senin & Kamis
+            if mark_mk:
+                wd = str(r.get("weekday", "")).strip()
+                if wd == "Monday":
+                    tags.append("Puasa Senin")
+                elif wd == "Thursday":
+                    tags.append("Puasa Kamis")
+    
+            # Tasū‘a (9 Muharram)
+            if mark_tasua:
+                d = _parse_hijri_day(r.get("hijri", ""))
+                h_month_en = str(r.get("h_month_en", "")).lower()
+                if d == 9 and h_month_en == "muharram":
+                    tags.append("Tasū‘a (9 Muharram)")
+    
+            lab.append(", ".join(tags))
+    
+        df["labels"] = lab
+        return df
+    
+    df = add_event_labels(df, mark_mk, mark_tasua)
+    
+    # Checkbox filter "hanya hari bertanda"
+    # only_marked = st.checkbox("Tampilkan hanya hari bertanda (event/puasa)", value=False)
+    if only_marked:
+        df = df[df["labels"].astype(str).str.len() > 0]
+    
+    st.dataframe(df, use_container_width=True)
+
 
     show_cols = ["gregorian", "weekday", "hijri", "h_month_en", "labels"]
     st.dataframe([{k: r[k] for k in show_cols} for r in filtered], use_container_width=True, height=420)
