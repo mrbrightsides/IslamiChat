@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-RADIO_API = "https://mp3quran.net/api/v3/radios?language=id"
+API_BASE = "https://mp3quran.net/api/v3/radios?language=id"
 
 def _fetch_radios(lang="eng") -> list:
     """Ambil daftar radio dari mp3quran v3. Raise error kalau gagal (agar tidak tercache)."""
