@@ -16,7 +16,7 @@ from components.masjid import (
     get_user_location, show_nearby_mosques
 )
 from components.murottal import (
-    RADIO_API, fetch_radios, show_murottal_tab
+    API_BASE, fetch_radios, show_murottal_tab
 )
 from components.event import (
     render_event, check_important_event
@@ -24,7 +24,7 @@ from components.event import (
 from components.khutbah_gpt import render_khutbah_form
 
 import os
-import pandas as pd  # untuk tampilan tabel lebih rapi
+import pandas as pd 
 
 # ===== Page setup =====
 st.set_page_config(page_title="IslamiChat 🤖🌸", layout="wide")
