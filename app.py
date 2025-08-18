@@ -36,7 +36,7 @@ from components.murottal import (
 
 # ===== Komponen: Khutbah GPT =====
 from components.khutbah_gpt import (
-    render_khutbah_form, generate_khutbah
+    render_khutbah_form, generate_khutbah, generate_khutbah_gpt
 )
 
 # ===== Page setup =====
