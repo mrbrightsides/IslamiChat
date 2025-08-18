@@ -10,8 +10,8 @@ from components.waktu_sholat import (
     TZ, METHODS, fetch_timings_by_city, parse_today_times,
     to_local_datetime, next_prayer, fmt_delta
 )
-from components.kiblat import show_qibla_direction
-from components.zakat import zakat_kalkulator
+from components.kiblat import (show_qibla_direction)
+from components.zakat import (zakat_kalkulator)
 from components.masjid import (
     get_user_location, show_nearby_mosques
 )
@@ -21,7 +21,7 @@ from components.murottal import (
 from components.event import (
     render_event, check_important_event
 )
-from components.khutbah_gpt import render_khutbah_form
+from components.khutbah_gpt import (render_khutbah_form)
 
 # ===== Page setup =====
 st.set_page_config(page_title="IslamiChat 🤖🌸", layout="wide")
