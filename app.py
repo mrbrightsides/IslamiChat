@@ -42,6 +42,9 @@ from components.khutbah_gpt import (
 # ===== Komponen: Live TV =====
 from components.live_tv import render_live_tv_tab
 
+# ===== Komponen: Chat Ustadz =====
+from components.chat_ustadz import show_chat_ustadz_tab
+
 # ===== Page setup =====
 st.set_page_config(page_title="IslamiChat 🤖🌸", layout="wide")
 st.title("IslamiChat = Tanya Jawab + Waktu Sholat")
@@ -57,7 +60,8 @@ tabs = st.tabs([
     "🗺️ Masjid Terdekat",
     "🗓️ Event Islam",
     "🗣️ KhutbahGPT",
-    "📺 Live TV"
+    "📺 Live TV",
+    "📞 Chat Ustadz"
 ])
 
 # ===== Tab: Chatbot =====
@@ -161,3 +165,7 @@ with tabs[7]:
 # === Tab 8: Live TV ===
 with tabs[8]:
     render_live_tv_tab()
+
+# === Tab 9: Chat Ustadz ===
+with tabs[9]:
+    show_chat_ustadz_tab()
