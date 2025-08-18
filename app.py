@@ -35,7 +35,9 @@ from components.murottal import (
 )
 
 # ===== Komponen: Khutbah GPT =====
-from components.khutbah_gpt import render_khutbah_form 
+from components.khutbah_gpt import (
+    render_khutbah_form, generate_khutbah_gpt
+)
 
 # ===== Page setup =====
 st.set_page_config(page_title="IslamiChat 🤖🌸", layout="wide")
