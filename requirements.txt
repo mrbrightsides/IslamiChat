@@ -2,8 +2,8 @@ streamlit
 requests
 pytz
 geopy
-folium
-streamlit-folium
 openai
 pandas
 markdownify
+streamlit-folium==0.20.0
+folium==0.17.0
