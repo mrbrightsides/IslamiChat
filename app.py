@@ -139,7 +139,7 @@ with tabs[5]:
 
 # === Tab 6: Event Islam ===
 with tabs[6]:
-    render_event()
+    render_simple_hijri_calendar()
 
 # === Tab 7: KhutbahGPT ===
 with tabs[7]:
