@@ -432,22 +432,22 @@ def render_event():
                 h = payload.get("hijri", {})
                 skeleton.append(
                     {
-                        "gregorian": _to_iso_gdate(g.get("date", "—")),
-                        "weekday": g.get("weekday", {}).get("en", ""),
-                        "hijri": h.get("date", f"{dd}-{mm}-{yyyy} H"),
-                        "h_month_en": h.get("month", {}).get("en", ""),
-                        "labels": "",
+                        "Masehi": _to_iso_gdate(g.get("date", "—")),
+                        "Hari": g.get("weekday", {}).get("en", ""),
+                        "Hijriah": h.get("date", f"{dd}-{mm}-{yyyy} H"),
+                        "Bulan": h.get("month", {}).get("en", ""),
+                        "Tanda": "",
                     }
                 )
             filtered = skeleton
         else:
             filtered = [
                 {
-                    "gregorian": "—",
-                    "weekday": "",
-                    "hijri": f"{year_h} H",
-                    "h_month_en": "",
-                    "labels": "Data tahun penuh tidak tersedia",
+                    "Masehi": "—",
+                    "Hari": "",
+                    "Hijriah": f"{year_h} H",
+                    "Bulan": "",
+                    "Tanda": "Data tahun penuh tidak tersedia",
                 }
             ]
 
