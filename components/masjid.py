@@ -8,6 +8,71 @@ from geopy.geocoders import Nominatim
 OVERPASS_PRIMARY = "https://overpass-api.de/api/interpreter"
 OVERPASS_FALLBACK = "https://overpass.kumi.systems/api/interpreter"
 
+# --- di atas: tambahkan daftar endpoint & helper ---
+OVERPASS_ENDPOINTS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass.openstreetmap.ru/api/interpreter",
+]
+
+def _run_overpass(endpoint: str, q: str, use_get: bool):
+    headers = {"User-Agent": "IslamiChat/1.0"}
+    if use_get:
+        # encode query di URL
+        return requests.get(endpoint, params={"data": q}, headers=headers, timeout=45)
+    else:
+        return requests.post(endpoint, data={"data": q}, headers=headers, timeout=45)
+
+def build_query(lat: float, lon: float, radius: int, lite: bool) -> str:
+    if lite:
+        # lebih ringan: fokus ke masjid/musholla via name OR religion=muslim (lebih sedikit clause)
+        return f"""
+        [out:json][timeout:30];
+        (
+          node["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
+          way["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
+          node["amenity"="place_of_worship"]["name"~"(?i)masjid|mushol+a|musala|surau"](around:{radius},{lat},{lon});
+          way["amenity"="place_of_worship"]["name"~"(?i)masjid|mushol+a|musala|surau"](around:{radius},{lat},{lon});
+        );
+        out center;
+        """
+    # versi lengkap (lebih berat)
+    return f"""
+    [out:json][timeout:50];
+    (
+      node["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
+      way["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
+      relation["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
+
+      node["amenity"="place_of_worship"]["name"~"(?i)masjid|mushol+a|musala|surau"](around:{radius},{lat},{lon});
+      way["amenity"="place_of_worship"]["name"~"(?i)masjid|mushol+a|musala|surau"](around:{radius},{lat},{lon});
+      relation["amenity"="place_of_worship"]["name"~"(?i)masjid|mushol+a|musala|surau"](around:{radius},{lat},{lon});
+    );
+    out center;
+    """
+
+@st.cache_data(ttl=300)
+def fetch_mosques(lat: float, lon: float, radius: int, lite: bool):
+    q = build_query(lat, lon, radius, lite)
+    last_err = []
+    # coba tiap endpoint, POST dulu lalu GET sebagai fallback, dengan retry backoff
+    for ep in OVERPASS_ENDPOINTS:
+        for use_get in (False, True):
+            delay = 1.5
+            for attempt in range(4):  # max 4 percobaan per (endpoint,method)
+                try:
+                    resp = _run_overpass(ep, q, use_get)
+                    if resp.status_code == 429:  # rate-limited
+                        time.sleep(delay); delay *= 1.8
+                        continue
+                    resp.raise_for_status()
+                    data = resp.json()
+                    return data.get("elements", [])
+                except Exception as e:
+                    last_err.append(f"{ep} {'GET' if use_get else 'POST'} try{attempt+1}: {e}")
+                    time.sleep(delay); delay *= 1.5
+    raise RuntimeError("Semua endpoint Overpass gagal. Detail: " + " | ".join(last_err[:3]) + " ...")
+
 # ---------- Lokasi ----------
 @st.cache_data(ttl=600)
 def ip_lookup():
@@ -43,21 +108,6 @@ def build_query(lat: float, lon: float, radius: int) -> str:
     );
     out center;
     """
-
-@st.cache_data(ttl=600)
-def fetch_mosques(lat: float, lon: float, radius: int):
-    query = build_query(lat, lon, radius)
-    headers = {"User-Agent": "IslamiChat/1.0"}
-    for endpoint in (OVERPASS_PRIMARY, OVERPASS_FALLBACK):
-        try:
-            r = requests.post(endpoint, data={"data": query}, timeout=30, headers=headers)
-            r.raise_for_status()
-            data = r.json()
-            return data.get("elements", [])
-        except Exception:
-            continue
-    raise RuntimeError("Semua endpoint Overpass gagal diakses")
-
 # ---------- UI ----------
 def get_user_location():
     """Kompat: tetap sediakan fungsi lama (IP only)."""
@@ -75,7 +125,8 @@ def show_nearby_mosques():
         use_ip = st.toggle("Gunakan lokasi berdasarkan IP", value=True,
                            help="Jika dimatikan, tulis nama lokasi secara manual di bawah.")
     with col2:
-        radius = st.slider("Radius pencarian (meter)", 500, 5000, 3000, step=250)
+        radius = st.slider("Radius pencarian (meter)", 300, 4000, 1500, step=100)
+    lite = st.toggle("Gunakan query ringan (lebih mudah lolos rate-limit)", value=True)
 
     lat, lon, label = None, None, ""
 
@@ -104,9 +155,10 @@ def show_nearby_mosques():
 
     # Ambil data masjid
     try:
-        elements = fetch_mosques(lat, lon, radius)
+        elements = fetch_mosques(lat, lon, radius, lite)
     except Exception as e:
         st.error(f"Gagal mengambil data masjid terdekat: {e}")
+        st.caption("Coba kecilkan radius, aktifkan 'Lite query', lalu klik Rerun.")
         return
 
     # Peta
