@@ -446,6 +446,10 @@ def render_event():
 
     import pandas as pd
 
+    def parse_hijri_day(hijri_str: str):
+        """Public alias untuk kompatibilitas import di app.py"""
+        return _parse_hijri_day(hijri_str)
+
     def _parse_hijri_day(hijri_str: str) -> int | None:
         # format "DD-MM-YYYY" -> ambil DD
         try:
