@@ -423,6 +423,10 @@ def render_event():
 
     rows_df = pd.DataFrame(rows, columns=["gregorian", "weekday", "hijri", "h_month_en", "labels"])
     rows_df["gregorian"] = rows_df["gregorian"].apply(_to_iso)
+    if "h_month_num" not in rows_df.columns:
+        rows_df["h_month_num"] = (
+            rows_df["hijri"].astype(str).str.split("-").str[1].astype("Int64")
+        )
     rows_df = add_event_labels(rows_df, include_mon_thu, include_tasua)
     rows_labeled = rows_df.to_dict("records")
 
@@ -456,13 +460,14 @@ def render_event():
                 "gregorian": _to_iso(g.get("date","—")),
                 "weekday":   g.get("weekday", {}).get("en",""),
                 "hijri":     h.get("date", f"{dd}-{mm}-{yyyy} H"),
+                "h_month_num": int(mm),
                 "h_month_en":h.get("month", {}).get("en",""),
                 "labels":    "",
             })
         filtered = skeleton
 
     # ===== Render tabel =====
-    df = pd.DataFrame(filtered, columns=["gregorian", "weekday", "hijri", "h_month_en", "labels"])
+    df = pd.DataFrame(filtered, columns=["gregorian", "weekday", "hijri", "h_month_en", "h_month_num", "labels"])
     df = add_event_labels(df, include_mon_thu, include_tasua)
     if only_labeled:
         df = df[df["labels"].astype(str).str.len() > 0]
