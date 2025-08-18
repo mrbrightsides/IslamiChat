@@ -15,6 +15,96 @@ def _has_openai_key() -> bool:
     key = key or os.getenv("OPENAI_API_KEY")
     return bool(key) and (OpenAI is not None)
 
+# ===== Offline fallback: generator khutbah sederhana =====
+import textwrap
+
+def generate_khutbah(jenis, tema, gaya, panjang, audience, tanggal, tambahan):
+    judul_default = {
+        "Jumat": "Taqwa & Amanah",
+        "Idul Fitri": "Syukur, Taqwa, dan Silaturahim",
+        "Idul Adha": "Keteladanan Ibrahim & Makna Kurban",
+        "Istisqa": "Taubat, Istighfar, dan Doa Meminta Hujan",
+        "Nikah": "Mawaddah wa Rahmah dalam Rumah Tangga",
+        "Umum": "Akhlak Mulia & Tanggung Jawab",
+    }.get(jenis, "Taqwa")
+    judul = (tema or judul_default).strip()
+
+    hint = {
+        "Formal": "",
+        "Lugas": "Kalimat singkat dan langsung.",
+        "Puitis": "Majas ringan; jaga ritme.",
+        "Reflektif": "Pertanyaan retoris untuk merenung.",
+        "Ringan untuk Remaja": "Contoh dekat: sekolah, gadget, media sosial.",
+    }.get(gaya, "")
+
+    def wrap(x): return textwrap.fill(x, 92)
+
+    pembuka = wrap(
+        "Alhamdulillāh, segala puji bagi Allah Rabb semesta alam. "
+        "Kita memuji-Nya, memohon pertolongan dan ampunan-Nya. "
+        "Ashhadu an lā ilāha illallāh, wa ashhadu anna Muḥammadan ‘abduhū wa rasūluh. "
+        "Allāhumma ṣalli ‘alā Muḥammad wa ‘alā ālihi wa ṣaḥbih. "
+        "Ma‘āsyiral muslimīn—marilah kita bertakwa kepada Allah dengan sebenar-benar takwa."
+    )
+
+    meta = f"**Tema:** {judul}"
+    if audience: meta += f" • **Target:** {audience}"
+    meta += f" • **Tanggal:** {tanggal.strftime('%d %B %Y')}"
+    if hint: meta += f" • _Gaya_: {hint}"
+
+    # jumlah poin sesuai slider panjang (indikatif)
+    target = max(300, min(1500, int(panjang)))
+    n_points = 4 if target < 600 else (6 if target < 1000 else 8)
+    poin = [
+        "Menguatkan ketakwaan sebagai poros amal.",
+        f"Memaknai '{judul}' dalam keseharian: ibadah, keluarga, kerja, dan ruang digital.",
+        "Menjaga amanah, lisan, dan etika bermedia.",
+        "Memulai langkah kecil pekan ini dan saling menasihati dalam kebaikan.",
+        "Merawat silaturahim dan kepedulian sosial.",
+        "Berdoa, beristighfar, dan menghidupkan salat berjamaah.",
+        "Membangun budaya belajar dan membaca Al-Qur’an di rumah.",
+        "Menjauhi perkara syubhat dan kebiasaan sia-sia.",
+    ][:n_points]
+
+    badan = "\n\n".join(map(wrap, [
+        f"Jamaah yang dimuliakan Allah, {judul} bukan sekadar slogan. Ia menuntut keyakinan yang benar, niat yang lurus, dan langkah nyata.",
+        "Mari kita mulai dari yang paling dekat: memperbaiki salat, menunaikan amanah, menahan lisan, serta berbuat baik kepada sesama.",
+        "Ketika pribadi-pribadi memperbaiki diri, Allah bukakan jalan kebaikan kolektif. Inilah sunnatullah yang tidak berubah."
+    ]))
+
+    bullets = "\n".join(f"- {p}" for p in poin)
+
+    doa1 = wrap(
+        "Allāhumma ighfir lil-muslimīna wal-muslimāt, wal-mu’minīna wal-mu’mināt, "
+        "al-aḥyā’i minhum wal-amwāt. Allāhumma inna nas’aluka hudā, wa tuqā, "
+        "wal ‘afāfa wal ghina."
+    )
+    doa2 = wrap("Rabbana ātinā fid-dunyā ḥasanah wa fil-ākhirati ḥasanah wa qinā ‘adzāban-nār.")
+    penutup = doa1 + "\n\n" + doa2
+    if jenis == "Jumat":
+        penutup += "\n\n" + wrap("Aqulu qawli hādzā, fastaghfirullāh li walakum.")
+
+    if tambahan:
+        tambahan_txt = "\n\n" + "**Catatan khusus panitia/jamaah:** " + tambahan.strip()
+    else:
+        tambahan_txt = ""
+
+    teks = (
+        pembuka + "\n\n" +
+        meta + "\n\n" +
+        badan + "\n\n" +
+        "**Langkah praktis pekan ini:**\n" + bullets +
+        tambahan_txt + "\n\n" +
+        penutup + (
+            "\n\n---\n### Khutbah Kedua (ringkas)\n" +
+            wrap("Alhamdulillāh, shalawat dan salam untuk Rasulullah. "
+                 "Perbanyak istighfar dan shalawat; semoga Allah menjaga negeri ini, "
+                 "memudahkan rezeki yang halal, serta menguatkan persatuan kaum Muslimin.")
+            if jenis == "Jumat" else ""
+        )
+    )
+    return teks
+
 def _build_prompt(jenis, tema, gaya, panjang, audience, tanggal, tambahan):
     judul = tema or {
         "Jumat":"Taqwa & Amanah",
