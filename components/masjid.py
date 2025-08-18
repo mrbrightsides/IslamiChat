@@ -6,7 +6,6 @@ from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
 from geopy.geocoders import Nominatim
 
-# Mirror yang relatif stabil terlebih dahulu
 OVERPASS_ENDPOINTS = [
     "https://overpass.kumi.systems/api/interpreter",
     "https://overpass-api.de/api/interpreter",
@@ -14,34 +13,36 @@ OVERPASS_ENDPOINTS = [
 
 def _run_overpass(endpoint: str, q: str):
     return requests.post(
-        endpoint,
-        data={"data": q},
+        endpoint, data={"data": q},
         headers={"User-Agent": "IslamiChat/1.0"},
-        timeout=(6, 20),  # (connect, read)
+        timeout=(6, 20)
     )
 
 def build_query(lat: float, lon: float, radius: int, lite: bool) -> str:
+    name_regex = "masjid|musholl?a|mushol?a|mus(ha)?ll?a|musala|surau|langgar|prayer.?room"
     if lite:
         return f"""
-        [out:json][timeout:30];
+        [out:json][timeout:20];
         (
           node["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
-          way["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
-          node["amenity"="place_of_worship"]["name"~"masjid|musholla|mushola|musala|surau", i](around:{radius},{lat},{lon});
-          way["amenity"="place_of_worship"]["name"~"masjid|musholla|mushola|musala|surau", i](around:{radius},{lat},{lon});
+          node["amenity"="place_of_worship"]["name"~"{name_regex}", i](around:{radius},{lat},{lon});
+          node["building"="mosque"](around:{radius},{lat},{lon});
         );
         out center;
         """
     return f"""
-    [out:json][timeout:50];
+    [out:json][timeout:25];
     (
       node["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
       way["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
       relation["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
 
-      node["amenity"="place_of_worship"]["name"~"masjid|musholla|mushola|musala|surau", i](around:{radius},{lat},{lon});
-      way["amenity"="place_of_worship"]["name"~"masjid|musholla|mushola|musala|surau", i](around:{radius},{lat},{lon});
-      relation["amenity"="place_of_worship"]["name"~"masjid|musholla|mushola|musala|surau", i](around:{radius},{lat},{lon});
+      node["amenity"="place_of_worship"]["name"~"{name_regex}", i](around:{radius},{lat},{lon});
+      way["amenity"="place_of_worship"]["name"~"{name_regex}", i](around:{radius},{lat},{lon});
+      relation["amenity"="place_of_worship"]["name"~"{name_regex}", i](around:{radius},{lat},{lon});
+
+      node["building"="mosque"](around:{radius},{lat},{lon});
+      way["building"="mosque"](around:{radius},{lat},{lon});
     );
     out center;
     """
@@ -52,92 +53,58 @@ def fetch_mosques(lat: float, lon: float, radius: int, lite: bool):
     last_err = []
     for ep in OVERPASS_ENDPOINTS:
         delay = 1.2
-        for attempt in range(2):   # fail-fast
+        for attempt in range(2):
             try:
-                resp = _run_overpass(ep, q)   # <- POST only
-                if resp.status_code == 429:
-                    time.sleep(delay); delay *= 1.6
-                    continue
-                resp.raise_for_status()
-                data = resp.json()
-                return data.get("elements", [])
+                r = _run_overpass(ep, q)
+                if r.status_code == 429:
+                    time.sleep(delay); delay *= 1.6; continue
+                r.raise_for_status()
+                return r.json().get("elements", [])
             except Exception as e:
                 last_err.append(f"{ep} try{attempt+1}: {e}")
                 time.sleep(delay); delay *= 1.6
     raise RuntimeError("Overpass gagal: " + " | ".join(last_err[:3]) + " …")
 
-# ---------- Lokasi ----------
-@st.cache_data(ttl=600)
-def ip_lookup():
-    r = requests.get("https://ipinfo.io/json", timeout=8, headers={"User-Agent": "IslamiChat/1.0"})
-    r.raise_for_status()
-    loc = (r.json().get("loc") or "").split(",")
-    if len(loc) == 2:
-        return float(loc[0]), float(loc[1])
-    raise ValueError("Tidak ada koordinat pada respons IP")
-
 @st.cache_data(ttl=86400)
 def geocode_place(q: str):
     geo = Nominatim(user_agent="islamiChat/1.0", timeout=10)
     loc = geo.geocode(q, language="id")
-    if not loc:
-        return None
+    if not loc: return None
     return float(loc.latitude), float(loc.longitude), loc.address
-
-def get_user_location():
-    try:
-        return ip_lookup()
-    except Exception:
-        return None, None
 
 def show_nearby_mosques():
     st.header("🕌 Masjid Terdekat")
 
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        use_ip = st.toggle("Gunakan lokasi berdasarkan IP", value=True,
-                           help="Jika dimatikan, tulis nama lokasi secara manual di bawah.")
-    with col2:
-        radius = st.slider("Radius pencarian (meter)", 300, 4000, 1500, step=100)
-    lite = st.toggle("Gunakan query ringan (lebih mudah lolos rate-limit)", value=True)
+    col_r, = st.columns(1)
+    radius = col_r.slider("Radius pencarian (meter)", 300, 4000, 1500, step=100)
 
-    lat, lon, label = None, None, ""
+    lite = st.toggle("Gunakan query ringan (lebih mudah lolos rate-limit)", value=False)
 
-    if use_ip:
-        try:
-            lat, lon = ip_lookup()
-            label = "Lokasi berdasarkan IP"
-        except Exception as e:
-            st.warning(f"Gagal dapat lokasi IP: {e}")
-    else:
-        q = st.text_input("Masukkan nama lokasi (contoh: Palembang, Indonesia)", value="Palembang, Indonesia")
-        if q.strip():
-            g = geocode_place(q.strip())
-            if g:
-                lat, lon, label = g
-            else:
-                st.error("Lokasi tidak ditemukan. Coba lebih spesifik.")
-                return
-        else:
-            st.info("Masukkan nama lokasi terlebih dahulu.")
-            return
+    q = st.text_input("Masukkan nama lokasi (contoh: Palembang, Indonesia)", value="Palembang, Indonesia")
+    if not q.strip():
+        st.info("Masukkan lokasi terlebih dahulu."); return
 
-    if lat is None or lon is None:
-        st.warning("Tidak dapat menentukan koordinat lokasi.")
-        return
+    g = geocode_place(q.strip())
+    if not g:
+        st.error("Lokasi tidak ditemukan. Coba lebih spesifik."); return
+    lat, lon, label = g
+    st.caption(f"Lokasi dicari pada: {label}  •  ({lat:.5f}, {lon:.5f})")
 
     try:
         elements = fetch_mosques(lat, lon, radius, lite)
+        if not elements:
+            new_radius = min(max(2*radius, 1000), 4000)
+            st.info(f"Belum ada hasil. Mencoba ulang radius {new_radius} m & query lengkap…")
+            elements = fetch_mosques(lat, lon, new_radius, False)
+            radius = new_radius
     except Exception as e:
-        st.error(f"Gagal mengambil data masjid terdekat: {e}")
-        st.caption("Coba kecilkan radius, aktifkan 'Lite query', lalu klik Rerun.")
+        st.error(f"Gagal mengambil data masjid: {e}")
         return
 
-    m = folium.Map(location=[lat, lon], zoom_start=14, control_scale=True)
-    folium.Marker([lat, lon], tooltip=label or "Lokasi Anda",
-                  icon=folium.Icon(color="blue", icon="user")).add_to(m)
-
+    m = folium.Map(location=[lat, lon], zoom_start=13, control_scale=True)
+    folium.Marker([lat, lon], tooltip=label, icon=folium.Icon(color="blue", icon="user")).add_to(m)
     cluster = MarkerCluster(name="Masjid").add_to(m)
+
     count = 0
     for el in elements:
         tags = el.get("tags", {})
@@ -152,4 +119,7 @@ def show_nearby_mosques():
             count += 1
 
     st.success(f"Ditemukan {count} lokasi dalam radius {radius} m.")
-    st_folium(m, width=800, height=520)
+    try:
+        st_folium(m, width=800, height=520)
+    except Exception as e:
+        st.warning("Map gagal dimuat. Coba reload halaman."); st.caption(str(e))
