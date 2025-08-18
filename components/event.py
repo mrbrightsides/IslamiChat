@@ -420,11 +420,11 @@ def render_event():
                 if not payload:
                     skeleton.append(
                         {
-                            "Masehi": "—",
-                            "Hari": "",
-                            "Hijriah": f"{dd}-{mm}-{yyyy} H",
-                            "Bulan": "",
-                            "Tanda": "",
+                            "gregorian": "—",
+                            "weekday": "",
+                            "hijri": f"{dd}-{mm}-{yyyy} H",
+                            "h_month_en": "",
+                            "labels": "",
                         }
                     )
                     continue
@@ -432,22 +432,22 @@ def render_event():
                 h = payload.get("hijri", {})
                 skeleton.append(
                     {
-                        "Masehi": _to_iso_gdate(g.get("date", "—")),
-                        "Hari": g.get("weekday", {}).get("en", ""),
-                        "Hijriah": h.get("date", f"{dd}-{mm}-{yyyy} H"),
-                        "Bulan": h.get("month", {}).get("en", ""),
-                        "Tanda": "",
+                        "gregorian": _to_iso_gdate(g.get("date", "—")),
+                        "weekday": g.get("weekday", {}).get("en", ""),
+                        "hijri": h.get("date", f"{dd}-{mm}-{yyyy} H"),
+                        "h_month_en": h.get("month", {}).get("en", ""),
+                        "labels": "",
                     }
                 )
             filtered = skeleton
         else:
             filtered = [
                 {
-                    "Masehi": "—",
-                    "Hari": "",
-                    "Hijriah": f"{year_h} H",
-                    "Bulan": "",
-                    "Tanda": "Data tahun penuh tidak tersedia",
+                    "gregorian": "—",
+                    "weekday": "",
+                    "hijri": f"{year_h} H",
+                    "h_month_en": "",
+                    "labels": "Data tahun penuh tidak tersedia",
                 }
             ]
 
