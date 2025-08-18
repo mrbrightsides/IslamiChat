@@ -274,7 +274,6 @@ def h_to_g_single(dd_mm_yyyy_h: str) -> Optional[dict]:
             # sebagian response sudah punya struktur g/hijri di level atas
             if isinstance(d, dict) and "gregorian" in d and "hijri" in d:
                 return d
-            # fallback lain: kadang d langsung "date", dll — abaikan kalau tak lengkap
     except Exception:
         pass
     return None
@@ -384,7 +383,6 @@ def render_event():
 
     st.success(f"Hari ini (Hijri): **{h_weekday_ar}, {h_date_str} {h_month_en} H**")
 
-    # ===== Controls (DITAMPILKAN lebih dulu; view_month didefinisikan DI SINI) =====
     st.subheader("⚙️ Pengaturan Tampilan")
     c1, c2, c3, c4 = st.columns([1, 1, 1, 2])
     with c1:
@@ -397,7 +395,7 @@ def render_event():
     with c4:
         only_labeled    = st.checkbox("Tampilkan hanya hari bertanda (event/puasa)", value=False)
 
-    st.subheader("📋 Kalender")
+    st.subheader("🗓️ Kalender")
     vm1, _ = st.columns([1, 3])
     options_vals = list(range(1, 13))
     default_idx  = max(min(h_month_num, 12), 1) - 1
@@ -444,7 +442,6 @@ def render_event():
         df2["labels"] = out
         return df2
 
-   # ===== Data setahun -> labelkan =====
     def _to_iso(s: str) -> str:
         s = str(s)
         # "DD-MM-YYYY" -> "YYYY-MM-DD"
@@ -456,7 +453,6 @@ def render_event():
     
     rows_all = []
 
-    # ===== Data setahun -> labelkan =====
     def _to_iso(s: str) -> str:
         s = str(s)
         # "DD-MM-YYYY" -> "YYYY-MM-DD"
@@ -498,47 +494,6 @@ def render_event():
     # labelkan (Senin/Kamis, Tasū‘a)
     rows_df = add_event_labels(rows_df, include_mon_thu, include_tasua)
     rows_labeled = rows_df.to_dict("records")
-    
-    # ===== Event Terdekat (pakai rows_labeled) =====
-    st.subheader("🗓️ Event Terdekat")
-    ups = find_upcoming(rows_labeled, from_g=date.today(), limit=8)
-    if ups:
-        for r in ups:
-            left_txt = f" (tinggal {r['days_left']} hari)" if r["days_left"] > 0 else " (hari ini)"
-            st.write(f"- **{_labels_to_str(r['labels'])}** — {r['gregorian']} (Hijri: {r['hijri']} / {r['h_month_en']}){left_txt}")
-
-    else:
-        st.caption("Belum ada event terdekat. Aktifkan penanda Senin/Kamis atau Tasu‘ā.")
-    
-    # (opsional) debug
-    # st.write("debug head:", rows_df.head(3).to_dict("records"))
-    
-    # ===== Data untuk tabel bulan (juga dari rows_labeled) =====
-    # NOTE: pastikan 'view_month' sudah dibuat dari selectbox sebelumnya
-    filtered = filter_rows(rows_labeled, only_labeled=only_labeled, month_filter=view_month)
-
-    # Fallback jika kosong → generate skeleton satu bulan
-    if not filtered:
-        month_len = 30
-        skeleton = []
-        for d in range(1, month_len + 1):
-            dd = f"{d:02d}"
-            mm = f"{int(view_month):02d}"
-            yyyy = str(int(year_h))
-            payload = h_to_g_single(f"{dd}-{mm}-{yyyy}")
-            if not payload:
-                skeleton.append({"gregorian":"—","weekday":"","hijri":f"{dd}-{mm}-{yyyy} H","h_month_en":"","labels":""})
-                continue
-            g = payload.get("gregorian", {}); h = payload.get("hijri", {})
-            skeleton.append({
-                "gregorian": _to_iso(g.get("date","—")),
-                "weekday":   g.get("weekday", {}).get("en",""),
-                "hijri":     h.get("date", f"{dd}-{mm}-{yyyy} H"),
-                "h_month_num": int(mm),
-                "h_month_en":h.get("month", {}).get("en",""),
-                "labels":    "",
-            })
-        filtered = skeleton
 
     # ===== Render tabel =====
     df = pd.DataFrame(
