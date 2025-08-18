@@ -19,7 +19,7 @@ from components.zakat import (
     zakat_kalkulator, OZT_TO_GRAM, fetch_gold_price_idr_per_gram, format_rp, nisab_emas_idr
 )
 from components.masjid import (
-    OVERPASS_ENDPOINTS, show_nearby_mosques, _run_overpass, build_query, fetch_mosques, geocode_place, build_query
+    OVERPASS_ENDPOINTS, show_nearby_mosques, _run_overpass, build_query, fetch_mosques, geocode_candidates, build_query
 )
 from components.murottal import (
     RADIO_API, fetch_radios, show_murottal_tab
