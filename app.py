@@ -56,7 +56,7 @@ tabs = st.tabs([
     "🧮 Kalkulator Zakat",
     "🗺️ Masjid Terdekat",
     "🗓️ Event Islam",
-    "🗣️ Khutbah"
+    "🗣️ KhutbahGPT",
     "📺 Live TV"
 ])
 
