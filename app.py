@@ -33,6 +33,19 @@ st.caption("Powered by ArtiBot / Botsonic • Waktu sholat dari Aladhan API")
 
 from streamlit.components.v1 import iframe
 
+# ===== Tab utama =====
+tabs = st.tabs([
+    "🧠 Chatbot", 
+    "🕌 Waktu Sholat",
+    "📻 Murottal Quran",
+    "🧭 Kiblat",
+    "🧮 Kalkulator Zakat",
+    "🗺️ Masjid Terdekat",
+    "🗓️ Event Islam",
+    "🗣️ KhutbahGPT"
+])
+
+# ===== Tab: Chatbot =====
 # ===== Tab: Chatbot =====
 with tabs[0]:
     st.subheader("Pilih widget:")
@@ -51,30 +64,6 @@ with tabs[0]:
 
     st.write(f"💬 Chat aktif: **{widget_opt}**")
     iframe(src=chosen_url, height=700)
-
-# ===== Tab utama =====
-tabs = st.tabs([
-    "🧠 Chatbot", 
-    "🕌 Waktu Sholat",
-    "📻 Murottal Quran",
-    "🧭 Kiblat",
-    "🧮 Kalkulator Zakat",
-    "🗺️ Masjid Terdekat",
-    "🗓️ Event Islam",
-    "🗣️ KhutbahGPT"
-])
-
-# ===== Tab: Chatbot =====
-with tabs[0]:
-    st.subheader("Pilih widget:")
-    widget_opt = st.radio(
-        " ",
-        ["ArtiBot", "BotSonic", "TawkTo"],
-        horizontal=True, label_visibility="collapsed"
-    )
-    embed_html = WIDGET_MAP.get(widget_opt, ARTIBOT_HTML)
-    # Bungkus biar ada tinggi kontainer yang konsisten
-    html(f"<div style='width:100%; height:650px;'>{embed_html}</div>", height=650)
 
 # === Tab 1: Waktu Sholat ===
 with tabs[1]:
