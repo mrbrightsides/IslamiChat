@@ -31,9 +31,8 @@ def render_live_tv_tab():
 
     if "Makkah" in choice:
         st.markdown(_responsive_embed(MAKKAH_EMBED, "Makkah Live"), unsafe_allow_html=True)
-        st.link_button("↗️ Buka di YouTube", MAKKAH_EMBED.replace("/embed/", "/watch?v="), use_container_width=True)
+        
     else:
         st.markdown(_responsive_embed(MADINAH_EMBED, "Madinah Live"), unsafe_allow_html=True)
-        st.link_button("↗️ Buka di YouTube", MADINAH_EMBED.replace("/embed/", "/watch?v="), use_container_width=True)
 
     st.caption("Autoplay bisa diblok oleh browser, jadi kadang perlu tekan tombol ▶️ secara manual.")
