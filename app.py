@@ -11,11 +11,17 @@ from components.waktu_sholat import (
     to_local_datetime, next_prayer, fmt_delta
 )
 from components.kiblat import show_qibla_direction
-from components.zakat import zakat_calculator
-from components.masjid import show_nearby_mosques
-from components.murottal import play_murottal
-from components.event import islamic_event_info
-from components.khutbah_gpt import khutbah_generator_ui
+from components.zakat import zakat_kalkulator
+from components.masjid import (
+    get_user_location, show_nearby_mosques
+)
+from components.murottal import (
+    RADIO_API, fetch_radios, show_murottal_tab
+)
+from components.event import (
+    render_event, check_important_event
+)
+from components.khutbah_gpt import render_khutbah_form
 
 # ===== Page setup =====
 st.set_page_config(page_title="IslamiChat 🤖🌸", layout="wide")
