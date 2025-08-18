@@ -79,7 +79,7 @@ with tabs[0]:
     iframe(src=final_url, height=720)
 
     # --- Fallback link aman
-    st.link_button(f"↗️ Buka {widget_opt} di tab ini (fallback)",
+    st.link_button(f"↗️ Buka {widget_opt} di tab ini jika chat tidak muncul (fallback)",
                    chosen_url, use_container_width=True)
 
 # === Tab 1: Waktu Sholat ===
