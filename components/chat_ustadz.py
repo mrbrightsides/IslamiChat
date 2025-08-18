@@ -1,70 +1,62 @@
 import streamlit as st
 from urllib.parse import quote_plus
 
-NAMA_USTADZ_1 = "Dr. Heri Iskandar, M.Pd"
-NAMA_USTADZ_2 = "Sawi Sujarwo, M.Psi"
+# ==== Konfigurasi ====
+NAMA_USTADZ_1   = "Dr. Heri Iskandar, M.Pd"
+PROFIL_USTADZ_1 = "Dosen & pembina kajian keluarga. Fokus fikih ibadah & pendidikan."
+WA_LINK_1       = "+6289675674860"
+DEFAULT_MSG_1   = "Assalamu'alaikum Ustadz, mohon bimbingannya terkait pertanyaan saya."
 
-WA_LINK_1 = "+6289675674860"
-WA_LINK_2 = "62xxxxxxxxxx"
+NAMA_USTADZ_2   = "Sawi Sujarwo, M.Psi"
+PROFIL_USTADZ_2 = "Psikolog muslim. Fokus parenting, remaja, dan kesehatan mental."
+WA_LINK_2       = "62xxxxxxxxxx"
+DEFAULT_MSG_2   = "Assalamu'alaikum Ustadz, saya ingin konsultasi singkat."
 
-DEFAULT_MESSAGE = (
-    "Assalamu'alaikum Ustadz, saya ingin bertanya: "
-)
-
-# ---------------- util ----------------
+# ==== Utils ====
 def _normalize_wa_base(raw: str) -> str:
     if not raw:
         return ""
     raw = raw.strip()
-    if raw.startswith("http://") or raw.startswith("https://"):
+    if raw.startswith(("http://", "https://")):
         return raw
-    digits = ''.join(ch for ch in raw if ch.isdigit())
-    if not digits:
-        return ""
-    return f"https://wa.me/{digits}"
+    digits = "".join(ch for ch in raw if ch.isdigit())
+    return f"https://wa.me/{digits}" if digits else ""
 
 def _with_prefill_message(base_url: str, message: str) -> str:
     if not base_url:
         return ""
-    sep = '&' if ('?' in base_url) else '?'
+    sep = "&" if "?" in base_url else "?"
     return f"{base_url}{sep}text={quote_plus(message or '')}"
 
-# ---------------- card ustadz ----------------
-def _ustadz_card(nama: str, wa_raw: str, key_prefix: str):
+# ==== Card Ustadz (1 kolom, tanpa textarea) ====
+def _ustadz_card(nama: str, profil: str, wa_raw: str, default_msg: str):
     base = _normalize_wa_base(wa_raw)
+    link = _with_prefill_message(base, default_msg)
 
     with st.container(border=True):
         st.subheader(nama)
-        msg = st.text_area(
-            "Tulis pesan (akan diprefill di WhatsApp):",
-            value=DEFAULT_MESSAGE,
-            key=f"msg_{key_prefix}",
-            height=120,
-        )
+        if profil:
+            st.caption(profil)  # profil singkat di bawah nama
 
-        link = _with_prefill_message(base, msg)
         disabled = not bool(link)
         try:
-            st.link_button(
-                "💬 Chat via WhatsApp",
-                link if link else "#",
-                use_container_width=True,
-                disabled=disabled
-            )
+            st.link_button("💬 Chat via WhatsApp", link if link else "#",
+                           use_container_width=True, disabled=disabled)
         except Exception:
             if disabled:
-                st.button("💬 Chat via WhatsApp (isi nomor dulu)", disabled=True, use_container_width=True)
+                st.button("💬 Chat via WhatsApp (isi nomor dulu)",
+                          disabled=True, use_container_width=True)
             else:
                 st.markdown(f"[💬 Chat via WhatsApp]({link})", unsafe_allow_html=True)
 
-# ---------------- main tab ----------------
+# ==== Tab utama ====
 def show_chat_ustadz_tab():
     st.title("📞 Chat Ustadz")
     st.caption(
-        "Tulis pesan lalu klik tombol untuk membuka WhatsApp. \n"
-        "Catatan: aplikasi ini *tidak* mengirim pesan otomatis; tombol hanya membuka WA dengan pesan terisi."
+        "Klik tombol untuk membuka WhatsApp dengan pesan awal. "
+        "Catatan: aplikasi ini **tidak** mengirim pesan otomatis."
     )
 
-    _ustadz_card(NAMA_USTADZ_1, WA_LINK_1, key_prefix="u1")
+    _ustadz_card(NAMA_USTADZ_1, PROFIL_USTADZ_1, WA_LINK_1, DEFAULT_MSG_1)
     st.markdown("---")
-    _ustadz_card(NAMA_USTADZ_2, WA_LINK_2, key_prefix="u2")
+    _ustadz_card(NAMA_USTADZ_2, PROFIL_USTADZ_2, WA_LINK_2, DEFAULT_MSG_2)
