@@ -2,42 +2,50 @@ import time
 import requests
 import datetime as dt
 import pytz
+import os
+import pandas as pd
 import streamlit as st
 from streamlit.components.v1 import iframe
-from math import radians, degrees, sin, cos, atan2
-from geopy.geocoders import Nominatim
 
-# ===== Import Komponen =====
+# ===== Komponen: Waktu Sholat =====
 from components.waktu_sholat import (
     TZ, METHODS, fetch_timings_by_city, parse_today_times,
     to_local_datetime, next_prayer, fmt_delta
 )
+
+# ===== Komponen: Kiblat =====
 from components.kiblat import (
     show_qibla_direction, geocode_cached, qibla_bearing, KAABA_LAT, KAABA_LON
 )
+
+# ===== Komponen: Zakat =====
 from components.zakat import (
-    zakat_kalkulator, OZT_TO_GRAM, fetch_gold_price_idr_per_gram, format_rp, nisab_emas_idr
+    zakat_kalkulator, OZI_TO_GRAM,
+    fetch_gold_price_idr_per_gram, format_rp, nisab_emas_idr
 )
+
+# ===== Komponen: Masjid Terdekat =====
 from components.masjid import (
-    OVERPASS_ENDPOINTS, show_nearby_mosques, _run_overpass, build_query, fetch_mosques, geocode_candidates, build_query
+    show_nearby_mosques
 )
+
+# ===== Komponen: Murottal =====
 from components.murottal import (
     RADIO_API, fetch_radios, show_murottal_tab
 )
-from components.event import (
-    render_simple_hijri_calendar, _parse_hijri_day as parse_hijri_day, add_event_labels, g_to_h, h_to_g_calendar, FIXED_EVENTS, AYYAM_AL_BID_DAYS, MON_THU, labels_for_day, find_upcoming, build_hijri_year_calendar, filter_rows, to_csv_bytes, to_ics_bytes, render_event, h_to_g_single, _safe_fromiso
-)
-from components.khutbah_gpt import render_khutbah_form
 
-import os
-import pandas as pd 
+# ===== Komponen: Event Hijriah =====
+from components.event import (
+    render_event
+)
+
+# ===== Komponen: Khutbah GPT =====
+from components.khutbah_gpt import render_khutbah_form 
 
 # ===== Page setup =====
 st.set_page_config(page_title="IslamiChat 🤖🌸", layout="wide")
 st.title("IslamiChat = Tanya Jawab + Waktu Sholat")
 st.caption("Powered by ArtiBot / Botsonic • Waktu sholat dari Aladhan API")
-
-from streamlit.components.v1 import iframe
 
 # ===== Tab utama =====
 tabs = st.tabs([
@@ -52,8 +60,6 @@ tabs = st.tabs([
 ])
 
 # ===== Tab: Chatbot =====
-from streamlit.components.v1 import iframe
-
 with tabs[0]:
     st.subheader("Pilih widget:")
 
@@ -139,7 +145,7 @@ with tabs[5]:
 
 # === Tab 6: Event Islam ===
 with tabs[6]:
-    render_simple_hijri_calendar()
+    render_event()
 
 # === Tab 7: KhutbahGPT ===
 with tabs[7]:
