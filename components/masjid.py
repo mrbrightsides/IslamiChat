@@ -13,12 +13,11 @@ OVERPASS_ENDPOINTS = [
 ]
 
 def _run_overpass(endpoint: str, q: str):
-    """Selalu GET untuk menghindari 400/CSRF pada beberapa mirror."""
-    return requests.get(
+    return requests.post(
         endpoint,
-        params={"data": q},
+        data={"data": q},
         headers={"User-Agent": "IslamiChat/1.0"},
-        timeout=(6, 14),  # (connect, read)
+        timeout=(6, 20),  # (connect, read)
     )
 
 def build_query(lat: float, lon: float, radius: int, lite: bool) -> str:
@@ -50,9 +49,9 @@ def fetch_mosques(lat: float, lon: float, radius: int, lite: bool):
     last_err = []
     for ep in OVERPASS_ENDPOINTS:
         delay = 1.2
-        for attempt in range(2):  # fail-fast
+        for attempt in range(2):   # fail-fast
             try:
-                resp = _run_overpass(ep, q)
+                resp = _run_overpass(ep, q)   # <- POST only
                 if resp.status_code == 429:
                     time.sleep(delay); delay *= 1.6
                     continue
