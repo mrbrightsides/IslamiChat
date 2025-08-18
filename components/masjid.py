@@ -23,22 +23,25 @@ def _run_overpass(endpoint: str, q: str):
 def build_query(lat: float, lon: float, radius: int, lite: bool) -> str:
     if lite:
         return f"""
-        [out:json][timeout:15];
+        [out:json][timeout:30];
         (
           node["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
-          node["amenity"="place_of_worship"]["name"~"(?i)masjid|mushol+a|musala|surau"](around:{radius},{lat},{lon});
+          way["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
+          node["amenity"="place_of_worship"]["name"~"masjid|musholla|mushola|musala|surau", i](around:{radius},{lat},{lon});
+          way["amenity"="place_of_worship"]["name"~"masjid|musholla|mushola|musala|surau", i](around:{radius},{lat},{lon});
         );
         out center;
         """
     return f"""
-    [out:json][timeout:20];
+    [out:json][timeout:50];
     (
       node["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
       way["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
       relation["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{lat},{lon});
-      node["amenity"="place_of_worship"]["name"~"(?i)masjid|mushol+a|musala|surau"](around:{radius},{lat},{lon});
-      way["amenity"="place_of_worship"]["name"~"(?i)masjid|mushol+a|musala|surau"](around:{radius},{lat},{lon});
-      relation["amenity"="place_of_worship"]["name"~"(?i)masjid|mushol+a|musala|surau"](around:{radius},{lat},{lon});
+
+      node["amenity"="place_of_worship"]["name"~"masjid|musholla|mushola|musala|surau", i](around:{radius},{lat},{lon});
+      way["amenity"="place_of_worship"]["name"~"masjid|musholla|mushola|musala|surau", i](around:{radius},{lat},{lon});
+      relation["amenity"="place_of_worship"]["name"~"masjid|musholla|mushola|musala|surau", i](around:{radius},{lat},{lon});
     );
     out center;
     """
