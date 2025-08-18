@@ -9,6 +9,7 @@ from streamlit.components.v1 import html
 from components.waktu_sholat import (
     TZ, METHODS, fetch_timings_by_city, parse_today_times,
     to_local_datetime, next_prayer, fmt_delta
+)
 from components.kiblat import show_qibla_direction
 from components.zakat import zakat_calculator
 from components.masjid import show_nearby_mosques
