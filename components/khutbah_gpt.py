@@ -11,7 +11,7 @@ def render_khutbah_form():
         jenis_khutbah = st.radio("Jenis Khutbah", ["Jumat", "Idul Fitri", "Idul Adha", "Istisqa", "Nikah", "Umum"], index=0)
         
         tema = st.text_input("Tema Khutbah (opsional)", placeholder="Contoh: Pentingnya Menjaga Amanah")
-        gaya = st.selectbox("Gaya Bahasa", ["Formal", Lugas", "Puitis", "Reflektif", "Ringan untuk Remaja"])
+        gaya = st.selectbox("Gaya Bahasa", ["Formal", "Lugas", "Puitis", "Reflektif", "Ringan untuk Remaja"])
         panjang = st.slider("Panjang Khutbah (kata)", min_value=300, max_value=1500, value=700, step=100)
         
         audience = st.text_input("Target Jamaah (opsional)", placeholder="Contoh: Mahasiswa, Jamaah Remaja, Umum")
