@@ -399,7 +399,7 @@ def render_event():
         if df_in is None or df_in.empty:
             return df_in
         df2 = df_in.copy()
-        labels = []
+        out = []
         for _, r in df2.iterrows():
             tags = []
             if mark_mk:
@@ -411,8 +411,8 @@ def render_event():
                 hme  = str(r.get("h_month_en", "")).lower()
                 if dnum == 9 and hme == "muharram":
                     tags.append("Tasū‘a (9 Muharram)")
-            labels.append(", ".join(tags))
-        df2["labels"] = labels
+            out.append(tags)  # <-- LIST, bukan string
+        df2["labels"] = out
         return df2
 
    # ===== Data setahun -> labelkan =====
