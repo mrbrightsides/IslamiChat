@@ -420,11 +420,11 @@ def render_event():
                 if not payload:
                     skeleton.append(
                         {
-                            "gregorian": "—",
-                            "weekday": "",
-                            "hijri": f"{dd}-{mm}-{yyyy} H",
-                            "h_month_en": "",
-                            "labels": "",
+                            "Masehi": "—",
+                            "Hari": "",
+                            "Hijriah": f"{dd}-{mm}-{yyyy} H",
+                            "Bulan": "",
+                            "Tanda": "",
                         }
                     )
                     continue
