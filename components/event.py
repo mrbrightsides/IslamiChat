@@ -495,6 +495,15 @@ def render_event():
     rows_df = add_event_labels(rows_df, include_mon_thu, include_tasua)
     rows_labeled = rows_df.to_dict("records")
 
+    try:
+        filtered  # noqa: F821
+    except NameError:
+        filtered = filter_rows(
+            rows_labeled,           # dataset setahun yang sudah berlabel
+            only_labeled=only_labeled,
+            month_filter=view_month  # dari selectbox "Bulan ..."
+        )
+
     # ===== Render tabel =====
     df = pd.DataFrame(
         filtered,
