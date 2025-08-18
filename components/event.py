@@ -505,11 +505,9 @@ def render_event():
         )
 
     if not filtered:
-        # kalau user centang "hanya hari bertanda", wajar kosong
         if only_labeled:
             st.info("Tidak ada hari bertanda di bulan ini.")
         else:
-            # Fallback minimal: generate 1 bulan dari API harian
             month_len = 30
             mm = int(view_month)
             yyyy = int(year_h)
@@ -528,7 +526,6 @@ def render_event():
                         "labels":    [],                                            # list, bukan string
                     })
                 else:
-                    # kalau API gagal, tetap isi baris minimal
                     skeleton.append({
                         "gregorian": "—",
                         "weekday": "",
