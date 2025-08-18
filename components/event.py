@@ -401,7 +401,7 @@ def render_event():
             help="Pilih salah satu bulan Hijriah."
         )
 
-    filtered = filter_rows(filter_rows(rows, only_labeled=only_labeled, month_filter=view_month)
+    filtered = filter_rows(rows, only_labeled=only_labeled, month_filter=view_month)
 
     if not filtered:
         month_len = 30
