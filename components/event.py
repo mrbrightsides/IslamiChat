@@ -357,7 +357,9 @@ def render_event():
     st.subheader("⚙️ Pengaturan Tampilan")
     c1, c2, c3, c4 = st.columns([1, 1, 1, 2])
     with c1:
-        year_h = st.number_input("Tahun Hijriah", value=h_year, step=1, min_value=h_year - 3, max_value=h_year + 3)
+        year_h = st.number_input(
+            "Tahun Hijriah", value=h_year, step=1, min_value=h_year - 3, max_value=h_year + 3
+        )
     with c2:
         include_mon_thu = st.toggle("Tandai puasa Senin & Kamis", value=True)
     with c3:
@@ -365,7 +367,7 @@ def render_event():
     with c4:
         only_labeled = st.checkbox("Tampilkan hanya hari bertanda (event/puasa)", value=False)
 
-    # Build calendar
+    # Build calendar (butuh helper yang sudah ada di modulmu)
     rows = build_hijri_year_calendar(int(year_h), include_mon_thu, include_tasua)
     if not rows:
         st.warning("Kalender tahun ini belum tersedia lengkap dari API.")
@@ -379,13 +381,14 @@ def render_event():
             left_txt = f" (tinggal {r['days_left']} hari)" if r["days_left"] > 0 else " (hari ini)"
             st.write(f"- **{r['labels']}** — {r['gregorian']} (Hijri: {r['hijri']} / {r['h_month_en']}){left_txt}")
     else:
-        st.caption("Belum ada event terdekat yang terdaftar. Aktifkan penanda Senin/Kamis atau Tāsū‘ā/‘Āsyūrā’ untuk melihat jadwal.")
+        st.caption(
+            "Belum ada event terdekat yang terdaftar. Aktifkan penanda Senin/Kamis atau Tāsū‘ā/‘Āsyūrā’ untuk melihat jadwal."
+        )
 
     # View mode: tahun penuh / bulan tertentu
     st.subheader("📋 Kalender")
     vm1, _ = st.columns([1, 3])
     options_vals = [0] + list(range(1, 13))
-    # index di selectbox adalah posisi dalam list, jadi mapping dulu
     default_val = h_month_num if int(year_h) == h_year else 0
     default_idx = options_vals.index(default_val)
 
@@ -395,15 +398,16 @@ def render_event():
             options=options_vals,
             format_func=lambda x: "Tahun penuh" if x == 0 else f"Bulan {x}",
             index=default_idx,
-            help="Pilih 'Tahun penuh' atau salah satu bulan Hijriah."
+            help="Pilih 'Tahun penuh' atau salah satu bulan Hijriah.",
         )
 
     filtered = filter_rows(
         rows,
         only_labeled=only_labeled,
-        month_filter=view_month if view_month != 0 else None
+        month_filter=view_month if view_month != 0 else None,
     )
 
+    # ---- Fallback isi bulan kalau filter kosong ----
     if not filtered:
         month_len = 30
         skeleton = []
@@ -414,110 +418,97 @@ def render_event():
                 yyyy = str(int(year_h))
                 payload = h_to_g_single(f"{dd}-{mm}-{yyyy}")
                 if not payload:
-                    # jika konversi gagal, tetap isi minimal
-                    skeleton.append({
-                        "gregorian": f"—",
-                        "weekday": "",
-                        "hijri": f"{dd}-{mm}-{yyyy} H",
-                        "h_month_en": "",
-                        "labels": ""
-                    })
+                    skeleton.append(
+                        {
+                            "gregorian": "—",
+                            "weekday": "",
+                            "hijri": f"{dd}-{mm}-{yyyy} H",
+                            "h_month_en": "",
+                            "labels": "",
+                        }
+                    )
                     continue
-    
                 g = payload.get("gregorian", {})
                 h = payload.get("hijri", {})
-                skeleton.append({
-                    "gregorian": _to_iso_gdate(g.get("date","—")),
-                    "weekday": g.get("weekday", {}).get("en", ""),
-                    "hijri": h.get("date", f"{dd}-{mm}-{yyyy} H"),
-                    "h_month_en": h.get("month", {}).get("en", ""),
-                    "labels": ""  # tanpa penanda, biar tetap muncul
-                })
+                skeleton.append(
+                    {
+                        "gregorian": _to_iso_gdate(g.get("date", "—")),
+                        "weekday": g.get("weekday", {}).get("en", ""),
+                        "hijri": h.get("date", f"{dd}-{mm}-{yyyy} H"),
+                        "h_month_en": h.get("month", {}).get("en", ""),
+                        "labels": "",
+                    }
+                )
             filtered = skeleton
         else:
-            # kalau "Tahun penuh" kosong, tetap kasih placeholder
-            filtered = [{
-                "gregorian": "—",
-                "weekday": "",
-                "hijri": f"{year_h} H",
-                "h_month_en": "",
-                "labels": "Data tahun penuh tidak tersedia"
-            }]
+            filtered = [
+                {
+                    "gregorian": "—",
+                    "weekday": "",
+                    "hijri": f"{year_h} H",
+                    "h_month_en": "",
+                    "labels": "Data tahun penuh tidak tersedia",
+                }
+            ]
 
+    # ---- Dari list -> DataFrame ----
     import pandas as pd
+    df = pd.DataFrame(filtered, columns=["gregorian", "weekday", "hijri", "h_month_en", "labels"])
 
-    def parse_hijri_day(hijri_str: str):
-        """Public alias untuk kompatibilitas import di app.py"""
-        return _parse_hijri_day(hijri_str)
-
-    def _parse_hijri_day(hijri_str: str) -> int | None:
-        # format "DD-MM-YYYY" -> ambil DD
+    # ---- Helpers untuk label ----
+    def _parse_hijri_day(hijri_str: str):
         try:
-            d = str(hijri_str).split("-")[0]
-            return int(d)
+            return int(str(hijri_str).split("-")[0])
         except Exception:
             return None
-    
-    def add_event_labels(df: pd.DataFrame, mark_mk: bool, mark_tasua: bool) -> pd.DataFrame:
-        """
-        mark_mk: True kalau toggle 'Tandai puasa Senin & Kamis' aktif
-        mark_tasua: True kalau toggle 'Tandai Tasū‘a (9 Muharram)' aktif
-        """
-        if df is None or df.empty:
-            return df
-    
-        df = df.copy()
+
+    def add_event_labels(df_in: pd.DataFrame, mark_mk: bool, mark_tasua: bool) -> pd.DataFrame:
+        if df_in is None or df_in.empty:
+            return df_in
+        df2 = df_in.copy()
         lab = []
-    
-        for _, r in df.iterrows():
+        for _, r in df2.iterrows():
             tags = []
-    
-            # Senin & Kamis
             if mark_mk:
                 wd = str(r.get("weekday", "")).strip()
                 if wd == "Monday":
                     tags.append("Puasa Senin")
                 elif wd == "Thursday":
                     tags.append("Puasa Kamis")
-    
-            # Tasū‘a (9 Muharram)
             if mark_tasua:
-                d = _parse_hijri_day(r.get("hijri", ""))
-                h_month_en = str(r.get("h_month_en", "")).lower()
-                if d == 9 and h_month_en == "muharram":
+                dnum = _parse_hijri_day(r.get("hijri", ""))
+                hme = str(r.get("h_month_en", "")).lower()
+                if dnum == 9 and hme == "muharram":
                     tags.append("Tasū‘a (9 Muharram)")
-    
             lab.append(", ".join(tags))
-    
-        df["labels"] = lab
-        return df
-    
-    df = add_event_labels(df, mark_mk, mark_tasua)
-    
-    # Checkbox filter "hanya hari bertanda"
-    # only_marked = st.checkbox("Tampilkan hanya hari bertanda (event/puasa)", value=False)
-    if only_marked:
+        df2["labels"] = lab
+        return df2
+
+    # Tambahkan label sesuai toggle
+    df = add_event_labels(df, include_mon_thu, include_tasua)
+
+    # Filter hanya bertanda jika dicentang
+    if only_labeled:
         df = df[df["labels"].astype(str).str.len() > 0]
-    
-    st.dataframe(df, use_container_width=True)
 
+    # Render tabel final (satu saja, jangan dua-duanya)
+    st.dataframe(df[["gregorian", "weekday", "hijri", "h_month_en", "labels"]],
+                 use_container_width=True, height=420)
 
-    show_cols = ["gregorian", "weekday", "hijri", "h_month_en", "labels"]
-    st.dataframe([{k: r[k] for k in show_cols} for r in filtered], use_container_width=True, height=420)
-
-    # Downloads
+    # Downloads (export pakai list of dicts)
+    export_rows = df.to_dict("records")
     cold1, cold2 = st.columns([1, 1])
     with cold1:
         st.download_button(
             "⬇️ Unduh CSV Kalender (sesuai tampilan)",
-            data=to_csv_bytes(filtered),
+            data=to_csv_bytes(export_rows),
             file_name=f"kalender_hijriah_{year_h}{('_bulan'+str(view_month)) if view_month else ''}.csv",
             mime="text/csv",
         )
     with cold2:
         st.download_button(
             "📥 Ekspor .ICS (Google/Apple/Outlook)",
-            data=to_ics_bytes(filtered),
+            data=to_ics_bytes(export_rows),
             file_name=f"kalender_hijriah_{year_h}{('_bulan'+str(view_month)) if view_month else ''}.ics",
             mime="text/calendar",
         )
