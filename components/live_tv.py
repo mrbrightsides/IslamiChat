@@ -34,5 +34,3 @@ def render_live_tv_tab():
         
     else:
         st.markdown(_responsive_embed(MADINAH_EMBED, "Madinah Live"), unsafe_allow_html=True)
-
-    st.caption("Autoplay bisa diblok oleh browser, jadi kadang perlu tekan tombol ▶️ secara manual.")
