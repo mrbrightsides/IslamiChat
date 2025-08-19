@@ -177,32 +177,45 @@ def show_kiblat_tab_plus():
     # Default contoh (mis. Palembang)
     default_lat, default_lon = -2.990934, 104.756554
 
+    if "lat" not in st.session_state: st.session_state.lat = -2.990934
+    if "lon" not in st.session_state: st.session_state.lon = 104.756554
+
     col1, col2 = st.columns(2)
     with col1:
-        lat = st.number_input("Latitude", value=default_lat)
+        lat = st.number_input("Latitude", key="lat_input", value=float(st.session_state.lat))
     with col2:
-        lon = st.number_input("Longitude", value=default_lon)
+        lon = st.number_input("Longitude", key="lon_input", value=float(st.session_state.lon))
 
     # Tombol GPS → override lat/lon jika berhasil
     lat, lon, updated = use_my_location(lat, lon)
     if updated:
         st.toast("Lokasi ter-update dari GPS", icon="📍")
 
-    # Hitung bearing & jarak seperti sebelumnya…
+    lat_new, lon_new, updated = use_my_location(lat, lon)
+    if updated:
+        # simpan ke state + sinkronkan ke field input
+        st.session_state.lat = lat_new
+        st.session_state.lon = lon_new
+        st.session_state.lat_input = float(lat_new)
+        st.session_state.lon_input = float(lon_new)
+        st.toast("Lokasi ter-update dari GPS", icon="📍")
+        st.rerun()  # penting: render ulang supaya bearing/peta pakai nilai baru
+    
+    # ambil lat/lon final dari state (setelah kemungkinan update)
+    lat = float(st.session_state.lat)
+    lon = float(st.session_state.lon)
+    
+    # --- hitung ulang & render ---
     bearing = _bearing_gc(lat, lon)
-    dist_km = _haversine_km(lat, lon)
-
+    dist_km  = _haversine_km(lat, lon)
     st.success(f"Arah Kiblat: **{bearing:.2f}°** dari utara. Jarak ke Ka'bah: **{dist_km:,.0f} km**.")
-
-    # Kompas realtime (HTML JS kamu yang sebelumnya)
+    
     st.markdown("#### 📳 Kompas Realtime")
     html(_compass_html(bearing), height=260)
-
-    # Peta (seperti sebelumnya)
+    
     st.markdown("#### 🗺️ Peta Garis Kiblat")
     html(_map_html(lat, lon, bearing), height=420, scrolling=False)
 
-    # Mode manual (fallback) — blok kamu yang sudah jalan tadi
     st.markdown("#### 🧭 Mode Manual (tanpa sensor)")
     st.caption("Kalau kompas di atas tidak bergerak (HP tidak mendukung sensor), gunakan mode manual ini.")
     heading_manual = st.slider(
