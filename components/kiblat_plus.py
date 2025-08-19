@@ -174,56 +174,52 @@ def show_kiblat_tab_plus():
     st.title("🧭 Arah Kiblat (Peta + Kompas)")
     st.caption("Gunakan kompas realtime dan peta. Jika sensor tidak tersedia, pakai Mode Manual.")
 
-    # Default contoh (mis. Palembang)
-    default_lat, default_lon = -2.990934, 104.756554
-
-    if "lat" not in st.session_state: st.session_state.lat = -2.990934
+    # --- init state (sekali) ---
+    if "lat" not in st.session_state: st.session_state.lat = -2.990934   # Palembang
     if "lon" not in st.session_state: st.session_state.lon = 104.756554
+    if "lat_input" not in st.session_state: st.session_state.lat_input = float(st.session_state.lat)
+    if "lon_input" not in st.session_state: st.session_state.lon_input = float(st.session_state.lon)
 
+    # --- input terikat state ---
     col1, col2 = st.columns(2)
     with col1:
-        lat = st.number_input("Latitude", key="lat_input", value=float(st.session_state.lat))
+        st.session_state.lat_input = st.number_input("Latitude", value=float(st.session_state.lat_input))
     with col2:
-        lon = st.number_input("Longitude", key="lon_input", value=float(st.session_state.lon))
+        st.session_state.lon_input = st.number_input("Longitude", value=float(st.session_state.lon_input))
 
-    # Tombol GPS → override lat/lon jika berhasil
-    lat, lon, updated = use_my_location(lat, lon)
-    if updated:
-        st.toast("Lokasi ter-update dari GPS", icon="📍")
+    # sinkronkan input -> state
+    st.session_state.lat = float(st.session_state.lat_input)
+    st.session_state.lon = float(st.session_state.lon_input)
 
-    lat_new, lon_new, updated = use_my_location(lat, lon)
+    # --- tombol GPS -> override kalau berhasil (PANGGIL SEKALI SAJA) ---
+    lat_new, lon_new, updated = use_my_location(st.session_state.lat, st.session_state.lon)
     if updated:
-        # simpan ke state + sinkronkan ke field input
         st.session_state.lat = lat_new
         st.session_state.lon = lon_new
         st.session_state.lat_input = float(lat_new)
         st.session_state.lon_input = float(lon_new)
         st.toast("Lokasi ter-update dari GPS", icon="📍")
-        st.rerun()  # penting: render ulang supaya bearing/peta pakai nilai baru
-    
-    # ambil lat/lon final dari state (setelah kemungkinan update)
-    lat = float(st.session_state.lat)
-    lon = float(st.session_state.lon)
-    
-    # --- hitung ulang & render ---
+        st.rerun()  # render ulang agar semua komponen pakai nilai baru
+
+    # --- ambil final lat/lon & render ---
+    lat, lon = float(st.session_state.lat), float(st.session_state.lon)
+
     bearing = _bearing_gc(lat, lon)
     dist_km  = _haversine_km(lat, lon)
     st.success(f"Arah Kiblat: **{bearing:.2f}°** dari utara. Jarak ke Ka'bah: **{dist_km:,.0f} km**.")
-    
+
     st.markdown("#### 📳 Kompas Realtime")
     html(_compass_html(bearing), height=260)
-    
+
     st.markdown("#### 🗺️ Peta Garis Kiblat")
     html(_map_html(lat, lon, bearing), height=420, scrolling=False)
 
     st.markdown("#### 🧭 Mode Manual (tanpa sensor)")
     st.caption("Kalau kompas di atas tidak bergerak (HP tidak mendukung sensor), gunakan mode manual ini.")
-    heading_manual = st.slider(
-        "Heading saya (0°=Utara, 90°=Timur, 180°=Selatan, 270°=Barat)",
-        min_value=0, max_value=359, value=0, step=1
-    )
+    heading_manual = st.slider("Heading saya (0°=Utara, 90°=Timur, 180°=Selatan, 270°=Barat)",
+                               min_value=0, max_value=359, value=0, step=1)
     delta = (bearing - heading_manual) % 360
-    colA, colB = st.columns([1,2])
+    colA, colB = st.columns([1, 2])
     with colA:
         html(_manual_compass_html(delta), height=200)
     with colB:
