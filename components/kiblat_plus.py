@@ -156,3 +156,50 @@ def show_kiblat_tab_plus():
             "- Arahkan badan menghadap **panah** pada kompas hingga di atas huruf **N**.  \n"
             "- Di dalam gedung tinggi/keramaian elektromagnetik, gunakan **peta** sebagai konfirmasi."
         )
+
+    # Kompas realtime (tetap ada)
+    st.markdown("#### 📳 Kompas Realtime")
+    html(_compass_html(bearing), height=260)
+
+    # === Fallback: Mode manual (tanpa sensor) ===
+    st.markdown("#### 🧭 Mode Manual (tanpa sensor)")
+    st.caption("Kalau kompas di atas tidak bergerak (HP tidak mendukung sensor), gunakan mode manual ini.")
+    heading_manual = st.slider(
+        "Heading saya (lihat kompas bawaan HP: 0°=Utara, 90°=Timur, 180°=Selatan, 270°=Barat)",
+        min_value=0, max_value=359, value=0, step=1
+    )
+    delta = (bearing - heading_manual) % 360
+    colA, colB = st.columns([1,2])
+    with colA:
+        html(_manual_compass_html(delta), height=200)
+    with colB:
+        st.info(
+            f"Arah Kiblat relatif ke Utara: **{bearing:.2f}°**.\n\n"
+            f"Heading kamu sekarang: **{heading_manual}°** → "
+            f"putar badan sampai panah ke **{delta:.1f}°** dari Utara (panah menghadap ke atas)."
+        )
+
+def _manual_compass_html(delta_deg: float) -> str:
+    # delta_deg = berapa derajat dari UTARA yang harus dihadapkan (0..360)
+    html_str = """
+    <style>
+      .dial { width:140px; height:140px; border:2px solid #444; border-radius:50%;
+              position:relative; background:radial-gradient(#111, #222); margin:auto; }
+      .north { position:absolute; top:6px; left:50%; transform:translateX(-50%); color:#bbb; font-size:12px; }
+      .arrow {
+        position:absolute; left:50%; top:50%;
+        width:0; height:0; transform-origin:50% 60px;
+        border-left:10px solid transparent; border-right:10px solid transparent;
+        border-bottom:50px solid #5cff8d; filter: drop-shadow(0 0 6px rgba(92,255,141,.25));
+      }
+    </style>
+    <div class="dial">
+      <div class="north">N</div>
+      <div class="arrow" style="transform: translate(-50%, -60px) rotate(__DELTA__deg);"></div>
+    </div>
+    <div style="text-align:center;color:#bbb;margin-top:6px;font-size:0.9rem;">
+      Arahkan ponsel sehingga panah menghadap ke atas (N). Itu arah kiblat.
+    </div>
+    """
+    return html_str.replace("__DELTA__", f"{delta_deg:.1f}")
+
