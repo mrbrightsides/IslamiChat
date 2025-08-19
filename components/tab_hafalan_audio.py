@@ -111,11 +111,31 @@ def show_hafalan_audio_tab():
 
     # Upload rekaman (audio-only)
     st.markdown("#### 🎧 Unggah Rekaman Bacaan")
-    audio = st.file_uploader("Pilih file audio (mp3/wav/m4a/webm)", type=["mp3","wav","m4a","webm"])
+    st.file_uploader(
+        "Pilih file audio (mp3/wav/m4a/webm)",
+        type=["mp3", "wav", "m4a", "webm"],
+        key="audio_upload",
+        on_change=_on_audio_change
+    )
 
     if "setor_audio_bytes" not in st.session_state:
         st.session_state.setor_audio_bytes = None
         st.session_state.setor_audio_name = None
+        st.session_state.setor_transcript = None
+    
+    # ==== handler perubahan uploader ====
+    def _on_audio_change():
+        upload = st.session_state.get("audio_upload")
+        if upload is None:
+            # user klik silang -> bersihkan state
+            st.session_state.setor_audio_bytes = None
+            st.session_state.setor_audio_name = None
+            st.session_state.setor_transcript = None
+    else:
+        # user pilih file baru -> simpan ke state
+        fname, data = _audio_file_meta(upload)
+        st.session_state.setor_audio_bytes = data
+        st.session_state.setor_audio_name = fname
         st.session_state.setor_transcript = None
 
     if audio is not None:
