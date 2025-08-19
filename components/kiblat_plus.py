@@ -1,39 +1,41 @@
 import math
 import streamlit as st
-import folium
 from streamlit.components.v1 import html
-from streamlit_js_eval import get_geolocation
 
-_HAS_GEOLOC = False
-try:
-    from streamlit_geolocation import geolocation as _geolocation
-    _HAS_GEOLOC = True
-except Exception:
-    try:
-        from streamlit_js_eval import get_geolocation as _get_geolocation
-        _HAS_GEOLOC = True
-    except Exception:
-        _HAS_GEOLOC = False
+# --- opsional: import folium hanya saat diperlukan ---
+def _lazy_import_folium():
+    import importlib
+    return importlib.import_module("folium")
 
-KAABA_LAT = 21.422487
-KAABA_LON = 39.826206
-
-def _bearing_gc(lat1, lon1, lat2=KAABA_LAT, lon2=KAABA_LON):
-    """Great-circle initial bearing (deg) from (lat1,lon1) to (lat2,lon2)."""
-    φ1, φ2 = math.radians(lat1), math.radians(lat2)
-    Δλ = math.radians(lon2 - lon1)
+# ============== UTIL ==============
+def _bearing_gc(lat, lon, lat2=21.422487, lon2=39.826206):
+    import math
+    φ1, φ2 = math.radians(lat), math.radians(lat2)
+    Δλ = math.radians(lon2 - lon)
     y = math.sin(Δλ) * math.cos(φ2)
     x = math.cos(φ1)*math.sin(φ2) - math.sin(φ1)*math.cos(φ2)*math.cos(Δλ)
-    brng = (math.degrees(math.atan2(y, x)) + 360) % 360
-    return brng
+    return (math.degrees(math.atan2(y, x)) + 360) % 360
 
-def _haversine_km(lat1, lon1, lat2=KAABA_LAT, lon2=KAABA_LON):
+def _haversine_km(lat, lon, lat2=21.422487, lon2=39.826206):
     R = 6371.0088
-    φ1, φ2 = math.radians(lat1), math.radians(lat2)
-    dφ = math.radians(lat2 - lat1)
-    dλ = math.radians(lon2 - lon1)
+    import math
+    φ1, φ2 = math.radians(lat), math.radians(lat2)
+    dφ = math.radians(lat2 - lat)
+    dλ = math.radians(lon2 - lon)
     a = math.sin(dφ/2)**2 + math.cos(φ1)*math.cos(φ2)*math.sin(dλ/2)**2
     return 2*R*math.asin(math.sqrt(a))
+
+@st.cache_data(show_spinner=False)
+def _cached_map_html(lat, lon, bearing, zoom=6):
+    """Bangun HTML peta satu kali per kombinasi parameter."""
+    folium = _lazy_import_folium()
+    m = folium.Map(location=[lat, lon], zoom_start=zoom, tiles="CartoDB positron")
+    folium.Marker([lat, lon], tooltip="Lokasi Anda").add_to(m)
+    folium.Marker([21.422487, 39.826206], tooltip="Ka'bah",
+                  icon=folium.Icon(color="green", icon="star")).add_to(m)
+    folium.PolyLine([[lat, lon], [21.422487, 39.826206]],
+                    tooltip=f"Garis Kiblat {bearing:.2f}°").add_to(m)
+    return m._repr_html_()
 
 def _map_html(lat, lon, bearing):
     m = folium.Map(location=[lat, lon], zoom_start=6, tiles="CartoDB positron")
@@ -172,61 +174,58 @@ def use_my_location(lat_default: float, lon_default: float):
 
 def show_kiblat_tab_plus():
     st.title("🧭 Arah Kiblat (Peta + Kompas)")
-    st.caption("Gunakan kompas realtime dan peta. Jika sensor tidak tersedia, pakai Mode Manual.")
+    st.caption("Kompas realtime + mode manual. Peta dibangun saat diminta agar ringan.")
 
-    # --- init state (sekali) ---
-    if "lat" not in st.session_state: st.session_state.lat = -2.990934   # Palembang
+    # --- init state ---
+    if "lat" not in st.session_state: st.session_state.lat = -2.990934
     if "lon" not in st.session_state: st.session_state.lon = 104.756554
     if "lat_input" not in st.session_state: st.session_state.lat_input = float(st.session_state.lat)
     if "lon_input" not in st.session_state: st.session_state.lon_input = float(st.session_state.lon)
 
-    # --- input terikat state ---
-    col1, col2 = st.columns(2)
-    with col1:
-        st.session_state.lat_input = st.number_input("Latitude", value=float(st.session_state.lat_input))
-    with col2:
-        st.session_state.lon_input = st.number_input("Longitude", value=float(st.session_state.lon_input))
-
-    # sinkronkan input -> state
+    # --- input ringan ---
+    c1, c2 = st.columns(2)
+    with c1: st.session_state.lat_input = st.number_input("Latitude", value=float(st.session_state.lat_input))
+    with c2: st.session_state.lon_input = st.number_input("Longitude", value=float(st.session_state.lon_input))
     st.session_state.lat = float(st.session_state.lat_input)
     st.session_state.lon = float(st.session_state.lon_input)
 
-    # --- tombol GPS -> override kalau berhasil (PANGGIL SEKALI SAJA) ---
+    # --- tombol GPS (panggil SEKALI) ---
     lat_new, lon_new, updated = use_my_location(st.session_state.lat, st.session_state.lon)
     if updated:
-        st.session_state.lat = lat_new
-        st.session_state.lon = lon_new
-        st.session_state.lat_input = float(lat_new)
-        st.session_state.lon_input = float(lon_new)
+        st.session_state.lat = lat_new; st.session_state.lon = lon_new
+        st.session_state.lat_input = float(lat_new); st.session_state.lon_input = float(lon_new)
         st.toast("Lokasi ter-update dari GPS", icon="📍")
-        st.rerun()  # render ulang agar semua komponen pakai nilai baru
+        st.rerun()  # rerun sekali saja saat GPS sukses
 
-    # --- ambil final lat/lon & render ---
-    lat, lon = float(st.session_state.lat), float(st.session_state.lon)
-
+    # --- hitung bearing/jarak (cepat) ---
+    lat, lon = st.session_state.lat, st.session_state.lon
     bearing = _bearing_gc(lat, lon)
-    dist_km  = _haversine_km(lat, lon)
+    dist_km = _haversine_km(lat, lon)
     st.success(f"Arah Kiblat: **{bearing:.2f}°** dari utara. Jarak ke Ka'bah: **{dist_km:,.0f} km**.")
 
+    # --- kompas realtime (ringan) ---
     st.markdown("#### 📳 Kompas Realtime")
     html(_compass_html(bearing), height=260)
 
-    st.markdown("#### 🗺️ Peta Garis Kiblat")
-    html(_map_html(lat, lon, bearing), height=420, scrolling=False)
+    # --- peta: TUNDA render sampai user minta ---
+    show_map = st.toggle("🗺️ Tampilkan peta garis ke Ka'bah", value=False)
+    if show_map:
+        zoom = st.slider("Zoom peta", 4, 12, 6, 1)
+        with st.spinner("Membangun peta…"):
+            map_html = _cached_map_html(lat, lon, bearing, zoom=zoom)
+        html(map_html, height=420, scrolling=False)
 
+    # --- mode manual (tetap ringan) ---
     st.markdown("#### 🧭 Mode Manual (tanpa sensor)")
-    st.caption("Kalau kompas di atas tidak bergerak (HP tidak mendukung sensor), gunakan mode manual ini.")
-    heading_manual = st.slider("Heading saya (0°=Utara, 90°=Timur, 180°=Selatan, 270°=Barat)",
-                               min_value=0, max_value=359, value=0, step=1)
+    heading_manual = st.slider("Heading saya (0°=Utara, 90°=Timur, 180°=Selatan, 270°=Barat)", 0, 359, 0, 1)
     delta = (bearing - heading_manual) % 360
-    colA, colB = st.columns([1, 2])
-    with colA:
-        html(_manual_compass_html(delta), height=200)
-    with colB:
+    a, b = st.columns([1,2])
+    with a: html(_manual_compass_html(delta), height=200)
+    with b:
         st.info(
             f"Arah Kiblat relatif ke Utara: **{bearing:.2f}°**.\n\n"
             f"Heading kamu sekarang: **{heading_manual}°** → "
-            f"putar badan sampai panah ke **{delta:.1f}°** dari Utara (panah menghadap ke atas)."
+            f"putar badan sampai panah ke **{delta:.1f}°** dari Utara."
         )
 
 def _manual_compass_html(delta_deg: float) -> str:
