@@ -133,7 +133,15 @@ def _manual_compass_html(delta_deg: float) -> str:
     return html_str.replace("__DELTA__", f"{delta_deg:.1f}")
 
 # ==== Ambil lokasi hanya saat tombol diklik (anti-loop & tahan error) ====
+from streamlit_js_eval import get_geolocation
+
 def use_my_location(lat_default: float, lon_default: float):
+    """
+    Non-blocking geolocation:
+    - Ambil lokasi hanya saat tombol di-klik.
+    - Tanpa spinner supaya tidak 'menggelapkan' layar kalau promise hang.
+    - Rerun hanya kalau dapat koordinat.
+    """
     colA, colB = st.columns([1, 3])
     with colA:
         clicked = st.button("📍 Gunakan Lokasi Saya", key="btn_geo", use_container_width=True)
@@ -144,23 +152,27 @@ def use_my_location(lat_default: float, lon_default: float):
     if not clicked:
         return lat, lon, updated
 
+    # Panggil sekali – tanpa spinner (anti 'ngilang')
     try:
-        with st.spinner("Mengambil lokasi dari browser…"):
-            loc = get_geolocation()  # bisa None jika izin belum diberi
+        loc = get_geolocation()
     except Exception as e:
         st.warning(f"Tidak bisa mengambil lokasi: {e}")
         return lat, lon, updated
 
+    # Bentuk balikan bisa flat atau di bawah 'coords'
     if isinstance(loc, dict):
         if "coords" in loc and isinstance(loc["coords"], dict):
             c = loc["coords"]
             if "latitude" in c and "longitude" in c:
-                lat, lon = float(c["latitude"]), float(c["longitude"]); updated = True
+                lat, lon = float(c["latitude"]), float(c["longitude"])
+                updated = True
         elif "latitude" in loc and "longitude" in loc:
-            lat, lon = float(loc["latitude"]), float(loc["longitude"]); updated = True
+            lat, lon = float(loc["latitude"]), float(loc["longitude"])
+            updated = True
 
     if updated:
         st.success("Lokasi berhasil diambil dari GPS ✅")
+        # biarkan caller yang melakukan st.rerun() supaya konsisten
     else:
         st.info("Belum menerima koordinat. Klik lagi atau cek izin lokasi di browser.")
 
