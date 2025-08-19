@@ -135,31 +135,44 @@ def _compass_html(qibla_deg: float) -> str:
     return html_str.replace("__QIBLA__", f"{qibla_deg:.6f}")
 
 def use_my_location(lat_default: float, lon_default: float):
-    """
-    Klik tombol -> minta izin -> jika browser mengembalikan koordinat,
-    return lat/lon baru. Jika None, jangan tulis 'gagal'—minta user klik lagi.
-    """
+    # state kecil buat melacak jumlah klik agar pemanggilan tidak kecache
+    if "geo_clicks" not in st.session_state:
+        st.session_state.geo_clicks = 0
+
     colA, colB = st.columns([1, 3])
     with colA:
-        clicked = st.button("📍 Gunakan Lokasi Saya", use_container_width=True)
+        if st.button("📍 Gunakan Lokasi Saya", use_container_width=True):
+            st.session_state.geo_clicks += 1
     with colB:
-        st.caption("Jika diminta, izinkan akses lokasi pada browser.")
+        st.caption("Jika diminta, izinkan akses lokasi pada browser (HTTPS wajib).")
 
     lat, lon = lat_default, lon_default
-    if not clicked:
-        return lat, lon, False  # False = belum update
+    updated = False
 
-    with st.spinner("Mengambil lokasi dari browser…"):
-        loc = get_geolocation()  # bisa balik None dulu
-    if isinstance(loc, dict) and "latitude" in loc and "longitude" in loc:
-        lat = float(loc["latitude"])
-        lon = float(loc["longitude"])
-        st.success("Lokasi berhasil diambil dari GPS.")
-        return lat, lon, True
+    # Hanya coba ambil lokasi kalau tombol sudah pernah diklik
+    if st.session_state.geo_clicks > 0:
+        # kunci unik per klik → cegah cache/hasil lama
+        key = f"geo_req_{st.session_state.geo_clicks}"
+        with st.spinner("Mengambil lokasi dari browser…"):
+            loc = get_geolocation(key=key)
 
-    # Tidak error—hanya info agar user coba lagi
-    st.info("Belum menerima koordinat. Coba klik lagi atau cek izin lokasi (HTTPS wajib).")
-    return lat, lon, False
+        # Beberapa browser kirim dict flat, sebagian kirim di bawah 'coords'
+        if isinstance(loc, dict):
+            if "coords" in loc and isinstance(loc["coords"], dict):
+                c = loc["coords"]
+                if "latitude" in c and "longitude" in c:
+                    lat, lon = float(c["latitude"]), float(c["longitude"])
+                    updated = True
+            elif "latitude" in loc and "longitude" in loc:
+                lat, lon = float(loc["latitude"]), float(loc["longitude"])
+                updated = True
+
+        if updated:
+            st.success("Lokasi berhasil diambil dari GPS ✅")
+        else:
+            st.info("Belum menerima koordinat. Coba klik tombolnya lagi atau cek izin lokasi.")
+
+    return lat, lon, updated
 
 def show_kiblat_tab_plus():
     st.title("🧭 Arah Kiblat (Peta + Kompas)")
@@ -170,12 +183,14 @@ def show_kiblat_tab_plus():
 
     col1, col2 = st.columns(2)
     with col1:
-        lat = st.number_input("Latitude", value=default_lat, help="Contoh: Palembang ≈ -2.990934")
+        lat = st.number_input("Latitude", value=default_lat)
     with col2:
-        lon = st.number_input("Longitude", value=default_lon, help="Contoh: Palembang ≈ 104.756554")
+        lon = st.number_input("Longitude", value=default_lon)
 
     # Tombol GPS → override lat/lon jika berhasil
-    lat, lon, _ = use_my_location(lat, lon)
+    lat, lon, updated = use_my_location(lat, lon)
+    if updated:
+        st.toast("Lokasi ter-update dari GPS", icon="📍")
 
     # Hitung bearing & jarak seperti sebelumnya…
     bearing = _bearing_gc(lat, lon)
