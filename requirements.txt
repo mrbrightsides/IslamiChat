@@ -7,3 +7,5 @@ pandas
 markdownify
 streamlit-folium==0.20.0
 folium==0.17.0
+streamlit-geolocation==0.0.11
+streamlit-js-eval==0.1.7
