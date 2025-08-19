@@ -50,7 +50,7 @@ from components.tab_hafalan_audio import show_hafalan_audio_tab
 from components.zikir import show_zikir_tab
 
 # ===== Komponen: Doa Harian =====
-from components.zikir import show_doa_harian
+from components.doa_harian import show_doa_harian
 
 # ===== Page setup =====
 st.set_page_config(page_title="IslamiChat 🤖🌸", layout="wide")
