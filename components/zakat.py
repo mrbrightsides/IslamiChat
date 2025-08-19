@@ -79,8 +79,8 @@ def zakat_kalkulator():
     # === HARGA EMAS: otomatis + fallback manual ===
     col0a, col0b = st.columns([1,1])
     with col0a:
-        use_auto = st.toggle("Gunakan harga emas otomatis", value=True,
-                             help="Butuh GOLDAPI_KEY di st.secrets. Fallback ke input manual jika gagal.")
+        use_auto = st.toggle("Gunakan harga emas otomatis", value=False,
+                             help="Gunakan harga emas manual jika data otomatis tidak tersedia.")
     with col0b:
         if st.button("🔄 Reload harga emas"):
             fetch_gold_price_idr_per_gram.clear()
