@@ -137,6 +137,12 @@ def show_hafalan_audio_tab():
         on_change=_on_audio_change
     )
 
+    has_audio = bool(st.session_state.get("setor_audio_bytes"))
+
+    if not has_audio:
+        st.info("Unggah rekaman bacaanmu untuk mulai setoran.")
+        st.stop()
+
     if st.session_state.setor_audio_bytes:
         st.audio(st.session_state.setor_audio_bytes, format="audio/*")
         st.success("Rekaman siap. Anda bisa mengirim rekaman ini ke ustadz untuk dinilai atau gunakan tombol analisa otomatis menggunakan AI di bawah.")
