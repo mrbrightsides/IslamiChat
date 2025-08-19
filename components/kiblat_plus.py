@@ -139,36 +139,38 @@ def _compass_html(qibla_deg: float) -> str:
 from streamlit_js_eval import get_geolocation
 
 def use_my_location(lat_default: float, lon_default: float):
-    if "geo_clicks" not in st.session_state:
-        st.session_state.geo_clicks = 0
-
+    """Ambil lokasi hanya saat tombol diklik. Tidak menyimpan counter, anti-loop."""
     colA, colB = st.columns([1, 3])
     with colA:
-        if st.button("📍 Gunakan Lokasi Saya", use_container_width=True):
-            st.session_state.geo_clicks += 1
+        clicked = st.button("📍 Gunakan Lokasi Saya", use_container_width=True)
     with colB:
         st.caption("Jika diminta, izinkan akses lokasi pada browser (HTTPS wajib).")
 
+    # default (tidak ada perubahan)
     lat, lon, updated = lat_default, lon_default, False
 
-    if st.session_state.geo_clicks > 0:
-        with st.spinner("Mengambil lokasi dari browser…"):
-            loc = get_geolocation()   # tanpa argumen
+    if not clicked:
+        return lat, lon, updated  # tidak melakukan apa-apa di rerun normal
 
-        if isinstance(loc, dict):
-            if "coords" in loc and isinstance(loc["coords"], dict):
-                c = loc["coords"]
-                if "latitude" in c and "longitude" in c:
-                    lat, lon = float(c["latitude"]), float(c["longitude"])
-                    updated = True
-            elif "latitude" in loc and "longitude" in loc:
-                lat, lon = float(loc["latitude"]), float(loc["longitude"])
+    # Hanya ketika tombol ditekan:
+    with st.spinner("Mengambil lokasi dari browser…"):
+        loc = get_geolocation()
+
+    # beberapa browser kirim di bawah 'coords'
+    if isinstance(loc, dict):
+        if "coords" in loc and isinstance(loc["coords"], dict):
+            c = loc["coords"]
+            if "latitude" in c and "longitude" in c:
+                lat, lon = float(c["latitude"]), float(c["longitude"])
                 updated = True
+        elif "latitude" in loc and "longitude" in loc:
+            lat, lon = float(loc["latitude"]), float(loc["longitude"])
+            updated = True
 
-        if updated:
-            st.success("Lokasi berhasil diambil dari GPS ✅")
-        else:
-            st.info("Belum menerima koordinat. Coba klik tombolnya lagi atau cek izin lokasi.")
+    if updated:
+        st.success("Lokasi berhasil diambil dari GPS ✅")
+    else:
+        st.info("Belum menerima koordinat. Coba klik tombolnya lagi atau cek izin lokasi.")
 
     return lat, lon, updated
 
