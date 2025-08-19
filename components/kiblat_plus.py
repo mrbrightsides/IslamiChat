@@ -2,6 +2,7 @@ import math
 import streamlit as st
 import folium
 from streamlit.components.v1 import html
+from streamlit_js_eval import get_geolocation
 
 _HAS_GEOLOC = False
 try:
@@ -133,12 +134,10 @@ def _compass_html(qibla_deg: float) -> str:
     """
     return html_str.replace("__QIBLA__", f"{qibla_deg:.6f}")
 
-def _use_my_location(lat_default: float, lon_default: float):
+def use_my_location(lat_default: float, lon_default: float):
     """
-    Tampilkan tombol 'Gunakan Lokasi Saya' lalu kembalikan (lat, lon) terbaru.
-    Prioritas:
-      1) streamlit-geolocation
-      2) streamlit-js-eval
+    Klik tombol -> minta izin -> jika browser mengembalikan koordinat,
+    return lat/lon baru. Jika None, jangan tulis 'gagal'—minta user klik lagi.
     """
     colA, colB = st.columns([1, 3])
     with colA:
@@ -147,39 +146,20 @@ def _use_my_location(lat_default: float, lon_default: float):
         st.caption("Jika diminta, izinkan akses lokasi pada browser.")
 
     lat, lon = lat_default, lon_default
-
     if not clicked:
-        return lat, lon
+        return lat, lon, False  # False = belum update
 
-    # Opsi 1: streamlit-geolocation
-    try:
-        from streamlit_geolocation import geolocation as _geolocation
-        loc = _geolocation()
-        if loc and "latitude" in loc and "longitude" in loc:
-            lat, lon = float(loc["latitude"]), float(loc["longitude"])
-            st.success("Lokasi berhasil diambil dari GPS.")
-            return lat, lon
-    except Exception:
-        pass
+    with st.spinner("Mengambil lokasi dari browser…"):
+        loc = get_geolocation()  # bisa balik None dulu
+    if isinstance(loc, dict) and "latitude" in loc and "longitude" in loc:
+        lat = float(loc["latitude"])
+        lon = float(loc["longitude"])
+        st.success("Lokasi berhasil diambil dari GPS.")
+        return lat, lon, True
 
-    # Opsi 2: streamlit-js-eval
-    try:
-        from streamlit_js_eval import get_geolocation as _get_geolocation
-        loc = _get_geolocation()
-        # library ini kadang mengembalikan dict rata atau di bawah 'coords'
-        if loc:
-            if isinstance(loc, dict) and "coords" in loc:
-                c = loc["coords"]
-                lat, lon = float(c.get("latitude")), float(c.get("longitude"))
-            elif isinstance(loc, dict) and "latitude" in loc and "longitude" in loc:
-                lat, lon = float(loc["latitude"]), float(loc["longitude"])
-            st.success("Lokasi berhasil diambil dari GPS.")
-            return lat, lon
-    except Exception:
-        pass
-
-    st.warning("Gagal mengambil lokasi otomatis. Pastikan https aktif & izin lokasi diberikan.")
-    return lat, lon
+    # Tidak error—hanya info agar user coba lagi
+    st.info("Belum menerima koordinat. Coba klik lagi atau cek izin lokasi (HTTPS wajib).")
+    return lat, lon, False
 
 def show_kiblat_tab_plus():
     st.title("🧭 Arah Kiblat (Peta + Kompas)")
