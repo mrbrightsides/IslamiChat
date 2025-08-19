@@ -14,9 +14,7 @@ from components.waktu_sholat import (
 )
 
 # ===== Komponen: Kiblat =====
-from components.kiblat import (
-    show_qibla_direction, geocode_cached, qibla_bearing, KAABA_LAT, KAABA_LON
-)
+from components.kiblat_plus import show_kiblat_tab_plus
 
 # ===== Komponen: Zakat =====
 from components.zakat import (
@@ -142,7 +140,7 @@ with tabs[2]:
 
 # === Tab 3: Kiblat ===
 with tabs[3]:
-    show_qibla_direction()
+    show_kiblat_tab_plus()
 
 # === Tab 4: Kalkulator Zakat ===
 with tabs[4]:
