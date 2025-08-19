@@ -8,23 +8,30 @@ def load_doa():
 def show_doa_harian():
     data = load_doa()
     st.title("📖 Doa Harian (Hisnul Muslim)")
+
+    # pilih kategori
     cats = sorted(set(item["category"] for item in data))
     cat = st.selectbox("Kategori", cats, index=0)
+
+    # filter doa berdasarkan kategori
     items = [d for d in data if d["category"] == cat]
-    opt = st.selectbox("Pilih doa", [f'{d["title"]}' for d in items])
+    opt = st.selectbox("Pilih doa", [d["title"] for d in items])
     doa = next(d for d in items if d["title"] == opt)
 
+    # tampilkan konten doa
     st.subheader(doa["title"])
     st.markdown(f"**Arab:**\n\n{doa['arab']}")
     st.markdown(f"**Latin:**\n\n{doa['latin']}")
     st.info(f"**Arti:** {doa['translation_id']}")
+    st.caption(f"Sumber: {doa['source']}")
+
+    # audio opsional
     if doa.get("audio_url"):
         st.audio(doa["audio_url"])
 
-    # Tombol copy / share (opsional)
-    if st.button("📋 Copy ke Clipboard"):
-        st.toast("Teks doa sudah disalin ✅")
+    # copy teks doa (pakai text_area supaya bisa di-copy manual)
+    st.text_area("📋 Salin teks doa:", f"{doa['arab']}\n\n{doa['latin']}\n\n{doa['translation_id']}", height=150)
 
-    # Tombol play audio (kalau ada file audio)
-    if st.button("🔊 Play Audio"):
-        st.audio("https://example.com/doa.mp3")  # ganti dengan URL audio asli
+    # share (opsional: buat URL Whatsapp)
+    share_url = f"https://wa.me/?text={doa['title']}%0A{doa['arab']}%0A{doa['latin']}%0A{doa['translation_id']}"
+    st.markdown(f"[🔗 Share via WhatsApp]({share_url})")
