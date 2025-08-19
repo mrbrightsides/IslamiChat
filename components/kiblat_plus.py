@@ -33,34 +33,33 @@ def _map_html(lat, lon, bearing):
                     tooltip=f"Garis Kiblat {bearing:.2f}°").add_to(m)
     return m._repr_html_()
 
-def _compass_html(qibla_deg):
-    # Kompas realtime; arah = qibla_deg - heading_device
-    return f"""
+def _compass_html(qibla_deg: float) -> str:
+    # Pakai placeholder __QIBLA__ lalu replace -> aman dari kurung kurawal CSS/JS
+    html_str = """
     <style>
-      .compass-wrap {{
+      .compass-wrap {
         display:flex; align-items:center; justify-content:center;
         height:180px; margin:8px 0 4px 0;
-      }}
-      .dial {{ width:140px; height:140px; border:2px solid #444; border-radius:50%;
-              position:relative; background:radial-gradient(#111, #222); }}
-      .tick {{ position:absolute; left:50%; top:2px; width:2px; height:10px; background:#777; transform-origin:50% 68px; }}
-      .north {{ position:absolute; top:6px; left:50%; transform:translateX(-50%); color:#bbb; font-size:12px; }}
-      .arrow {{
+      }
+      .dial { width:140px; height:140px; border:2px solid #444; border-radius:50%;
+              position:relative; background:radial-gradient(#111, #222); }
+      .tick { position:absolute; left:50%; top:2px; width:2px; height:10px; background:#777; transform-origin:50% 68px; }
+      .north { position:absolute; top:6px; left:50%; transform:translateX(-50%); color:#bbb; font-size:12px; }
+      .arrow {
         position:absolute; left:50%; top:50%;
         width:0; height:0; transform-origin:50% 60px;
         border-left:10px solid transparent; border-right:10px solid transparent;
-        border-bottom:50px solid #5cff8d;  /* jangan ganti warna di sini bila pakai tema gelap */
+        border-bottom:50px solid #5cff8d;
         filter: drop-shadow(0 0 6px rgba(92,255,141,.25));
-      }}
-      .legend {{ text-align:center; color:#bbb; font-size:0.9rem; }}
-      .perm-btn {{
+      }
+      .legend { text-align:center; color:#bbb; font-size:0.9rem; }
+      .perm-btn {
         display:inline-block; padding:6px 10px; border:1px solid #666; border-radius:6px; cursor:pointer; margin-top:6px; color:#ddd;
-      }}
+      }
     </style>
     <div class="compass-wrap">
       <div class="dial" id="dial">
         <div class="north">N</div>
-        <!-- beberapa tanda tick -->
         <div class="tick" style="transform:rotate(0deg) translateX(-1px);"></div>
         <div class="tick" style="transform:rotate(90deg) translateX(-1px);"></div>
         <div class="tick" style="transform:rotate(180deg) translateX(-1px);"></div>
@@ -77,51 +76,52 @@ def _compass_html(qibla_deg):
     </div>
 
     <script>
-      const QIBLA = {qibla_deg:.6f};  // dari Python
+      const QIBLA = __QIBLA__;  // derajat dari utara, searah jarum jam
       const arrow = document.getElementById('arrow');
       const readout = document.getElementById('readout');
       const permBox = document.getElementById('perm');
 
       function updateArrow(heading){
         // heading: 0=N, searah jarum jam
-        const delta = ((QIBLA - heading) % 360 + 360) % 360; // sudut yang harus dituju relatif ke N perangkat
-        arrow.style.transform = `translate(-50%, -60px) rotate(${delta}deg)`;
-        readout.textContent = `Heading: ${heading.toFixed(1)}°  |  Kiblat: ${QIBLA.toFixed(2)}°  |  Delta: ${delta.toFixed(1)}°`;
+        const delta = ((QIBLA - heading) % 360 + 360) % 360;
+        // hindari template literal biar aman dari f-string: pakai concatenation
+        arrow.style.transform = 'translate(-50%, -60px) rotate(' + delta + 'deg)';
+        readout.textContent = 'Heading: ' + heading.toFixed(1) + '°  |  Kiblat: ' +
+                              QIBLA.toFixed(2) + '°  |  Delta: ' + delta.toFixed(1) + '°';
       }
 
       function onOrient(e){
-        // Safari/iOS kadang pakai webkitCompassHeading
         let heading = null;
-        if (e.webkitCompassHeading !== undefined) {{
-          heading = e.webkitCompassHeading; // 0..360, 0=N
-        }} else if (e.absolute === true && e.alpha !== null) {{
-          // alpha: relatif ke utara magnet (kadang butuh koreksi), cukup untuk panduan
-          heading = 360 - e.alpha; // kira-kira 0=N
-        }}
+        if (e.webkitCompassHeading !== undefined) {
+          heading = e.webkitCompassHeading;
+        } else if (e.absolute === true && e.alpha !== null) {
+          heading = 360 - e.alpha;
+        }
         if (heading !== null) updateArrow((heading%360+360)%360);
       }
 
       function start(){
-        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {{
-          // iOS: perlu izin sentuh
+        if (typeof DeviceOrientationEvent !== 'undefined' &&
+            typeof DeviceOrientationEvent.requestPermission === 'function') {
           permBox.style.display = 'block';
-        }} else {{
+        } else {
           window.addEventListener('deviceorientation', onOrient, true);
-        }}
+        }
       }
 
-      function reqPerm(){{
-        DeviceOrientationEvent.requestPermission().then(state => {{
-          if (state === 'granted') {{
+      function reqPerm(){
+        DeviceOrientationEvent.requestPermission().then(state => {
+          if (state === 'granted') {
             window.addEventListener('deviceorientation', onOrient, true);
             permBox.style.display = 'none';
-          }}
-        }}).catch(console.warn);
-      }}
+          }
+        }).catch(console.warn);
+      }
 
       start();
     </script>
     """
+    return html_str.replace("__QIBLA__", f"{qibla_deg:.6f}")
 
 def show_kiblat_tab_plus():
     st.title("🧭 Arah Kiblat (Peta + Kompas)")
