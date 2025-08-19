@@ -189,5 +189,3 @@ def show_hafalan_audio_tab():
                 st.markdown("**Hasil transkrip (eksperimental):**")
                 st.write(st.session_state.setor_transcript)
                 st.caption("Catatan: transkrip bisa berbeda dari teks mushaf. Verifikasi ke ustadz pembimbing.")
-    else:
-        st.info("Unggah rekaman bacaanmu untuk mulai setoran.")
