@@ -136,17 +136,12 @@ def show_hafalan_audio_tab():
         key="audio_upload",
         on_change=_on_audio_change
     )
-    
-    # ==== Render lanjutan ====
-    if st.session_state.setor_audio_bytes:
-        st.audio(st.session_state.setor_audio_bytes, format="audio/*")
-        st.success("Rekaman siap. Anda bisa kirim WA atau jalankan analisa opsional di bawah.")
-    else:
-        st.info("Unggah rekaman bacaanmu untuk mulai setoran.")
 
     if st.session_state.setor_audio_bytes:
         st.audio(st.session_state.setor_audio_bytes, format="audio/*")
         st.success("Rekaman siap. Anda bisa mengirim rekaman ini ke ustadz untuk dinilai atau gunakan tombol analisa otomatis menggunakan AI di bawah.")
+    else:
+        st.info("Unggah rekaman bacaanmu untuk mulai setoran.")
 
         summary = (
             f"{WA_GREETING}\n"
