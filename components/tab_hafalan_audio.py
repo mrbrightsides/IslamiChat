@@ -126,44 +126,28 @@ def show_hafalan_audio_tab():
 
     if st.session_state.setor_audio_bytes:
         st.audio(st.session_state.setor_audio_bytes, format="audio/*")
-        st.success("Rekaman siap. Kamu bisa simpan, kirim WA, atau hapus rekaman.")
-        # ===== Aksi utama =====
-        colA, colB, colC = st.columns([1,1,1])
-        with colA:
-            st.download_button(
-                "⬇️ Simpan rekaman",
-                data=st.session_state.setor_audio_bytes,
-                file_name=st.session_state.setor_audio_name,
-                mime="audio/*",
-                use_container_width=True
-            )
-        with colB:
-            # Ringkasan untuk prefill WA
-            summary = (
-                f"{WA_GREETING}\n"
-                f"- Surah: {MUSHAF[surah_key]['name']} ({surah_key})\n"
-                f"- Ayat: {start}–{end}\n"
-                f"(Audio terlampir)"
-            )
-            # Dropdown tujuan (ustadz atau umum)
-            tujuan = st.selectbox(
-                "Kirim ke:",
-                ["Buka WA (pilih kontak sendiri)"] + [u["name"] for u in USTADZ_LIST],
-                index=0
-            )
-            if tujuan == "Buka WA (pilih kontak sendiri)":
-                wa = ""
-            else:
-                wa = next((u["wa"] for u in USTADZ_LIST if u["name"] == tujuan), "")
-            wa_link = wa_prefill_link(wa, summary)
-            st.link_button("💬 Kirim ke WhatsApp", wa_link if wa_link else "#", use_container_width=True)
-        with colC:
-            if st.button("❌ Hapus rekaman", type="secondary", use_container_width=True):
-                st.session_state.setor_audio_bytes = None
-                st.session_state.setor_audio_name = None
-                st.session_state.setor_transcript = None
-                st.toast("Rekaman dihapus dari sesi ini.", icon="🗑️")
-                st.experimental_rerun()
+        st.success("Rekaman siap. Anda bisa mengirim rekaman ini ke ustadz untuk dinilai atau gunakan tombol analisa otomatis menggunakan AI di bawah.")
+
+        summary = (
+            f"{WA_GREETING}\n"
+            f"- Surah: {MUSHAF[surah_key]['name']} ({surah_key})\n"
+            f"- Ayat: {start}–{end}\n"
+            f"(Audio terlampir)"
+        )
+        
+        tujuan = st.selectbox(
+            "Kirim ke:",
+            ["Buka WA (pilih kontak sendiri)"] + [u["name"] for u in USTADZ_LIST],
+            index=0
+        )
+        
+        wa = "" if tujuan == "Buka WA (pilih kontak sendiri)" else next(
+            (u["wa"] for u in USTADZ_LIST if u["name"] == tujuan), ""
+        )
+        
+        wa_link = wa_prefill_link(wa, summary)
+        st.link_button("💬 Kirim ke WhatsApp", wa_link if wa_link else "#", use_container_width=True)
+
 
         st.divider()
 
