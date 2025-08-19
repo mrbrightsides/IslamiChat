@@ -137,7 +137,7 @@ def show_hafalan_audio_tab():
         
         tujuan = st.selectbox(
             "Kirim ke:",
-            ["Buka WA (pilih kontak sendiri)"] + [u["name"] for u in USTADZ_LIST],
+            ["Pilih Ustadz"] + [u["name"] for u in USTADZ_LIST],
             index=0
         )
         
