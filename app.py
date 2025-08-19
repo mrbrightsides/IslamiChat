@@ -46,6 +46,9 @@ from components.chat_ustadz import show_chat_ustadz_tab
 # ===== Komponen: Hafalan =====
 from components.tab_hafalan_audio import show_hafalan_audio_tab
 
+# ===== Komponen: Hafalan =====
+from components.zikir import show_zikir_tab
+
 # ===== Page setup =====
 st.set_page_config(page_title="IslamiChat 🤖🌸", layout="wide")
 st.title("IslamiChat = Tanya Jawab + Waktu Sholat")
@@ -63,7 +66,8 @@ tabs = st.tabs([
     "🗣️ KhutbahGPT",
     "📺 Live TV",
     "📞 Chat Ustadz",
-    "🎙️ Setor Hafalan"
+    "🎙️ Setor Hafalan",
+    "🧿 Zikir"
 ])
 
 # ===== Tab: Chatbot =====
@@ -175,3 +179,7 @@ with tabs[9]:
 # === Tab 10: Hafalan ===
 with tabs[10]:
     show_hafalan_audio_tab()
+
+# === Tab 11: Hafalan ===
+with tabs[11]:
+    show_zikir_tab()
