@@ -31,7 +31,7 @@ def show_doa_harian():
 
     copy_button(f"{doa['arab']}\n\n{doa['latin']}\n\n{doa['translation_id']}")
 
-import streamlit as st
+from streamlit.components.v1 import html
 
 def copy_button(text_to_copy: str):
     copy_code = f"""
@@ -53,8 +53,23 @@ def copy_button(text_to_copy: str):
     }}
     </style>
 
-    <button class="copy-btn" onclick="navigator.clipboard.writeText(`{text_to_copy}`)">
+    <button class="copy-btn" onclick="navigator.clipboard.writeText(`{text_to_copy}`); 
+        var toast=document.createElement('div');
+        toast.innerText='✅ Doa disalin!';
+        toast.style.position='fixed';
+        toast.style.bottom='20px';
+        toast.style.right='20px';
+        toast.style.background='#333';
+        toast.style.color='#fff';
+        toast.style.padding='10px 14px';
+        toast.style.borderRadius='6px';
+        toast.style.fontSize='14px';
+        toast.style.zIndex='9999';
+        document.body.appendChild(toast);
+        setTimeout(()=>toast.remove(),2000);
+    ">
         📋 Copy Doa
     </button>
     """
-    st.markdown(copy_code, unsafe_allow_html=True)
+    html(copy_code, height=60)
+
