@@ -134,6 +134,41 @@ def _compass_html(qibla_deg: float) -> str:
     """
     return html_str.replace("__QIBLA__", f"{qibla_deg:.6f}")
 
+from streamlit_js_eval import get_geolocation
+
+def use_my_location(lat_default: float, lon_default: float):
+    if "geo_clicks" not in st.session_state:
+        st.session_state.geo_clicks = 0
+
+    colA, colB = st.columns([1, 3])
+    with colA:
+        if st.button("📍 Gunakan Lokasi Saya", use_container_width=True):
+            st.session_state.geo_clicks += 1
+    with colB:
+        st.caption("Jika diminta, izinkan akses lokasi pada browser (HTTPS wajib).")
+
+    lat, lon, updated = lat_default, lon_default, False
+
+    if st.session_state.geo_clicks > 0:
+        with st.spinner("Mengambil lokasi dari browser…"):
+            loc = get_geolocation()   # tanpa argumen
+
+        if isinstance(loc, dict):
+            if "coords" in loc and isinstance(loc["coords"], dict):
+                c = loc["coords"]
+                if "latitude" in c and "longitude" in c:
+                    lat, lon = float(c["latitude"]), float(c["longitude"])
+                    updated = True
+            elif "latitude" in loc and "longitude" in loc:
+                lat, lon = float(loc["latitude"]), float(loc["longitude"])
+                updated = True
+
+        if updated:
+            st.success("Lokasi berhasil diambil dari GPS ✅")
+        else:
+            st.info("Belum menerima koordinat. Coba klik tombolnya lagi atau cek izin lokasi.")
+
+    return lat, lon, updated
 
 def show_kiblat_tab_plus():
     st.title("🧭 Arah Kiblat (Peta + Kompas)")
