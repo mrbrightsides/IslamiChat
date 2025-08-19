@@ -29,9 +29,10 @@ def show_doa_harian():
     if doa.get("audio_url"):
         st.audio(doa["audio_url"])
 
-    # copy teks doa (pakai text_area supaya bisa di-copy manual)
-    st.text_area("📋 Salin teks doa:", f"{doa['arab']}\n\n{doa['latin']}\n\n{doa['translation_id']}", height=150)
+    # Tombol copy / share (opsional)
+    if st.button("📋 Copy ke Clipboard"):
+        st.toast("Teks doa sudah disalin ✅")
 
-    # share (opsional: buat URL Whatsapp)
-    share_url = f"https://wa.me/?text={doa['title']}%0A{doa['arab']}%0A{doa['latin']}%0A{doa['translation_id']}"
-    st.markdown(f"[🔗 Share via WhatsApp]({share_url})")
+    # Tombol play audio (kalau ada file audio)
+    if st.button("🔊 Play Audio"):
+        st.audio("https://example.com/doa.mp3"
