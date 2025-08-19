@@ -109,67 +109,58 @@ def show_hafalan_audio_tab():
 
     st.divider()
 
+    # ==== State awal ====
     if "setor_audio_bytes" not in st.session_state:
         st.session_state.setor_audio_bytes = None
         st.session_state.setor_audio_name = None
         st.session_state.setor_transcript = None
     
-    # ==== Handler perubahan uploader ====
-    def _on_audio_change():
-        upload = st.session_state.get("audio_upload")
-        if upload is None:
-            # user klik silang -> bersihkan state
+    st.markdown("#### 🎧 Unggah Rekaman Bacaan")
+    upload = st.file_uploader(
+        "Pilih file audio (mp3/wav/m4a/webm)",
+        type=["mp3", "wav", "m4a", "webm"],
+        key="audio_upload"
+    )
+    
+    # ==== Sinkronisasi state (tanpa on_change, tanpa st.stop) ====
+    if upload is None:
+        # user belum upload / klik ❌
+        if st.session_state.setor_audio_bytes is not None:
             st.session_state.setor_audio_bytes = None
             st.session_state.setor_audio_name = None
             st.session_state.setor_transcript = None
-        else:
-            # user pilih file -> simpan ke state
+    else:
+        # user pilih file; kalau baru/berbeda -> simpan
+        if (
+            st.session_state.setor_audio_bytes is None
+            or st.session_state.setor_audio_name != upload.name
+        ):
             fname, data = _audio_file_meta(upload)
             st.session_state.setor_audio_bytes = data
             st.session_state.setor_audio_name = fname
-            st.session_state.setor_transcript = None
+            st.session_state.setor_transcript = None  # reset transkrip
     
-    st.markdown("#### 🎧 Unggah Rekaman Bacaan")
-    st.file_uploader(
-        "Pilih file audio (mp3/wav/m4a/webm)",
-        type=["mp3", "wav", "m4a", "webm"],
-        key="audio_upload",
-        on_change=_on_audio_change
-    )
-
-    has_audio = bool(st.session_state.get("setor_audio_bytes"))
-
-    if not has_audio:
-        st.info("Unggah rekaman bacaanmu untuk mulai setoran.")
-        st.stop()
-
+    # ==== Render lanjut hanya jika ada audio di state ====
     if st.session_state.setor_audio_bytes:
         st.audio(st.session_state.setor_audio_bytes, format="audio/*")
-        st.success("Rekaman siap. Anda bisa mengirim rekaman ini ke ustadz untuk dinilai atau gunakan tombol analisa otomatis menggunakan AI di bawah.")
-    else:
-        st.info("Unggah rekaman bacaanmu untuk mulai setoran.")
-
+        st.success("Rekaman siap. Anda bisa kirim ke ustadz atau gunakan analisa otomatis di bawah.")
+    
+        # --- Kirim ke WA ---
+        tujuan = st.selectbox(
+            "Kirim ke:",
+            ["Buka WA (pilih kontak sendiri)"] + [u["name"] for u in USTADZ_LIST],
+            index=0
+        )
+        wa = "" if tujuan.startswith("Buka WA") else next((u["wa"] for u in USTADZ_LIST if u["name"] == tujuan), "")
         summary = (
             f"{WA_GREETING}\n"
             f"- Surah: {MUSHAF[surah_key]['name']} ({surah_key})\n"
             f"- Ayat: {start}–{end}\n"
             f"(Audio terlampir)"
         )
-        
-        tujuan = st.selectbox(
-            "Kirim ke:",
-            ["Pilih Ustadz"] + [u["name"] for u in USTADZ_LIST],
-            index=0
-        )
-        
-        wa = "" if tujuan == "Buka WA (pilih kontak sendiri)" else next(
-            (u["wa"] for u in USTADZ_LIST if u["name"] == tujuan), ""
-        )
-        
         wa_link = wa_prefill_link(wa, summary)
         st.link_button("💬 Kirim ke WhatsApp", wa_link if wa_link else "#", use_container_width=True)
-
-
+    
         st.divider()
 
         # ===== Analisa opsional (STT) =====
@@ -195,3 +186,6 @@ def show_hafalan_audio_tab():
                 st.markdown("**Hasil transkrip (eksperimental):**")
                 st.write(st.session_state.setor_transcript)
                 st.caption("Catatan: transkrip bisa berbeda dari teks mushaf. Verifikasi ke ustadz pembimbing.")
+
+    else:
+        st.info("Unggah rekaman bacaanmu untuk mulai setoran.")
