@@ -2,6 +2,9 @@ import math
 import streamlit as st
 from streamlit.components.v1 import html
 
+KAABA_LAT = 21.422487
+KAABA_LON = 39.826206
+
 # --- opsional: import folium hanya saat diperlukan ---
 def _lazy_import_folium():
     import importlib
@@ -37,10 +40,11 @@ def _cached_map_html(lat, lon, bearing, zoom=6):
                     tooltip=f"Garis Kiblat {bearing:.2f}°").add_to(m)
     return m._repr_html_()
 
-def _map_html(lat, lon, bearing):
-    m = folium.Map(location=[lat, lon], zoom_start=6, tiles="CartoDB positron")
+def _map_html(lat, lon, bearing, zoom=6):
+    folium = _lazy_import_folium()
+    m = folium.Map(location=[lat, lon], zoom_start=zoom, tiles="CartoDB positron")
     folium.Marker([lat, lon], tooltip="Lokasi Anda").add_to(m)
-    folium.Marker([KAABA_LAT, KAABA_LON], tooltip="Ka'bah (Masjidil Haram)",
+    folium.Marker([KAABA_LAT, KAABA_LON], tooltip="Ka'bah",
                   icon=folium.Icon(color="green", icon="star")).add_to(m)
     folium.PolyLine([[lat, lon], [KAABA_LAT, KAABA_LON]],
                     tooltip=f"Garis Kiblat {bearing:.2f}°").add_to(m)
@@ -139,24 +143,25 @@ def _compass_html(qibla_deg: float) -> str:
 from streamlit_js_eval import get_geolocation
 
 def use_my_location(lat_default: float, lon_default: float):
-    """Ambil lokasi hanya saat tombol diklik. Tidak menyimpan counter, anti-loop."""
+    """Ambil lokasi hanya saat tombol diklik. Anti-loop + tahan error."""
     colA, colB = st.columns([1, 3])
     with colA:
-        clicked = st.button("📍 Gunakan Lokasi Saya", use_container_width=True)
+        clicked = st.button("📍 Gunakan Lokasi Saya", key="btn_geo", use_container_width=True)
     with colB:
         st.caption("Jika diminta, izinkan akses lokasi pada browser (HTTPS wajib).")
 
-    # default (tidak ada perubahan)
     lat, lon, updated = lat_default, lon_default, False
-
     if not clicked:
-        return lat, lon, updated  # tidak melakukan apa-apa di rerun normal
+        return lat, lon, updated
 
-    # Hanya ketika tombol ditekan:
-    with st.spinner("Mengambil lokasi dari browser…"):
-        loc = get_geolocation()
+    try:
+        with st.spinner("Mengambil lokasi dari browser…"):
+            loc = get_geolocation()  # bisa None di klik pertama / user tolak izin
+    except Exception as e:
+        st.warning(f"Tidak bisa mengambil lokasi: {e}")
+        return lat, lon, updated
 
-    # beberapa browser kirim di bawah 'coords'
+    # Bentuk balikan bisa flat atau di bawah 'coords'
     if isinstance(loc, dict):
         if "coords" in loc and isinstance(loc["coords"], dict):
             c = loc["coords"]
@@ -170,7 +175,7 @@ def use_my_location(lat_default: float, lon_default: float):
     if updated:
         st.success("Lokasi berhasil diambil dari GPS ✅")
     else:
-        st.info("Belum menerima koordinat. Coba klik tombolnya lagi atau cek izin lokasi.")
+        st.info("Belum menerima koordinat. Klik lagi atau cek izin lokasi di browser.")
 
     return lat, lon, updated
 
