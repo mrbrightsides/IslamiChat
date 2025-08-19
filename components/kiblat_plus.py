@@ -175,7 +175,7 @@ def show_kiblat_tab_plus():
         lon = st.number_input("Longitude", value=default_lon, help="Contoh: Palembang ≈ 104.756554")
 
     # Tombol GPS → override lat/lon jika berhasil
-    lat, lon = use_my_location(lat, lon)
+    lat, lon, _ = use_my_location(lat, lon)
 
     # Hitung bearing & jarak seperti sebelumnya…
     bearing = _bearing_gc(lat, lon)
