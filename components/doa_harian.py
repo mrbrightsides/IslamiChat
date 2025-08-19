@@ -29,10 +29,32 @@ def show_doa_harian():
     if doa.get("audio_url"):
         st.audio(doa["audio_url"])
 
-    # Tombol copy / share (opsional)
-    if st.button("📋 Copy ke Clipboard"):
-        st.toast("Teks doa sudah disalin ✅")
+    copy_button(f"{doa['arab']}\n\n{doa['latin']}\n\n{doa['translation_id']}")
 
-    # Tombol play audio (kalau ada file audio)
-    if st.button("🔊 Play Audio"):
-        st.audio("https://example.com/doa.mp3"
+import streamlit as st
+
+def copy_button(text_to_copy: str):
+    copy_code = f"""
+    <style>
+    .copy-btn {{
+        display:inline-block;
+        padding:8px 14px;
+        margin-top:10px;
+        border-radius:6px;
+        background-color:#4CAF50;
+        color:white;
+        font-weight:bold;
+        cursor:pointer;
+        border:none;
+        transition:0.2s;
+    }}
+    .copy-btn:hover {{
+        background-color:#45a049;
+    }}
+    </style>
+
+    <button class="copy-btn" onclick="navigator.clipboard.writeText(`{text_to_copy}`)">
+        📋 Copy Doa
+    </button>
+    """
+    st.markdown(copy_code, unsafe_allow_html=True)
