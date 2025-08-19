@@ -109,13 +109,12 @@ def show_hafalan_audio_tab():
 
     st.divider()
 
-    # Upload rekaman (audio-only)
     if "setor_audio_bytes" not in st.session_state:
         st.session_state.setor_audio_bytes = None
         st.session_state.setor_audio_name = None
         st.session_state.setor_transcript = None
     
-    # ==== handler perubahan uploader ====
+    # ==== Handler perubahan uploader ====
     def _on_audio_change():
         upload = st.session_state.get("audio_upload")
         if upload is None:
@@ -123,7 +122,13 @@ def show_hafalan_audio_tab():
             st.session_state.setor_audio_bytes = None
             st.session_state.setor_audio_name = None
             st.session_state.setor_transcript = None
-
+        else:
+            # user pilih file -> simpan ke state
+            fname, data = _audio_file_meta(upload)
+            st.session_state.setor_audio_bytes = data
+            st.session_state.setor_audio_name = fname
+            st.session_state.setor_transcript = None
+    
     st.markdown("#### 🎧 Unggah Rekaman Bacaan")
     st.file_uploader(
         "Pilih file audio (mp3/wav/m4a/webm)",
@@ -132,18 +137,12 @@ def show_hafalan_audio_tab():
         on_change=_on_audio_change
     )
     
+    # ==== Render lanjutan ====
+    if st.session_state.setor_audio_bytes:
+        st.audio(st.session_state.setor_audio_bytes, format="audio/*")
+        st.success("Rekaman siap. Anda bisa kirim WA atau jalankan analisa opsional di bawah.")
     else:
-        # user pilih file baru -> simpan ke state
-        fname, data = _audio_file_meta(upload)
-        st.session_state.setor_audio_bytes = data
-        st.session_state.setor_audio_name = fname
-        st.session_state.setor_transcript = None
-
-    if audio is not None:
-        fname, data = _audio_file_meta(audio)
-        st.session_state.setor_audio_bytes = data
-        st.session_state.setor_audio_name = fname
-        st.session_state.setor_transcript = None  # reset
+        st.info("Unggah rekaman bacaanmu untuk mulai setoran.")
 
     if st.session_state.setor_audio_bytes:
         st.audio(st.session_state.setor_audio_bytes, format="audio/*")
