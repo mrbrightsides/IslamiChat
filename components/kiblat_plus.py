@@ -1,8 +1,18 @@
-# components/kiblat_plus.py
 import math
 import streamlit as st
 import folium
 from streamlit.components.v1 import html
+
+_HAS_GEOLOC = False
+try:
+    from streamlit_geolocation import geolocation as _geolocation
+    _HAS_GEOLOC = True
+except Exception:
+    try:
+        from streamlit_js_eval import get_geolocation as _get_geolocation
+        _HAS_GEOLOC = True
+    except Exception:
+        _HAS_GEOLOC = False
 
 KAABA_LAT = 21.422487
 KAABA_LON = 39.826206
@@ -123,49 +133,89 @@ def _compass_html(qibla_deg: float) -> str:
     """
     return html_str.replace("__QIBLA__", f"{qibla_deg:.6f}")
 
+def _use_my_location(lat_default: float, lon_default: float):
+    """
+    Tampilkan tombol 'Gunakan Lokasi Saya' lalu kembalikan (lat, lon) terbaru.
+    Prioritas:
+      1) streamlit-geolocation
+      2) streamlit-js-eval
+    """
+    colA, colB = st.columns([1, 3])
+    with colA:
+        clicked = st.button("📍 Gunakan Lokasi Saya", use_container_width=True)
+    with colB:
+        st.caption("Jika diminta, izinkan akses lokasi pada browser.")
+
+    lat, lon = lat_default, lon_default
+
+    if not clicked:
+        return lat, lon
+
+    # Opsi 1: streamlit-geolocation
+    try:
+        from streamlit_geolocation import geolocation as _geolocation
+        loc = _geolocation()
+        if loc and "latitude" in loc and "longitude" in loc:
+            lat, lon = float(loc["latitude"]), float(loc["longitude"])
+            st.success("Lokasi berhasil diambil dari GPS.")
+            return lat, lon
+    except Exception:
+        pass
+
+    # Opsi 2: streamlit-js-eval
+    try:
+        from streamlit_js_eval import get_geolocation as _get_geolocation
+        loc = _get_geolocation()
+        # library ini kadang mengembalikan dict rata atau di bawah 'coords'
+        if loc:
+            if isinstance(loc, dict) and "coords" in loc:
+                c = loc["coords"]
+                lat, lon = float(c.get("latitude")), float(c.get("longitude"))
+            elif isinstance(loc, dict) and "latitude" in loc and "longitude" in loc:
+                lat, lon = float(loc["latitude"]), float(loc["longitude"])
+            st.success("Lokasi berhasil diambil dari GPS.")
+            return lat, lon
+    except Exception:
+        pass
+
+    st.warning("Gagal mengambil lokasi otomatis. Pastikan https aktif & izin lokasi diberikan.")
+    return lat, lon
+
 def show_kiblat_tab_plus():
     st.title("🧭 Arah Kiblat (Peta + Kompas)")
-    st.caption("Gunakan kompas di bawah (realtime) dan peta garis lurus ke Ka'bah. "
-               "Catatan: kompas ponsel dipengaruhi **magnet** & **kalibrasi**; gunakan sebagai panduan, verifikasi jika perlu.")
+    st.caption("Gunakan kompas realtime dan peta. Jika sensor tidak tersedia, pakai Mode Manual.")
 
-    # Input lokasi (lat/lon). Kamu bisa ganti dengan geocoder yang kamu pakai sekarang.
+    # Default contoh (mis. Palembang)
+    default_lat, default_lon = -2.990934, 104.756554
+
     col1, col2 = st.columns(2)
     with col1:
-        lat = st.number_input("Latitude", value=-2.990934, help="Contoh: Palembang ≈ -2.990934")
+        lat = st.number_input("Latitude", value=default_lat, help="Contoh: Palembang ≈ -2.990934")
     with col2:
-        lon = st.number_input("Longitude", value=104.756554, help="Contoh: Palembang ≈ 104.756554")
+        lon = st.number_input("Longitude", value=default_lon, help="Contoh: Palembang ≈ 104.756554")
 
-    # Hitung bearing & jarak
+    # Tombol GPS → override lat/lon jika berhasil
+    lat, lon = _use_my_location(lat, lon)
+
+    # Hitung bearing & jarak seperti sebelumnya…
     bearing = _bearing_gc(lat, lon)
     dist_km = _haversine_km(lat, lon)
 
-    st.success(f"Arah Kiblat: **{bearing:.2f}°** dari utara (searah jarum jam). Jarak ke Ka'bah: **{dist_km:,.0f} km**.")
+    st.success(f"Arah Kiblat: **{bearing:.2f}°** dari utara. Jarak ke Ka'bah: **{dist_km:,.0f} km**.")
 
-    # Kompas realtime
+    # Kompas realtime (HTML JS kamu yang sebelumnya)
     st.markdown("#### 📳 Kompas Realtime")
     html(_compass_html(bearing), height=260)
 
-    # Peta garis ke Ka'bah
+    # Peta (seperti sebelumnya)
     st.markdown("#### 🗺️ Peta Garis Kiblat")
     html(_map_html(lat, lon, bearing), height=420, scrolling=False)
 
-    with st.expander("ℹ️ Tips akurasi & kalibrasi"):
-        st.markdown(
-            "- Jauhkan ponsel dari magnet/metal (earpods, casing magnet, motor).  \n"
-            "- **Kalibrasi** kompas ponsel (gerakkan angka delapan/∞ selama 10–20 detik).  \n"
-            "- Arahkan badan menghadap **panah** pada kompas hingga di atas huruf **N**.  \n"
-            "- Di dalam gedung tinggi/keramaian elektromagnetik, gunakan **peta** sebagai konfirmasi."
-        )
-
-    # Kompas realtime (tetap ada)
-    st.markdown("#### 📳 Kompas Realtime")
-    html(_compass_html(bearing), height=260)
-
-    # === Fallback: Mode manual (tanpa sensor) ===
+    # Mode manual (fallback) — blok kamu yang sudah jalan tadi
     st.markdown("#### 🧭 Mode Manual (tanpa sensor)")
     st.caption("Kalau kompas di atas tidak bergerak (HP tidak mendukung sensor), gunakan mode manual ini.")
     heading_manual = st.slider(
-        "Heading saya (lihat kompas bawaan HP: 0°=Utara, 90°=Timur, 180°=Selatan, 270°=Barat)",
+        "Heading saya (0°=Utara, 90°=Timur, 180°=Selatan, 270°=Barat)",
         min_value=0, max_value=359, value=0, step=1
     )
     delta = (bearing - heading_manual) % 360
