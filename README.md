@@ -1,74 +1,79 @@
-# IslamiChat 🤖📿  
-**Chatbot Islami + Waktu Sholat Harian**  
-Powered by **ArtiBot**, **BotSonic**, & **Aladhan API**  
+# SmartFaith ✨
+*(sebelumnya dikenal sebagai **IslamiChat**)*
+
+**Platform Islami Pintar**  
+Tanya jawab Islami, waktu sholat, khutbah AI, setoran hafalan, kalkulator zakat, doa harian, murottal Quran & integrasi IoT.
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.16787143.svg)](https://doi.org/10.5281/zenodo.16787143)
 [![MIT License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Streamlit](https://img.shields.io/badge/Deploy%20on-Streamlit-FF4B4B)](https://islamichat.streamlit.app)
+[![Streamlit](https://img.shields.io/badge/Deploy%20on-Streamlit-FF4B4B)](https://smartfaith.streamlit.app)
 [![Python](https://img.shields.io/badge/Python-3.9%2B-blue)](https://www.python.org/)
 [![Status](https://img.shields.io/badge/status-active-success)]()
 [![Issues](https://img.shields.io/github/issues/mrbrightsides/IslamiChat)](https://github.com/mrbrightsides/IslamiChat/issues)
 
 ---
 
-## 📌 Tentang Proyek
-**IslamiChat** adalah aplikasi berbasis web yang menyediakan:
-- **Dua pilihan chatbot Islami**: ArtiBot & BotSonic.
-- **Informasi waktu sholat harian** dari Aladhan API.
-- Antarmuka sederhana & responsif menggunakan **Streamlit**.
-
-Aplikasi ini cocok untuk integrasi dengan **IoT** seperti layar digital masjid, jam pintar, atau speaker otomatis yang mengumumkan waktu adzan.
-
----
-
-## 📷 Preview
-<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/9016b2fc-8f50-4a65-807f-b753c1209b22" />
+## ⚡ Powered By
+- 🤖 **ArtiBot** → tanya jawab pengetahuan tentang islam
+- 🧠 **TawkTo** → knowledge base dan AI admin
+- 🕌 **Aladhan API** → jadwal sholat & arah kiblat  
+- 📖 **OpenAI API** → KhutbahGPT, validasi setoran hafalan, tanya jawab Islami  
+- 💰 **GoldAPI** → data harga emas realtime untuk kalkulator zakat  
+- 🎧 **MP3Quran.net** → murottal Quran  
+- 🗺️ **OpenStreetMap** → pencarian masjid terdekat  
+- 📚 **Hisnul Muslim dataset** → kumpulan doa harian  
 
 ---
 
 ## ✨ Fitur Utama
-- 💬 **Tanya jawab Islami** dengan AI.
-- 🕌 **Jadwal sholat realtime** (lokasi & metode perhitungan bisa diubah).
-- 🌙 **Pengingat sholat berikutnya** dengan hitung mundur.
-- 📡 **Siap integrasi IoT** untuk:
-  - Notifikasi adzan otomatis.
-  - Display jadwal sholat di layar digital.
-  - Kontrol perangkat pintar berbasis jadwal sholat.
+- 💬 Tanya jawab Islami (powered by AI)  
+- 🕌 Jadwal sholat realtime (lokasi & metode hisab bisa diatur)  
+- ⏰ Pengingat sholat berikutnya dengan hitung mundur  
+- 📢 KhutbahGPT: generator khutbah singkat berbasis AI  
+- 🎙️ Setor hafalan: validasi bacaan Al-Qur’an via AI  
+- 📖 Murottal Al-Qur’an (streaming dari MP3Quran)  
+- 🧮 Kalkulator zakat (otomatis ambil harga emas dari GoldAPI)  
+- 📚 Doa harian (Hisnul Muslim)  
+- 🧭 Arah kiblat  
+- 🕌 Cari masjid terdekat (OpenStreetMap)  
+- 🔌 Siap integrasi IoT untuk:  
+  - Notifikasi adzan otomatis  
+  - Display jadwal sholat di layar digital  
+  - Kontrol perangkat pintar berbasis jadwal sholat  
+
+---
+
+## 🖼️ Preview
+(Screenshot UI bisa ditaruh di sini)
 
 ---
 
 ## 🚀 Cara Menjalankan
 
-### 1️⃣ Clone repositori
-git clone https://github.com/mrbrightsides/IslamiChat.git
-cd IslamiChat
-
-### 2️⃣ Install dependencies
-pip install -r requirements.txt
-
-### 3️⃣ Jalankan aplikasi
-streamlit run app.py
-
----
-
-## 🛠 Integrasi IoT
-Proyek ini dapat dihubungkan dengan:
-
-### ESP32 / Raspberry Pi untuk menampilkan jadwal sholat.
-
-### Speaker pintar untuk mengumumkan adzan otomatis.
-
-### Dashboard admin untuk mengatur lokasi & metode hisab.
-
-<img width="1024" height="1024" alt="image" src="https://github.com/user-attachments/assets/128aa5d2-ed36-4d27-a42e-19b3e287a38b" />
+1. **Clone repository**
+   ```bash
+   git clone https://github.com/mrbrightsides/islamichat.git
+   cd SmartFaith
+2. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+3. **Jalankan aplikasi**
+   ```bash
+   streamlit run app.py
 
 ---
 
-## 📄 Lisensi
-Proyek ini menggunakan lisensi MIT – silakan digunakan, dimodifikasi, dan dikembangkan.
+## 🔗 Integrasi IoT
+
+SmartFaith dapat dihubungkan dengan perangkat seperti:
+- ESP32 / Raspberry Pi → menampilkan jadwal sholat
+- Speaker pintar → mengumumkan adzan otomatis
+- Dashboard admin → mengatur lokasi & metode hisab
 
 ---
 
-## 🤝 Kontribusi
-Kontribusi sangat terbuka!
-Silakan buat Pull Request atau lapor issue untuk perbaikan dan pengembangan fitur baru.
+## 📜 Lisensi
+
+MIT License. Bebas digunakan & dikembangkan untuk kemaslahatan umat.
+
+
