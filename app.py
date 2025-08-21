@@ -53,9 +53,13 @@ from components.zikir import show_zikir_tab
 from components.doa_harian import show_doa_harian
 
 # ===== Page setup =====
-st.set_page_config(page_title="IslamiChat 🤖🌸", layout="wide")
-st.title("IslamiChat = Tanya Jawab + Waktu Sholat")
-st.caption("Powered by ArtiBot / Botsonic • Waktu sholat dari Aladhan API")
+st.set_page_config(
+    page_title="SmartFaith",
+    page_icon="🕋",
+    layout="wide"
+)
+st.title("SmartFaith 🕌🤖")
+st.caption("Asisten Islami Berbasis AI: Tanya Jawab, Generator Khutbah, & Setor Hafalan")
 
 # ===== Tab utama =====
 tabs = st.tabs([
@@ -95,17 +99,14 @@ with tabs[0]:
     }
     chosen_url = URLS[widget_opt]
 
-    # --- Opsi cache-bust (kalau iframe keliatan “nge-freeze”)
     cache_bust = st.toggle("Force refresh chat (cache-bust)", value=False)
     final_url = f"{chosen_url}?t={int(time.time())}" if cache_bust else chosen_url
 
     st.write(f"💬 Chat aktif: **{widget_opt}**")
     st.caption("Jika area kosong, kemungkinan dibatasi oleh CSP/X-Frame-Options dari penyedia.")
 
-    # --- Render iframe
     iframe(src=final_url, height=720)
 
-    # --- Fallback link aman
     st.link_button(f"↗️ Buka {widget_opt} di tab ini jika chat tidak muncul (fallback)",
                    chosen_url, use_container_width=True)
 
@@ -122,7 +123,6 @@ with tabs[1]:
         date_readable = payload["date"]["readable"]
         timings = parse_today_times(payload["timings"])
 
-        # Hilangkan anotasi seperti " (WIB)" jika ada
         times_local = {
             n: to_local_datetime(date_readable, t.split(" ")[0])
             for n, t in timings.items()
