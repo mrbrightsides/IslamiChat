@@ -44,7 +44,8 @@ Tanya jawab Islami, waktu sholat, khutbah AI, setoran hafalan, kalkulator zakat,
 ---
 
 ## 🖼️ Preview
-(Screenshot UI bisa ditaruh di sini)
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/1df97483-5cf4-438b-9d39-f6b9bb237068" />
+
 
 ---
 
