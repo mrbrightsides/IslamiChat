@@ -1,7 +1,9 @@
 # SmartFaith ✨
 *(sebelumnya dikenal sebagai **IslamiChat**)*
 
-**Platform Islami Pintar**  
+**lihat halaman [Wiki](https://github.com/mrbrightsides/IslamiChat/wiki)*
+
+**Asisten Islami Berbasis AI**  
 Tanya jawab Islami, waktu sholat, khutbah AI, setoran hafalan, kalkulator zakat, doa harian, murottal Quran & integrasi IoT.
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.16787143.svg)](https://doi.org/10.5281/zenodo.16787143)
