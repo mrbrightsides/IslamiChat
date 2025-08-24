@@ -284,7 +284,7 @@ def render_khutbah_form():
         st.caption("👉 Setelah klik **Buat Khutbah Sekarang**, teks khutbah akan muncul di bawah.")
         return
 
-    st.success("📜 Sedang membuat khutbah...")
+    #st.success("📜 Sedang membuat khutbah...")
     st.info(f"Jenis khutbah: **{jenis_khutbah}** • Tema: **{tema or '(otomatis oleh AI)'}**")
 
     # Generate sekali saja (tanpa duplikasi)
