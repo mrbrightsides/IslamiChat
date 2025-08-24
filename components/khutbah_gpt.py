@@ -284,8 +284,40 @@ def render_khutbah_form():
         st.caption("👉 Setelah klik **Buat Khutbah Sekarang**, teks khutbah akan muncul di bawah.")
         return
 
-    st.success("📜 Sedang membuat khutbah...")
-    st.info(f"Jenis khutbah: **{jenis_khutbah}** • Tema: **{tema or '(otomatis oleh AI)'}**")
+    status = st.status("📜 Sedang membuat khutbah…", expanded=False)
+    try:
+        st.info(f"Jenis khutbah: **{jenis_khutbah}** • Tema: **{tema or '(otomatis oleh AI)'}**")
+    
+        if engine.startswith("GPT"):
+            with st.spinner("🧠 Meminta GPT menyusun teks khutbah..."):
+                text = generate_khutbah_gpt(
+                    jenis_khutbah, tema, gaya, panjang, audience, tanggal, tambahan, model=model
+                )
+        else:
+            text = generate_khutbah(jenis_khutbah, tema, gaya, panjang, audience, tanggal, tambahan)
+    
+        status.update(label="✅ Khutbah selesai dibuat", state="complete", expanded=False)
+    
+        st.markdown(f"### {tema or _default_theme_for(jenis_khutbah)}")
+        st.write(text)
+        st.download_button(
+            "💾 Unduh Teks (.txt)",
+            data=text.encode("utf-8"),
+            file_name=f"Khutbah_{jenis_khutbah}_{tanggal.isoformat()}.txt",
+            mime="text/plain"
+        )
+    except Exception as e:
+        status.update(label="❌ Gagal membuat khutbah", state="error", expanded=True)
+        st.warning(f"Gagal pakai GPT: {e}. Diproses dengan Template (offline).")
+        text = generate_khutbah(jenis_khutbah, tema, gaya, panjang, audience, tanggal, tambahan)
+        st.markdown(f"### {tema or _default_theme_for(jenis_khutbah)}")
+        st.write(text)
+        st.download_button(
+            "💾 Unduh Teks (.txt)",
+            data=text.encode("utf-8"),
+            file_name=f"Khutbah_{jenis_khutbah}_{tanggal.isoformat()}.txt",
+            mime="text/plain"
+        )
 
     # Generate sekali saja (tanpa duplikasi)
     try:
