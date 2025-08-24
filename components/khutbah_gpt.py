@@ -275,7 +275,7 @@ def render_khutbah_form():
         engine = st.radio(
             "Mesin Pembuat Khutbah",
             ["Template (offline)", "GPT (butuh API key)"],
-            index=0
+            index=0, key="engine"
         )
 
         # === Model hanya muncul jika GPT dipilih ===
@@ -285,38 +285,34 @@ def render_khutbah_form():
             model = st.selectbox(
                 "Model",
                 ["— pilih model —", "gpt-4o-mini", "gpt-4o"],
-                index=0,
-                key="model"
+                index=0, key="model"
             )
             model_valid = model in ("gpt-4o-mini", "gpt-4o")
         else:
             # bersihkan state model bila balik ke Template
-            if "model" in st.session_state:
-                del st.session_state["model"]
+            st.session_state.pop("model", None)
 
-        # Tombol submit hanya aktif jika:
+        # Tombol submit aktif jika:
         # - mode Template, atau
         # - mode GPT & model sudah valid
         disable_submit = (engine.startswith("GPT") and not model_valid)
-
         submitted = st.form_submit_button("🎙️ Buat Khutbah Sekarang", disabled=disable_submit)
 
     # === Setelah form disubmit ===
     if not submitted:
         return
 
-    # Validasi server-side (jaga-jaga kalau ada rerun aneh)
+    # Validasi server-side (antisipasi edge case)
     if engine.startswith("GPT") and not model_valid:
         st.warning("Pilih model dulu ya (gpt-4o-mini atau gpt-4o).")
         return
 
-    # --- STATUS + GENERATE ---
+    # --- STATUS + GENERATE (sekali saja) ---
     status = st.status("📜 Sedang membuat khutbah…", expanded=False)
     try:
         st.info(f"Jenis khutbah: **{jenis_khutbah}** • Tema: **{tema or '(otomatis oleh AI)'}**")
 
         if engine.startswith("GPT"):
-            # panggil GPT sesuai model terpilih
             text = generate_khutbah_gpt(
                 jenis_khutbah, tema, gaya, panjang, audience, tanggal, tambahan,
                 model=model
@@ -337,24 +333,3 @@ def render_khutbah_form():
     except Exception as e:
         status.update(label="❌ Gagal membuat khutbah", state="error", expanded=True)
         st.error(f"Gagal membuat khutbah: {e}")
-
-    # Generate sekali saja (tanpa duplikasi)
-    try:
-        if engine.startswith("GPT"):
-            with st.spinner("🧠 Meminta GPT menyusun teks khutbah..."):
-                text = generate_khutbah_gpt(jenis_khutbah, tema, gaya, panjang, audience, tanggal, tambahan, model=model)
-        else:
-            text = generate_khutbah(jenis_khutbah, tema, gaya, panjang, audience, tanggal, tambahan)
-    except Exception as e:
-        st.warning(f"Gagal pakai GPT: {e}. Diproses dengan Template (offline).")
-        text = generate_khutbah(jenis_khutbah, tema, gaya, panjang, audience, tanggal, tambahan)
-
-    st.markdown(f"### {tema or _default_theme_for(jenis_khutbah)}")
-    st.write(text)
-
-    st.download_button(
-        "💾 Unduh Teks (.txt)",
-        data=text.encode("utf-8"),
-        file_name=f"Khutbah_{jenis_khutbah}_{tanggal.isoformat()}.txt",
-        mime="text/plain"
-    )
