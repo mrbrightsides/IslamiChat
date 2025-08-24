@@ -108,7 +108,7 @@ with tabs[0]:
 
     iframe(src=final_url, height=720)
 
-    if st.button(f"🔗 Buka {widget_opt} di halaman ini jika chat tidak tampil (fallback)"):
+    if st.button(f"🔗 Buka {widget_opt} di halaman ini jika chat tidak tampil atau jika halaman chat tidak responsif"):
         st.markdown(
             f"""
             <meta http-equiv="refresh" content="0; url={chosen_url}">
