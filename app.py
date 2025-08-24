@@ -89,7 +89,7 @@ with tabs[0]:
     widget_opt = st.radio(
         " ", ["ArtiBot", "TawkTo", "ChatBase"],
         horizontal=True, label_visibility="collapsed",
-        index=["ArtiBot","TawkTo","SmartBase"].index(st.session_state.chat_widget),
+        index=["ArtiBot","TawkTo","ChatBase"].index(st.session_state.chat_widget),
         key="chat_widget"
     )
 
