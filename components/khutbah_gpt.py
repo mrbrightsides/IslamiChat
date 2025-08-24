@@ -262,48 +262,45 @@ def render_khutbah_form():
     with st.form("khutbah_form"):
         tanggal = st.date_input("Tanggal Khutbah", value=date.today())
         jenis_khutbah = st.radio(
-            "Jenis Khutbah",
-            ["Jumat", "Idul Fitri", "Idul Adha", "Istisqa", "Nikah", "Umum"],
-            index=0
+            "Jenis Khutbah", ["Jumat", "Idul Fitri", "Idul Adha", "Istisqa", "Nikah", "Umum"], index=0
         )
         tema = st.text_input("Tema Khutbah (opsional)", placeholder="Contoh: Pentingnya Menjaga Amanah")
         gaya = st.selectbox("Gaya Bahasa", ["Formal", "Lugas", "Puitis", "Reflektif", "Ringan untuk Remaja"], index=0)
         panjang = st.slider("Panjang Khutbah (kata, indikatif)", 300, 1500, 700, 100)
         audience = st.text_input("Target Jamaah (opsional)", placeholder="Contoh: Mahasiswa, Jamaah Remaja, Umum")
         tambahan = st.text_area("Catatan atau Permintaan Khusus (opsional)", placeholder="Misal: Sertakan QS Al-‘Asr di pengantar")
-
+    
         engine = st.radio(
             "Mesin Pembuat Khutbah",
             ["Template (offline)", "GPT (butuh API key)"],
             index=0, key="engine"
         )
-
+    
         # === Model hanya muncul jika GPT dipilih ===
-        model = None
-        model_valid = False
         if engine.startswith("GPT"):
-            model = st.selectbox(
+            st.selectbox(
                 "Model",
                 ["— pilih model —", "gpt-4o-mini", "gpt-4o"],
-                index=0, key="model"
+                index=0,
+                key="model"
             )
-            model_valid = model in ("gpt-4o-mini", "gpt-4o")
+            # VALIDASI langsung dari session_state (lebih stabil)
+            model_value = (st.session_state.get("model") or "").strip()
+            model_valid = model_value in ("gpt-4o-mini", "gpt-4o")
         else:
-            # bersihkan state model bila balik ke Template
             st.session_state.pop("model", None)
-
-        # Tombol submit aktif jika:
-        # - mode Template, atau
-        # - mode GPT & model sudah valid
+            model_value = ""
+            model_valid = True  # mode Template: tombol boleh aktif
+    
+        # Tombol submit aktif jika Template, atau GPT & model valid
         disable_submit = (engine.startswith("GPT") and not model_valid)
         submitted = st.form_submit_button("🎙️ Buat Khutbah Sekarang", disabled=disable_submit)
 
     # === Setelah form disubmit ===
     if not submitted:
         return
-
-    # Validasi server-side (antisipasi edge case)
-    if engine.startswith("GPT") and not model_valid:
+    
+    if engine.startswith("GPT") and not ((st.session_state.get("model") or "").strip() in ("gpt-4o-mini", "gpt-4o")):
         st.warning("Pilih model dulu ya (gpt-4o-mini atau gpt-4o).")
         return
 
