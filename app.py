@@ -108,8 +108,13 @@ with tabs[0]:
 
     iframe(src=final_url, height=720)
 
-    st.link_button(f"↗️ Buka {widget_opt} di tab ini jika chat tidak muncul (fallback)",
-                   chosen_url, use_container_width=True)
+    if st.button(f"🔗 Buka {widget_opt} di halaman ini jika chat tidak tampil (fallback)"):
+    st.markdown(
+        f"""
+        <meta http-equiv="refresh" content="0; url={chosen_url}">
+        """,
+        unsafe_allow_html=True
+    )
 
 # === Tab 1: Waktu Sholat ===
 with tabs[1]:
