@@ -87,15 +87,16 @@ with tabs[0]:
         st.session_state.chat_widget = "TawkTo"  # default
 
     widget_opt = st.radio(
-        " ", ["ArtiBot", "TawkTo"],
+        " ", ["ArtiBot", "TawkTo", "ChatBase"],
         horizontal=True, label_visibility="collapsed",
-        index=["ArtiBot","TawkTo"].index(st.session_state.chat_widget),
+        index=["ArtiBot","TawkTo","SmartBase"].index(st.session_state.chat_widget),
         key="chat_widget"
     )
 
     URLS = {
         "ArtiBot": "https://my.artibot.ai/islamichat",
-        "TawkTo": "https://tawk.to/chat/63f1709c4247f20fefe15b12/1gpjhvpnb"
+        "TawkTo": "https://tawk.to/chat/63f1709c4247f20fefe15b12/1gpjhvpnb",
+        "ChatBase": "https://www.chatbase.co/chatbot-iframe/Ho6CMtS7y0t5oM-Ktx9jU"
     }
     chosen_url = URLS[widget_opt]
 
