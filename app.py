@@ -59,7 +59,7 @@ st.set_page_config(
     layout="wide"
 )
 st.title("SmartFaith 🕌🤖")
-st.caption("Asisten Islami Berbasis AI: Tanya Jawab, Generator Khutbah, & Setor Hafalan https://imgur.com/EquqJXH")
+st.caption("Asisten Islami Berbasis AI: Tanya Jawab, Generator Khutbah, & Setor Hafalan https://i.imgur.com/EquqJXH.png")
 
 # ===== Tab utama =====
 tabs = st.tabs([
