@@ -3,14 +3,16 @@ from urllib.parse import quote_plus
 
 # ==== Konfigurasi ====
 NAMA_USTADZ_1   = "Dr. Heri Iskandar, M.Pd"
-PROFIL_USTADZ_1 = "Dosen & pembina kajian keluarga. Fokus fikih ibadah & pendidikan."
+PROFIL_USTADZ_1 = "Pengasuh MT Al Hikam Palembang. Fokus fikih ibadah & pendidikan."
 WA_LINK_1       = "+6289675674860"
 DEFAULT_MSG_1   = "Assalamu'alaikum Ustadz, mohon bimbingannya terkait pertanyaan saya."
+FOTO_USTADZ_1   = "https://i.imgur.com/KymF9yk.png"
 
-NAMA_USTADZ_2   = "Sawi Sujarwo, M.Psi"
-PROFIL_USTADZ_2 = "Psikolog muslim. Fokus parenting, remaja, dan kesehatan mental."
-WA_LINK_2       = "62xxxxxxxxxx"
+NAMA_USTADZ_2   = "Sawi Sujarwo, S.Psi., M.A"
+PROFIL_USTADZ_2 = "Psikolog dan cedikiawan muslim. Fokus parenting, remaja, dan kesehatan mental."
+WA_LINK_2       = "+6281377544596"
 DEFAULT_MSG_2   = "Assalamu'alaikum Ustadz, saya ingin konsultasi singkat."
+FOTO_USTADZ_2   = "https://i.imgur.com/NMw3m9V.png"
 
 # ==== Utils ====
 def _normalize_wa_base(raw: str) -> str:
