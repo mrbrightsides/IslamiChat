@@ -63,7 +63,7 @@ LOGO_URL = "https://i.imgur.com/EquqJXH.png"
 
 col1, col2 = st.columns([1, 4])
 with col1:
-    st.image(LOGO_URL, width=60)
+    st.image(LOGO_URL, use_column_width=True)
 with col2:
     st.markdown("""
         ## SmartFaith 🕌🤖
