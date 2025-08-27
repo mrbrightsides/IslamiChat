@@ -5,6 +5,33 @@ from typing import Dict, Any, List, Optional, Tuple
 
 API = "https://equran.id/api/v2"
 
+def _extract_audio_src(audio_field):
+    """Balikin URL/bytes untuk st.audio dari berbagai bentuk audio_field."""
+    if not audio_field:
+        return None
+    # sudah string? langsung pakai
+    if isinstance(audio_field, str):
+        return audio_field
+    # dict: cari key yang berisi URL
+    if isinstance(audio_field, dict):
+        # kandidat umum
+        for k in ("url", "audio_url", "primary", "mp3"):
+            v = audio_field.get(k)
+            if isinstance(v, str) and v.startswith(("http://", "https://")):
+                return v
+        # fallback: ambil nilai string pertama yang mirip URL
+        for v in audio_field.values():
+            if isinstance(v, str) and v.startswith(("http://", "https://")):
+                return v
+        return None
+    # list: pilih item pertama yang valid
+    if isinstance(audio_field, list):
+        for item in audio_field:
+            src = _extract_audio_src(item)
+            if src:
+                return src
+    return None
+
 # =========================
 # JUZ MAP (pembuka Juz → (surah, ayat))
 # Sumber: standar mushaf Madinah (bisa di-tweak kalau mau pakai mapping lain)
@@ -198,8 +225,10 @@ def render_quran_tab():
                 st.write(a["terjemah"])
 
             # Audio per-ayat
-            if a["audio"]:
-                st.audio(a["audio"])
+            src = _extract_audio_src(a.get("audio"))
+            if src:
+                st.audio(src, format="audio/mp3")
+
 
             c1, c2, c3 = st.columns(3)
             if c1.button(f"Tandai terakhir di {n}", key=f"mark_{n}"):
@@ -299,8 +328,10 @@ def render_quran_tab():
                 st.session_state[reps_key] = cur
                 st.progress(min(cur / max(h['repeat'],1), 1.0), text=f"Ulangan: {cur}/{h['repeat']}")
 
-                if ayat["audio"]:
-                    st.audio(ayat["audio"])
+                src = _extract_audio_src(ayat.get("audio"))
+                if src:
+                    st.audio(src, format="audio/mp3")
+
             else:
                 st.warning("Ayat tidak ditemukan (cek koneksi/API).")
             st.divider()
