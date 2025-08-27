@@ -14,9 +14,7 @@ from components.waktu_sholat import (
 )
 
 # ===== Komponen: Quran =====
-from components.quran import (
-    render_quran_tab, surat_list
-)
+from components.quran import render_quran_tab
 
 # ===== Komponen: Zakat =====
 from components.zakat import (
