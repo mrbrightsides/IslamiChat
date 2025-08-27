@@ -3,7 +3,7 @@ import requests
 import streamlit as st
 from typing import Dict, Any, List, Optional, Tuple
 
-API = "https://equran.id/apidev/v2"
+API = "https://equran.id/api/v2"
 
 # =========================
 # JUZ MAP (pembuka Juz → (surah, ayat))
