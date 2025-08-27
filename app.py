@@ -13,7 +13,7 @@ from components.waktu_sholat import (
     to_local_datetime, next_prayer, fmt_delta
 )
 
-# ===== Komponen: Kiblat =====
+# ===== Komponen: Quran =====
 from components.quran import render_quran_tab
 
 # ===== Komponen: Zakat =====
@@ -76,7 +76,7 @@ tabs = st.tabs([
     "🧠 Chatbot", 
     "🕌 Waktu Sholat",
     "📻 Murottal Quran",
-    "🧭 Kiblat",
+    "📖 Quran",
     "🧮 Kalkulator Zakat",
     "🗺️ Masjid Terdekat",
     "🗓️ Event Islam",
@@ -85,7 +85,7 @@ tabs = st.tabs([
     "📞 Chat Ustadz",
     "🎙️ Setor Hafalan",
     "🧿 Zikir",
-    "📖 Doa Harian"
+    "📚 Doa Harian"
 ])
 
 # ===== Tab: Chatbot =====
@@ -162,7 +162,7 @@ with tabs[1]:
 with tabs[2]:
     show_murottal_tab()
 
-# === Tab 3: Kiblat ===
+# === Tab 3: Quran ===
 with tabs[3]:
     render_quran_tab()
 
