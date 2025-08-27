@@ -100,9 +100,30 @@ def _audio_full_candidates(detail: Dict[str, Any]) -> Dict[str, str]:
 def _normalize_ayat(a: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "nomor": a.get("nomorAyat") or a.get("nomor") or a.get("number"),
-        "arab": a.get("teks") or a.get("arab") or a.get("text") or "",
-        "latin": a.get("teks_latin") or a.get("latin") or a.get("read") or "",
-        "terjemah": a.get("teks_id") or a.get("terjemah") or a.get("translation") or "",
+        # perbaiki key untuk arab/latin/terjemah (camelCase + fallback lama)
+        "arab": (
+            a.get("teksArab")
+            or a.get("teks_arab")
+            or a.get("arab")
+            or a.get("teks")
+            or a.get("text")
+            or ""
+        ),
+        "latin": (
+            a.get("teksLatin")
+            or a.get("teks_latin")
+            or a.get("latin")
+            or a.get("read")
+            or ""
+        ),
+        "terjemah": (
+            a.get("teksIndonesia")
+            or a.get("teks_id")
+            or a.get("terjemah")
+            or a.get("translation")
+            or ""
+        ),
+        # audio tetap; extractor akan handle dict/list/string
         "audio": a.get("audio") or a.get("audio_url") or "",
     }
 
