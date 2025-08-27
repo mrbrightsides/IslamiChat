@@ -32,6 +32,29 @@ def _extract_audio_src(audio_field):
                 return src
     return None
 
+def _ayat_count(obj) -> Optional[int]:
+    """Ambil jumlah ayat dari berbagai kemungkinan key."""
+    for k in ("jumlah_ayat", "jumlahAyat", "ayat", "verses_count", "numberOfAyah"):
+        v = obj.get(k)
+        if isinstance(v, int):
+            return v
+        if isinstance(v, str) and v.isdigit():
+            return int(v)
+    return None
+
+options = {}
+for s in surat_list:
+    cnt = _ayat_count(s)
+    label = f"{s.get('nomor'):>03} — {s.get('nama_latin','')} ({cnt if cnt else '?'} ayat)"
+    options[label] = s.get("nomor")
+
+# --- Detail surat
+detail = get_surah_detail(int(no_surah))
+cnt = _ayat_count(detail) or "?"
+nama_latin = detail.get("nama_latin") or detail.get("namaLatin") or detail.get("nama", "")
+nama_arab  = detail.get("nama") or ""
+info = f"{detail.get('tempat_turun','')} • {detail.get('arti','')} • {cnt} ayat"
+
 # =========================
 # JUZ MAP (pembuka Juz → (surah, ayat))
 # Sumber: standar mushaf Madinah (bisa di-tweak kalau mau pakai mapping lain)
