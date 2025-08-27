@@ -40,20 +40,7 @@ def _ayat_count(obj) -> Optional[int]:
             return v
         if isinstance(v, str) and v.isdigit():
             return int(v)
-    return None
-
-options = {}
-for s in surat_list:
-    cnt = _ayat_count(s)
-    label = f"{s.get('nomor'):>03} — {s.get('nama_latin','')} ({cnt if cnt else '?'} ayat)"
-    options[label] = s.get("nomor")
-
-# --- Detail surat
-detail = get_surah_detail(int(no_surah))
-cnt = _ayat_count(detail) or "?"
-nama_latin = detail.get("nama_latin") or detail.get("namaLatin") or detail.get("nama", "")
-nama_arab  = detail.get("nama") or ""
-info = f"{detail.get('tempat_turun','')} • {detail.get('arti','')} • {cnt} ayat"
+    return None    
 
 # =========================
 # JUZ MAP (pembuka Juz → (surah, ayat))
@@ -165,13 +152,23 @@ def render_quran_tab():
         st.error(f"Gagal memuat daftar surat: {e}")
         return
 
-    options = {
-        f"{s.get('nomor'):>03} — {s.get('nama_latin','')} ({s.get('jumlah_ayat','?')} ayat)": s.get("nomor")
-        for s in surat_list
-    }
-    default_surah = st.session_state.get("__sf_q_surah", 1)
-    label_idx = list(options.values()).index(default_surah) if default_surah in options.values() else 0
-    pilih_label = st.selectbox("Pilih Surat", list(options.keys()), index=label_idx, key="__sf_q_surah_label")
+    options: Dict[str, int] = {}
+    for s in surat_list:
+        nomor = int(s.get("nomor") or s.get("number") or 1)
+        nama  = s.get("nama_latin") or s.get("namaLatin") or s.get("nama") or ""
+        cnt   = _ayat_count(s)  # <- helper baru
+        label = f"{nomor:03} — {nama} ({cnt if cnt is not None else '?'} ayat)"
+        options[label] = nomor
+    
+    # pilih default
+    labels = list(options.keys())
+    default_surah = int(st.session_state.get("__sf_q_surah", 1))
+    try:
+        label_idx = next(i for i, (lbl, n) in enumerate(options.items()) if n == default_surah)
+    except StopIteration:
+        label_idx = 0
+    
+    pilih_label = st.selectbox("Pilih Surat", labels, index=label_idx, key="__sf_q_surah_label")
     no_surah = options[pilih_label]
 
     # --- Navigasi Juz
@@ -197,9 +194,12 @@ def render_quran_tab():
         st.error(f"Gagal memuat detail surat: {e}")
         return
 
+    detail = get_surah_detail(int(no_surah))
+    cnt_detail = _ayat_count(detail) or "?"
     nama_latin = detail.get("nama_latin") or detail.get("namaLatin") or detail.get("nama", "")
     nama_arab  = detail.get("nama") or ""
-    info = f"{detail.get('tempat_turun','')} • {detail.get('arti','')} • {detail.get('jumlah_ayat','?')} ayat"
+    info = f"{detail.get('tempat_turun','')} • {detail.get('arti','')} • {cnt_detail} ayat"
+
     top = st.columns([3, 2])
     with top[0]:
         st.subheader(f"{nama_latin} — {nama_arab}")
