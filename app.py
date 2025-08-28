@@ -6,7 +6,6 @@ import os
 import pandas as pd
 import streamlit as st
 from streamlit.components.v1 import iframe
-from urllib.parse import quote
 
 # ===== Komponen: Waktu Sholat =====
 from components.waktu_sholat import (
@@ -98,58 +97,21 @@ with tabs[0]:
         st.session_state.chat_widget = "TawkTo"  # default
 
     widget_opt = st.radio(
-        " ", ["ArtiBot", "TawkTo", "ChatBase", "Botsonic"],
+        " ", ["ArtiBot", "TawkTo", "ChatBase"],
         horizontal=True, label_visibility="collapsed",
-        index=["ArtiBot","TawkTo","ChatBase","Botsonic"].index(st.session_state.chat_widget),
+        index=["ArtiBot","TawkTo","ChatBase"].index(st.session_state.chat_widget),
         key="chat_widget"
     )
 
-    SERVICE_BASE = "https://api-bot.writesonic.com"
-    MY_ORIGIN    = "https://smartfaith.streamlit.app"
-    TOKEN        = "78d9eaba-80fc-4293-b290-fe72e1899607"
-    
-    def q(u: str) -> str:
-        return quote(u, safe=":/")
-    
-    BOTSONIC_SRC = (
-        "https://widget.botsonic.com/CDN/index.html"
-        f"?service-base-url={q(SERVICE_BASE)}"
-        f"&token={TOKEN}"
-        f"&origin={q(MY_ORIGIN)}"
-        f"&instance-name=SmartFaith"
-        f"&standalone=true"
-        f"&page-url={q(MY_ORIGIN)}"
-    )
-    
     URLS = {
         "ArtiBot": "https://my.artibot.ai/islamichat",
         "TawkTo": "https://tawk.to/chat/63f1709c4247f20fefe15b12/1gpjhvpnb",
-        "ChatBase": "https://www.chatbase.co/chatbot-iframe/Ho6CMtS7y0t5oM-Ktx9jU",
-        "Botsonic": BOTSONIC_SRC,
+        "ChatBase": "https://www.chatbase.co/chatbot-iframe/Ho6CMtS7y0t5oM-Ktx9jU"
     }
+    chosen_url = URLS[widget_opt]
 
-    chosen_url = URLS.get(widget_opt)
-    if not chosen_url:
-        st.error(f"Widget '{widget_opt}' belum dikonfigurasi URL-nya.")
-    else:
-        cache_bust = st.toggle("Force refresh chat (cache-bust)", value=False)
-        final_url  = f"{chosen_url}?t={int(time.time())}" if cache_bust else chosen_url
-    
-        if widget_opt == "Botsonic":
-            st.components.v1.html(f"""
-            <div style="height:80vh;width:100%;overflow:hidden;">
-              <iframe
-                src="{final_url}"
-                style="border:0;width:100%;height:100%;"
-                allow="microphone; autoplay; clipboard-read; clipboard-write"
-                referrerpolicy="no-referrer"
-              ></iframe>
-            </div>
-            """, height=720, scrolling=False)
-        else:
-            # sesuai pola atau pakai iframe;
-            # sementara simple pakai tombol/link
-            st.link_button("Buka Chat", botsonic_src, use_container_width=True)
+    cache_bust = st.toggle("Force refresh chat (cache-bust)", value=False)
+    final_url = f"{chosen_url}?t={int(time.time())}" if cache_bust else chosen_url
 
     st.write(f"💬 Chat aktif: **{widget_opt}**")
     st.caption("Jika area kosong, kemungkinan dibatasi oleh CSP/X-Frame-Options dari penyedia.")
