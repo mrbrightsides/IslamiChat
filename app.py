@@ -149,7 +149,7 @@ with tabs[0]:
         else:
             # sesuai pola atau pakai iframe;
             # sementara simple pakai tombol/link
-            st.link_button("Buka Chat", final_url, use_container_width=True)
+            st.link_button("Buka Chat", botsonic_src, use_container_width=True)
 
     st.write(f"💬 Chat aktif: **{widget_opt}**")
     st.caption("Jika area kosong, kemungkinan dibatasi oleh CSP/X-Frame-Options dari penyedia.")
