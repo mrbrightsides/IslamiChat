@@ -12,6 +12,7 @@ Tanya jawab Islami, waktu sholat, khutbah AI, setoran hafalan, kalkulator zakat,
 [![Python](https://img.shields.io/badge/Python-3.9%2B-blue)](https://www.python.org/)
 [![Status](https://img.shields.io/badge/status-active-success)]()
 [![Issues](https://img.shields.io/github/issues/mrbrightsides/IslamiChat)](https://github.com/mrbrightsides/IslamiChat/issues)
+![Telegram](https://img.shields.io/badge/Telegram-SmartFaith-blue?logo=telegram)
 
 ---
 
@@ -49,7 +50,8 @@ Tanya jawab Islami, waktu sholat, khutbah AI, setoran hafalan, kalkulator zakat,
 ---
 
 ## 🖼️ Preview
-<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/1df97483-5cf4-438b-9d39-f6b9bb237068" />
+<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/612de068-b911-4a29-853e-2c4f94b86447" />
+
 
 
 ---
