@@ -12,7 +12,9 @@ Tanya jawab Islami, waktu sholat, khutbah AI, setoran hafalan, kalkulator zakat,
 [![Python](https://img.shields.io/badge/Python-3.9%2B-blue)](https://www.python.org/)
 [![Status](https://img.shields.io/badge/status-active-success)]()
 [![Issues](https://img.shields.io/github/issues/mrbrightsides/IslamiChat)](https://github.com/mrbrightsides/IslamiChat/issues)
-![Telegram](https://img.shields.io/badge/Telegram-SmartFaith-blue?logo=telegram)
+[![Telegram](https://img.shields.io/badge/Telegram-SmartFaith-blue?logo=telegram)](https://t.me/smartfaith_bot)
+
+![Preview Bot](docs/smartfaith_bot_preview.png)
 
 ---
 
