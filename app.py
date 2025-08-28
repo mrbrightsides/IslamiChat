@@ -114,7 +114,7 @@ with tabs[0]:
             "&origin=https%3A%2F%2Fbot.writesonic.com"
             "&instance-name=Botsonic"
             "&standalone=true"
-            "&page-url=https%3A%2F%2Fbot.writesonic.com%2Fbots%2Fa148b878-259e-4591-858a-8869b9b23604%2Fconnect%3Ftab%3Dembeddings"
+            "&page-url=https%3A%2F%2Fsmartfaith.streamlit.app%2Fbots%2Fa148b878-259e-4591-858a-8869b9b23604%2Fconnect%3Ftab%3Dembeddings"
         )
     }
     chosen_url = URLS[widget_opt]
