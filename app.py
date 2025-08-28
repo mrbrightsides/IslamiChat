@@ -107,15 +107,7 @@ with tabs[0]:
         "ArtiBot": "https://my.artibot.ai/islamichat",
         "TawkTo": "https://tawk.to/chat/63f1709c4247f20fefe15b12/1gpjhvpnb",
         "ChatBase": "https://www.chatbase.co/chatbot-iframe/Ho6CMtS7y0t5oM-Ktx9jU",
-        "Botsonic":(
-            "https://widget.botsonic.com/CDN/index.html"
-            "?service-base-url=https%3A%2F%2Fapi-bot.writesonic.com"
-            "&token=78d9eaba-80fc-4293-b290-fe72e1899607"
-            "&origin=https%3A%2F%2Fsmartfaith.streamlit.app"
-            "&instance-name=Botsonic"
-            "&standalone=true"
-            "&page-url=https%3A%2F%2Fsmartfaith.streamlit.app%2Fbots%2Fa148b878-259e-4591-858a-8869b9b23604%2Fconnect%3Ftab%3Dembeddings"
-        )
+        "Botsonic": "https://widget.botsonic.com/CDN/index.html?service-base-url=https%3A%2F%2Fapi-bot.writesonic.com&token=78d9eaba-80fc-4293-b290-fe72e1899607&origin=https%3A%2F%2Fsmartfaith.streamlit.app&instance-name=Botsonic&standalone=true&page-url=https%3A%2F%2Fsmartfaith.streamlit.app"
     }
     chosen_url = URLS[widget_opt]
 
