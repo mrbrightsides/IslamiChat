@@ -59,7 +59,7 @@ st.set_page_config(
     layout="wide"
 )
 
-LOGO_URL = "https://i.imgur.com/1kanAiT.png"
+LOGO_URL = "https://i.imgur.com/vPQigu6.png"
 
 col1, col2 = st.columns([1, 4])
 with col1:
