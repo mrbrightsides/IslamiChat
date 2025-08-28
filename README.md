@@ -13,6 +13,7 @@ Tanya jawab Islami, waktu sholat, khutbah AI, setoran hafalan, kalkulator zakat,
 [![Status](https://img.shields.io/badge/status-active-success)]()
 [![Issues](https://img.shields.io/github/issues/mrbrightsides/IslamiChat)](https://github.com/mrbrightsides/IslamiChat/issues)
 [![Telegram](https://img.shields.io/badge/Telegram-SmartFaith-blue?logo=telegram)](https://t.me/smartfaith_bot)
+[![Keep Alive](https://github.com/mrbrightsides/IslamiChat/actions/workflows/ping.yml/badge.svg)](https://github.com/mrbrightsides/IslamiChat/actions/workflows/ping.yml)
 
 ---
 
