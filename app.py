@@ -7,6 +7,9 @@ import pandas as pd
 import streamlit as st
 from streamlit.components.v1 import iframe
 
+if st.query_params.get("ping") == "1":
+    st.write("ok"); st.stop()
+
 # ===== Komponen: Waktu Sholat =====
 from components.waktu_sholat import (
     TZ, METHODS, fetch_timings_by_city, parse_today_times,
