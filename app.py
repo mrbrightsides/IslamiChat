@@ -128,25 +128,28 @@ with tabs[0]:
         "Botsonic": BOTSONIC_SRC,
     }
 
-    chosen_url = URLs[widget_opt]
-    cache_bust = st.toggle("Force refresh chat (cache-bust)", value=False)
-    final_url  = f"{chosen_url}?t={int(time.time())}" if cache_bust else chosen_url
-    
-    # RENDER
-    if widget_opt == "Botsonic":
-        st.components.v1.html(f"""
-        <div style="height:80vh;width:100%;overflow:hidden;">
-          <iframe
-            src="{final_url}"
-            style="border:0;width:100%;height:100%;"
-            allow="microphone; autoplay; clipboard-read; clipboard-write"
-            referrerpolicy="no-referrer"
-          ></iframe>
-        </div>
-        """, height=720, scrolling=False)
+    chosen_url = URLS.get(widget_opt)
+    if not chosen_url:
+        st.error(f"Widget '{widget_opt}' belum dikonfigurasi URL-nya.")
     else:
-        # yang lain tetap dibuka sebagai link / iframe
-        st.link_button("Buka Chat", final_url, use_container_width=True)
+        cache_bust = st.toggle("Force refresh chat (cache-bust)", value=False)
+        final_url  = f"{chosen_url}?t={int(time.time())}" if cache_bust else chosen_url
+    
+        if widget_opt == "Botsonic":
+            st.components.v1.html(f"""
+            <div style="height:80vh;width:100%;overflow:hidden;">
+              <iframe
+                src="{final_url}"
+                style="border:0;width:100%;height:100%;"
+                allow="microphone; autoplay; clipboard-read; clipboard-write"
+                referrerpolicy="no-referrer"
+              ></iframe>
+            </div>
+            """, height=720, scrolling=False)
+        else:
+            # sesuai pola atau pakai iframe;
+            # sementara simple pakai tombol/link
+            st.link_button("Buka Chat", final_url, use_container_width=True)
 
     st.write(f"💬 Chat aktif: **{widget_opt}**")
     st.caption("Jika area kosong, kemungkinan dibatasi oleh CSP/X-Frame-Options dari penyedia.")
