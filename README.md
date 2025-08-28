@@ -14,8 +14,6 @@ Tanya jawab Islami, waktu sholat, khutbah AI, setoran hafalan, kalkulator zakat,
 [![Issues](https://img.shields.io/github/issues/mrbrightsides/IslamiChat)](https://github.com/mrbrightsides/IslamiChat/issues)
 [![Telegram](https://img.shields.io/badge/Telegram-SmartFaith-blue?logo=telegram)](https://t.me/smartfaith_bot)
 
-![Preview Bot](docs/smartfaith_bot_preview.png)
-
 ---
 
 ## ⚡ Powered By
