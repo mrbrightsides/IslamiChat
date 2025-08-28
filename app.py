@@ -97,9 +97,9 @@ with tabs[0]:
         st.session_state.chat_widget = "TawkTo"  # default
 
     widget_opt = st.radio(
-        " ", ["ArtiBot", "TawkTo", "ChatBase"],
+        " ", ["ArtiBot", "TawkTo", "ChatBase", "Botsonic"],
         horizontal=True, label_visibility="collapsed",
-        index=["ArtiBot","TawkTo","ChatBase"].index(st.session_state.chat_widget),
+        index=["ArtiBot","TawkTo","ChatBase","Botsonic"].index(st.session_state.chat_widget),
         key="chat_widget"
     )
 
@@ -107,6 +107,14 @@ with tabs[0]:
         "ArtiBot": "https://my.artibot.ai/islamichat",
         "TawkTo": "https://tawk.to/chat/63f1709c4247f20fefe15b12/1gpjhvpnb",
         "ChatBase": "https://www.chatbase.co/chatbot-iframe/Ho6CMtS7y0t5oM-Ktx9jU"
+        "Botsonic":
+        "https://widget.botsonic.com/CDN/index.html"
+        "?service-base-url=https%3A%2F%2Fapi-bot.writesonic.com"
+        "&token=78d9eaba-80fc-4293-b290-fe72e1899607"
+        "&origin=https%3A%2F%2Fbot.writesonic.com"
+        "&instance-name=Botsonic"
+        "&standalone=true"
+        "&page-url=https%3A%2F%2Fbot.writesonic.com%2Fbots%2Fa148b878-259e-4591-858a-8869b9b23604%2Fconnect%3Ftab%3Dembeddings"
     }
     chosen_url = URLS[widget_opt]
 
@@ -118,7 +126,7 @@ with tabs[0]:
 
     iframe(src=final_url, height=720)
 
-    if st.button(f"🔗 Klik disini jika {widget_opt} tidak tampil atau jika halaman chat tidak responsif"):
+    if st.button(f"🔗 Klik disini jika ingin menampilkan halaman chat {widget_opt} dengan lebih baik"):
         st.markdown(
             f"""
             <meta http-equiv="refresh" content="0; url={chosen_url}">
