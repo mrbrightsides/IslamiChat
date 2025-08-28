@@ -42,7 +42,9 @@ Tanya jawab Islami, waktu sholat, khutbah AI, setoran hafalan, kalkulator zakat,
 - 🔌 Siap integrasi IoT untuk:  
   - Notifikasi adzan otomatis  
   - Display jadwal sholat di layar digital  
-  - Kontrol perangkat pintar berbasis jadwal sholat  
+  - Kontrol perangkat pintar berbasis jadwal sholat
+ 
+🚀 Coba versi ringkas via Telegram: [@smartfaith_bot](https://t.me/smartfaith_bot)
 
 ---
 
