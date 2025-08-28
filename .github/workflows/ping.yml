@@ -1,0 +1,10 @@
+name: Keep Alive Streamlit
+on:
+  schedule:
+    - cron: "*/10 1-15 * * *"   # 08:00–22:59 WIB (UTC+7 -> 01–15 UTC)
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Curl app
+        run: curl -sS "https://smartfaith.streamlit.app/?ping=1" > /dev/null
