@@ -106,7 +106,7 @@ with tabs[0]:
     URLS = {
         "ArtiBot": "https://my.artibot.ai/islamichat",
         "TawkTo": "https://tawk.to/chat/63f1709c4247f20fefe15b12/1gpjhvpnb",
-        "ChatBase": "https://www.chatbase.co/chatbot-iframe/Ho6CMtS7y0t5oM-Ktx9jU"
+        "ChatBase": "https://www.chatbase.co/chatbot-iframe/Ho6CMtS7y0t5oM-Ktx9jU",
         "Botsonic":(
             "https://widget.botsonic.com/CDN/index.html"
             "?service-base-url=https%3A%2F%2Fapi-bot.writesonic.com"
