@@ -127,7 +127,8 @@ with tabs[0]:
         "ChatBase": "https://www.chatbase.co/chatbot-iframe/Ho6CMtS7y0t5oM-Ktx9jU",
         "Botsonic": BOTSONIC_SRC,
     }
-    
+
+    chosen_url = URLs[widget_opt]
     cache_bust = st.toggle("Force refresh chat (cache-bust)", value=False)
     final_url  = f"{chosen_url}?t={int(time.time())}" if cache_bust else chosen_url
     
