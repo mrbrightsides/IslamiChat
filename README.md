@@ -18,8 +18,9 @@ Tanya jawab Islami, waktu sholat, khutbah AI, setoran hafalan, kalkulator zakat,
 ## ⚡ Powered By
 - 🤖 **ArtiBot** → tanya jawab pengetahuan tentang islam
 - 🧠 **TawkTo** → knowledge base dan AI admin
-- 🕌 **Aladhan API** → jadwal sholat & arah kiblat  
-- 📖 **OpenAI API** → KhutbahGPT, validasi setoran hafalan, tanya jawab Islami  
+- 🕌 **Aladhan API** → jadwal sholat & arah kiblat
+- 📖 **E-Quran.id API** → transkrip dan terjemahan Quran
+- 🗣️ **OpenAI API** → KhutbahGPT, validasi setoran hafalan, tanya jawab Islami  
 - 💰 **GoldAPI** → data harga emas realtime untuk kalkulator zakat  
 - 🎧 **MP3Quran.net** → murottal Quran  
 - 🗺️ **OpenStreetMap** → pencarian masjid terdekat  
