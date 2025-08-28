@@ -128,7 +128,6 @@ with tabs[0]:
         "Botsonic": BOTSONIC_SRC,
     }
     
-    chosen_url = URLs[widget_opt]
     cache_bust = st.toggle("Force refresh chat (cache-bust)", value=False)
     final_url  = f"{chosen_url}?t={int(time.time())}" if cache_bust else chosen_url
     
@@ -145,7 +144,7 @@ with tabs[0]:
         </div>
         """, height=720, scrolling=False)
     else:
-        # yang lain boleh tetap dibuka sebagai link / iframe sesuai pola kamu
+        # yang lain tetap dibuka sebagai link / iframe
         st.link_button("Buka Chat", final_url, use_container_width=True)
 
     st.write(f"💬 Chat aktif: **{widget_opt}**")
