@@ -8,12 +8,27 @@ Tanya jawab Islami, waktu sholat, khutbah AI, setoran hafalan, kalkulator zakat,
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.16787143.svg)](https://doi.org/10.5281/zenodo.16787143)
 [![MIT License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Streamlit](https://img.shields.io/badge/Deploy%20on-Streamlit-FF4B4B)](https://smartfaith.streamlit.app)
 [![Python](https://img.shields.io/badge/Python-3.9%2B-blue)](https://www.python.org/)
 [![Status](https://img.shields.io/badge/status-active-success)]()
 [![Issues](https://img.shields.io/github/issues/mrbrightsides/IslamiChat)](https://github.com/mrbrightsides/IslamiChat/issues)
-[![Telegram](https://img.shields.io/badge/Telegram-SmartFaith-blue?logo=telegram)](https://t.me/smartfaith_bot)
 [![Keep Alive](https://github.com/mrbrightsides/IslamiChat/actions/workflows/ping.yml/badge.svg)](https://github.com/mrbrightsides/IslamiChat/actions/workflows/ping.yml)
+[![Architecture](https://img.shields.io/badge/docs-architecture-blue?logo=mermaid&logoColor=white)](https://github.com/mrbrightsides/IslamiChat/blob/main/docs/ARCHITECTURE.md)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/mrbrightsides/IslamiChat/pulls)
+
+<p align="center">
+  <a href="https://github.com/mrbrightsides/IslamiChat/releases/download/v1.0.0/SmartFaith.zip">
+    <img alt="Download APK" src="https://img.shields.io/badge/Download-APK-3DDC84?logo=android&logoColor=white&style=for-the-badge">
+  </a>
+  <a href="https://smartfaith.streamlit.app/">
+    <img alt="Open Web App" src="https://img.shields.io/badge/Open-Web%20App-FF4B4B?logo=streamlit&logoColor=white&style=for-the-badge">
+  </a>
+  <a href="https://t.me/smartfaith_bot">
+    <img alt="Chat on Telegram" src="https://img.shields.io/badge/Chat-Telegram-229ED9?logo=telegram&logoColor=white&style=for-the-badge">
+  </a>
+  <a href="https://smartfaithbot.vercel.app/">
+    <img alt="Live on Vercel" src="https://img.shields.io/badge/Live-Vercel-000000?logo=vercel&logoColor=white&style=for-the-badge">
+  </a>
+</p>
 
 ---
 
