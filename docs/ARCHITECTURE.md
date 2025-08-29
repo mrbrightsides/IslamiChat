@@ -8,19 +8,50 @@ Tujuannya agar contributor dan tim dev mudah memahami alur sistem, integrasi, se
 ## 🔎 High-level Overview
 
 ```mermaid
+%% High-level Overview (Clickable)
 graph TD
-  TG["Telegram App"] --> BOT["smartfaith_bot (Python)"]
-  WEB["Web App (Streamlit)"] --> API
-  WV["Web View (Embed)"] --> API
+  %% === Frontend ===
+  subgraph Frontend
+    TG["📱 Telegram App"]
+    WEB["🌐 Web App (Streamlit)"]
+    WV["🔗 Web View (Embed)"]
+  end
 
-  BOT --> API["API Gateway (Vercel / Next.js)"]
-  API --> LLM["LLM Providers (OpenAI / Groq)"]
-  API --> SVC["Internal Services (Quran, Sholat, Zakat)"]
-  API --> DB["Data Store / Logs"]
-  API --> CDN["Cloudinary (Media)"]
+  %% === Backend ===
+  subgraph Backend
+    BOT["🤖 smartfaith_bot (Python)"]
+    API["🚪 API Gateway (Vercel / Next.js)"]
+    LOG["📊 Data Store / Logs"]
+  end
 
-  TG --- MON["Uptime / Monitoring"]
+  %% === Services ===
+  subgraph Services
+    LLM["🧠 LLM Providers (OpenAI / Groq)"]
+    SVC["📚 Internal Services (Quran, Sholat, Zakat)"]
+    CDN["🖼️ Cloudinary (Media)"]
+    MON["🛡️ Uptime / Monitoring"]
+  end
+
+  %% Flows
+  TG --> BOT
+  BOT --> API
+  WEB --> API
+  WV --> API
+  API --> LLM
+  API --> SVC
+  API --> LOG
+  API --> CDN
+  TG --- MON
   API --- MON
+
+%% === Clickable links (tanpa indent) ===
+click TG "https://t.me/smartfaith_bot" "Open Telegram bot" _blank
+click WEB "https://smartfaith.streamlit.app/" "Open Web App" _blank
+click WV "https://smartfaithbot.vercel.app/" "Open Web View" _blank
+click BOT "https://github.com/mrbrightsides/smartfaith-bot" "Open bot repo" _blank
+click API "https://github.com/mrbrightsides/IslamiChat" "Open web app repo" _blank
+click CDN "https://cloudinary.com/console" "Open Cloudinary" _blank
+click MON "https://uptimerobot.com" "Open monitoring" _blank
 ```
 
 ---
@@ -50,14 +81,16 @@ sequenceDiagram
 ## 🌐 Web App Flow
 
 ```mermaid
+%% 🌐 Web App Flow (Clickable)
 flowchart LR
-  U[User]
-  UI["SmartFaith Web App\n(Streamlit)"]
-  API["Vercel API"]
-  LLM["OpenAI / Groq"]
-  SVC["Modules\n(Prayer Time, Tafsir, etc)"]
-  LOG["Logs / Analytics"]
+  U["🙋 User"]
+  UI["💻 SmartFaith Web App (Streamlit)"]
+  API["🚪 Vercel API"]
+  LLM["🧠 OpenAI / Groq"]
+  SVC["📚 Modules (Prayer Time, Tafsir, Zakat)"]
+  LOG["📊 Logs / Analytics"]
 
+  %% Flow
   U --> UI
   UI -->|REST JSON| API
   API --> LLM
@@ -66,6 +99,24 @@ flowchart LR
   LLM --> API
   SVC --> API
   API --> UI
+
+%% Clickable Links
+click UI "https://smartfaith.streamlit.app/" "Open SmartFaith Web App" _blank
+click API "https://github.com/mrbrightsides/IslamiChat" "Open Web App Repo" _blank
+click LLM "https://platform.openai.com/" "Go to OpenAI" _blank
+click LOG "https://vercel.com/dashboard" "View Logs on Vercel" _blank
+```
+
+Legend:
+```mermaid
+%% Legend
+flowchart LR
+  A["🙋 User"]:::legend -->|"Frontend"| B["💻 Web / App"]
+  B -->|"Gateway"| C["🚪 API"]
+  C -->|"Compute"| D["🧠 LLM / Services"]
+  C -->|"Storage"| E["📊 Logs / Data"]
+  
+classDef legend fill:#1e1e1e,stroke:#666,color:#fff,font-size:12px;
 ```
 
 ## 🌍 Subdomain Mapping
