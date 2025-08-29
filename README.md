@@ -60,15 +60,11 @@ Tanya jawab Islami, waktu sholat, khutbah AI, setoran hafalan, kalkulator zakat,
   - Notifikasi adzan otomatis  
   - Display jadwal sholat di layar digital  
   - Kontrol perangkat pintar berbasis jadwal sholat
- 
-🚀 Coba versi ringkas via Telegram: [@smartfaith_bot](https://t.me/smartfaith_bot)
 
 ---
 
 ## 🖼️ Preview
 <img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/612de068-b911-4a29-853e-2c4f94b86447" />
-
-
 
 ---
 
