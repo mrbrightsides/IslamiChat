@@ -1,6 +1,6 @@
 import streamlit as st
 
-MAKKAH_EMBED = "https://www.youtube.com/embed/sJHSo9sYdeI"
+MAKKAH_EMBED = "https://www.youtube.com/embed/bNY8a2BB5Gc"
 MADINAH_EMBED = "https://www.youtube.com/embed/wiQWH8908PU"
 
 def _responsive_embed(embed_url: str, title: str) -> str:
