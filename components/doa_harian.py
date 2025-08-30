@@ -1,4 +1,37 @@
 import requests, streamlit as st
+# === Copy-to-Clipboard helper (Streamlit) ===
+from streamlit.components.v1 import html
+
+def _esc(s: str) -> str:
+    # amankan backslash & backtick biar tidak pecah di template literal JS
+    return (s or "").replace("\\", "\\\\").replace("`", "\\`")
+
+def copy_button(text_to_copy: str, label: str = "📋 Copy Doa"):
+    payload = _esc(text_to_copy or "")
+    html(
+        f"""
+        <style>
+        .copy-btn {{
+            display:inline-block; padding:8px 14px; margin-top:10px;
+            border-radius:6px; background:#4CAF50; color:#fff; font-weight:600;
+            border:none; cursor:pointer; transition:.15s;
+        }}
+        .copy-btn:hover {{ background:#3f9b46; }}
+        </style>
+        <button class="copy-btn" onclick="
+            navigator.clipboard.writeText(`{payload}`);
+            const t=document.createElement('div');
+            t.textContent='✅ Doa disalin';
+            Object.assign(t.style, {{
+                position:'fixed', bottom:'18px', right:'18px',
+                background:'#333', color:'#fff', padding:'10px 14px',
+                borderRadius:'6px', fontSize:'14px', zIndex:9999
+            }});
+            document.body.appendChild(t); setTimeout(()=>t.remove(),1800);
+        ">{label}</button>
+        """,
+        height=0,
+    )
 
 API_BASE = "https://equran.id/api/doa"
 CACHE_TTL = 60 * 60 * 12  # 12 jam
@@ -44,49 +77,38 @@ def safe_get(d: dict, key: str, default=""):
 def show_doa_harian():
     st.title("📖 Doa Harian (EQuran.id API)")
 
-    data = fetch_api()
-
+    data = fetch_api()              # sudah kita normalisasi sebelumnya
     if not data:
         st.warning("Tidak ada data doa ditemukan.")
         return
 
-    # Pastikan setiap item minimal berbentuk dict dengan kunci standar
-    fixed = []
-    for x in data:
-        fixed.append({
-            "id":    safe_get(x, "id"),
-            "grup":  safe_get(x, "grup", "Tanpa Grup"),
-            "judul": safe_get(x, "doa",  safe_get(x, "judul", "Tanpa judul")),
-            "arab":  safe_get(x, "ayat", safe_get(x, "arab", "")),
-            "latin": safe_get(x, "latin", ""),
-            "indo":  safe_get(x, "artinya", safe_get(x, "indo", "")),
-            "audio": safe_get(x, "audio"),
-        })
-
-    # --- Kategori unik ---
-    grups = sorted({ item["grup"] if item["grup"] else "Tanpa Grup" for item in fixed })
+    # kategori/grup aman
+    grups = sorted({ (d.get("grup") or "Tanpa Grup") for d in data })
     grup  = st.selectbox("Kategori", grups)
 
-    # --- Filter sesuai grup ---
-    items = [d for d in fixed if (d["grup"] or "Tanpa Grup") == grup]
+    items = [d for d in data if (d.get("grup") or "Tanpa Grup") == grup]
     if not items:
         st.info("Tidak ada doa pada kategori ini.")
         return
 
-    # --- Pilihan doa ---
-    opt_titles = [d["judul"] or f"Tanpa judul #{d['id']}" for d in items]
-    opt = st.selectbox("Pilih doa", opt_titles)
-    doa = next(d for d in items if (d["judul"] or f"Tanpa judul #{d['id']}") == opt)
+    titles = [d.get("judul") or d.get("doa") or f"Tanpa judul #{d.get('id')}" for d in items]
+    picked = st.selectbox("Pilih doa", titles)
 
-    # --- Tampilkan konten ---
-    st.subheader(doa["judul"] or "Tanpa judul")
-    st.markdown(f"**Arab:**\n\n{doa['arab'] or '-'}")
-    st.markdown(f"**Latin:**\n\n{doa['latin'] or '-'}")
-    st.info(f"**Arti:** {doa['indo'] or '-'}")
+    doa = next(d for d in items if (d.get("judul") or d.get("doa") or f"Tanpa judul #{d.get('id')}") == picked)
+
+    title = doa.get("judul") or doa.get("doa") or "Tanpa judul"
+    arab  = (doa.get("arab")  or doa.get("ayat")   or "").strip()
+    latin = (doa.get("latin") or "").strip()
+    indo  = (doa.get("indo")  or doa.get("artinya") or "").strip()
+
+    st.subheader(title)
+    st.markdown(f"**Arab:**\n\n{arab or '-'}")
+    st.markdown(f"**Latin:**\n\n{latin or '-'}")
+    st.info(f"**Arti:** {indo or '-'}")
     st.caption("Sumber: EQuran.id")
 
-    # tombol copy
-    copy_button(f"{doa['arab']}\n\n{doa['latin']}\n\n{doa['indo']}")
+    # tombol copy — sekarang sudah terdefinisi
+    copy_button("\n\n".join([arab or "-", latin or "-", indo or "-"]))
 
 @st.cache_data(ttl=CACHE_TTL, show_spinner=False)
 def fetch_doa_by_id(doa_id: int):
