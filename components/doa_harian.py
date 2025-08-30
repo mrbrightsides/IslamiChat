@@ -44,17 +44,27 @@ def fetch_list(grup: str | None = None, tag: str | None = None):
     params = {}
     if grup: params["grup"] = grup
     if tag:  params["tag"]  = tag
+
     r = requests.get(API_BASE, params=params, timeout=15)
     r.raise_for_status()
-    raw = r.json() or []
-    # normalisasi minimal buat dropdown
+    raw = r.json()
+
+    # Normalisasi bentuk
+    if isinstance(raw, dict):
+        # kalau ada wrapper, ambil isinya
+        raw = raw.get("data") or raw.get("result") or []
+
+    if not isinstance(raw, list):
+        return []
+
     out = []
     for x in raw:
+        if not isinstance(x, dict):
+            continue  # skip kalau bukan dict
         out.append({
             "id": x.get("id"),
             "grup": _first("grup", src=x, default="Tanpa Grup"),
             "judul": _first("doa", "judul", src=x, default=f"Tanpa judul #{x.get('id')}"),
-            # beberapa API kadang sudah kirim konten; kalau kosong akan kita isi dari detail
             "arab":  _first("arab", "ayat", src=x, default=""),
             "latin": _first("latin", src=x, default=""),
             "indo":  _first("indo", "artinya", "terjemahan", "id", src=x, default=""),
