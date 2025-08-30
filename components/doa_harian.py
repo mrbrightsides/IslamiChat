@@ -10,6 +10,14 @@ def load_local():
     p = Path("data/doa_harian.json")
     return json.loads(p.read_text(encoding="utf-8"))
 
+with st.expander("Debug (developer)"):
+    if st.checkbox("Show raw API sample"):
+        try:
+            sample = requests.get(API_BASE, timeout=10).json()
+            st.json(sample)
+        except Exception as e:
+            st.error(f"Fetch sample failed: {e}")
+
 @st.cache_data(ttl=CACHE_TTL, show_spinner=False)
 def fetch_api(grup: str | None = None, tag: str | None = None):
     params = {}
