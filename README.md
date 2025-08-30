@@ -15,6 +15,7 @@ Tanya jawab Islami, waktu sholat, khutbah AI, setoran hafalan, kalkulator zakat,
 [![Architecture](https://img.shields.io/badge/docs-architecture-blue?logo=mermaid&logoColor=white)](https://github.com/mrbrightsides/IslamiChat/blob/main/docs/ARCHITECTURE.md)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/mrbrightsides/IslamiChat/pulls)
 
+Coba semua SmartFaith di berbagai platform
 <p align="center">
   <a href="https://github.com/mrbrightsides/IslamiChat/releases/download/v1.0.0/SmartFaith.zip">
     <img alt="Download APK" src="https://img.shields.io/badge/Download-APK-3DDC84?logo=android&logoColor=white&style=for-the-badge">
