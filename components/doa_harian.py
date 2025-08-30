@@ -1,47 +1,46 @@
 import requests
 import streamlit as st
-from streamlit.components.v1 import html
+from typing import Any, Dict, List, Optional
 
 API_BASE = "https://equran.id/api/doa"
 CACHE_TTL = 60 * 60  # 1 jam
 
-# ---------- utilities ----------
-def _esc(s: str) -> str:
-    return (s or "").replace("\\", "\\\\").replace("`", "\\`")
-
-def copy_button(text_to_copy: str, label: str = "📋 Copy Doa"):
-    html(
-        f"""
-        <style>
-        .copy-btn{{
-          display:inline-block;padding:8px 14px;margin-top:10px;border-radius:6px;
-          background:#4CAF50;color:#fff;font-weight:600;border:none;cursor:pointer
-        }}
-        .copy-btn:hover{{background:#3f9b46}}
-        </style>
-        <button class="copy-btn" onclick="
-          navigator.clipboard.writeText(`{_esc(text_to_copy or '')}`);
-          const t=document.createElement('div');t.textContent='✅ Doa disalin';
-          Object.assign(t.style,{{position:'fixed',bottom:'18px',right:'18px',
-          background:'#333',color:'#fff',padding:'10px 14px',borderRadius:'6px',
-          fontSize:'14px',zIndex:9999}});document.body.appendChild(t);
-          setTimeout(()=>t.remove(),1800);
-        ">{label}</button>
-        """,
-        height=0,
-    )
-
-def _first(*keys, src=None, default=""):
-    for k in keys:
-        v = (src or {}).get(k)
-        if isinstance(v, str) and v.strip():
-            return v.strip()
+# ---------- helpers ----------
+def _getv(d: Dict[str, Any], *candidates: str, default: str = "") -> str:
+    """Ambil d[k] dengan beberapa fallback nama kunci."""
+    for k in candidates:
+        if k in d and d[k] is not None:
+            v = d[k]
+            return str(v)
     return default
 
-# ---------- API calls ----------
+def _normalize_container(raw: Any) -> List[Dict[str, Any]]:
+    """Jika respons dibungkus 'data' atau 'result', ambil isinya."""
+    if isinstance(raw, dict):
+        raw = raw.get("data") or raw.get("result") or raw.get("items") or []
+    return raw if isinstance(raw, list) else []
+
+def _normalize_item(x: Dict[str, Any]) -> Dict[str, Any]:
+    """Samakan nama kunci dari berbagai kemungkinan API."""
+    _id   = _getv(x, "id", "ID", "no", default="")
+    judul = _getv(x, "doa", "title", "judul", default=f"Tanpa judul #{_id or '?'}")
+    arab  = _getv(x, "ayat", "arab", "arabic", "arab_text", default="")
+    latin = _getv(x, "latin", "transliterasi", "latin_text", default="")
+    indo  = _getv(x, "artinya", "indo", "translation", "terjemahan", "id", default="-")
+    grup  = _getv(x, "grup", "group", "kategori", default="Tanpa Grup")
+    return {
+        "id": _id,
+        "grup": grup,
+        "judul": judul,
+        "arab": arab,
+        "latin": latin,
+        "indo": indo,
+    }
+
+# ---------- fetchers ----------
 @st.cache_data(ttl=CACHE_TTL, show_spinner=False)
-def fetch_list(grup: str | None = None, tag: str | None = None):
-    params = {}
+def fetch_list(grup: Optional[str] = None, tag: Optional[str] = None, debug: bool = False) -> List[Dict[str, Any]]:
+    params: Dict[str, Any] = {}
     if grup: params["grup"] = grup
     if tag:  params["tag"]  = tag
 
@@ -49,81 +48,100 @@ def fetch_list(grup: str | None = None, tag: str | None = None):
     r.raise_for_status()
     raw = r.json()
 
-    # Normalisasi bentuk
-    if isinstance(raw, dict):
-        # kalau ada wrapper, ambil isinya
-        raw = raw.get("data") or raw.get("result") or []
+    items = _normalize_container(raw)
+    out: List[Dict[str, Any]] = []
+    for it in items:
+        if isinstance(it, dict):
+            out.append(_normalize_item(it))
 
-    if not isinstance(raw, list):
-        return []
+    # (opsional) tampilkan dump jika mau debugging cepat
+    if debug:
+        st.caption("Debug: respons mentah daftar")
+        st.json(raw)
 
-    out = []
-    for x in raw:
-        if not isinstance(x, dict):
-            continue  # skip kalau bukan dict
-        out.append({
-            "id": x.get("id"),
-            "grup": _first("grup", src=x, default="Tanpa Grup"),
-            "judul": _first("doa", "judul", src=x, default=f"Tanpa judul #{x.get('id')}"),
-            "arab":  _first("arab", "ayat", src=x, default=""),
-            "latin": _first("latin", src=x, default=""),
-            "indo":  _first("indo", "artinya", "terjemahan", "id", src=x, default=""),
-        })
     return out
 
 @st.cache_data(ttl=CACHE_TTL, show_spinner=False)
-def fetch_detail(doa_id: int):
+def fetch_detail(doa_id: str, debug: bool = False) -> Dict[str, Any]:
+    if not doa_id:
+        return {}
     r = requests.get(f"{API_BASE}/{doa_id}", timeout=15)
     r.raise_for_status()
-    x = r.json() or {}
-    return {
-        "id": x.get("id"),
-        "grup": _first("grup", src=x, default="Tanpa Grup"),
-        "judul": _first("doa", "judul", src=x, default=f"Tanpa judul #{x.get('id')}"),
-        "arab":  _first("arab", "ayat", src=x, default=""),
-        "latin": _first("latin", src=x, default=""),
-        "indo":  _first("indo", "artinya", "terjemahan", "id", src=x, default=""),
-    }
+    raw = r.json()
 
-# ---------- UI ----------
+    # beberapa API mengembalikan 1 objek, atau {data: {...}}
+    if isinstance(raw, dict) and ("data" in raw) and isinstance(raw["data"], dict):
+        raw = raw["data"]
+
+    # kalau masih berupa list, ambil elemen pertama
+    if isinstance(raw, list) and raw and isinstance(raw[0], dict):
+        raw = raw[0]
+
+    if debug:
+        st.caption("Debug: respons mentah detail")
+        st.json(raw)
+
+    return _normalize_item(raw if isinstance(raw, dict) else {})
+
+# ---------- UI utama ----------
 def show_doa_harian():
-    st.title("📖 Doa Harian (EQuran.id API)")
+    st.header("📖 Doa Harian (EQuran.id API)")
 
-    # ambil semua & tampilkan kategori
-    data = fetch_list()
+    # Kalau pengen debugging cepat:
+    debug = st.toggle("Debug API response", value=False)
+
+    # ambil daftar (tanpa filter dulu, filter manual di UI)
+    data = fetch_list(debug=debug)
+
     if not data:
-        st.warning("Tidak ada data doa dari API.")
+        st.warning("Tidak ada data dari API. Coba muat ulang atau periksa koneksi.")
         return
 
-    grups = sorted({ d.get("grup") or "Tanpa Grup" for d in data })
-    grup  = st.selectbox("Kategori", grups)
+    # kumpulkan grup unik
+    grups = sorted({d["grup"] for d in data})
+    grup = st.selectbox("Kategori", grups, index=0)
 
-    items = [d for d in data if (d.get("grup") or "Tanpa Grup") == grup]
-    if not items:
-        st.info("Tidak ada doa pada kategori ini.")
-        return
+    # filter sesuai grup
+    opsi = [d for d in data if d["grup"] == grup]
+    judul_map = {f"{d['judul']} #{d['id']}" if d['id'] else d['judul']: d["id"] for d in opsi}
 
-    titles = [d["judul"] for d in items]
-    picked = st.selectbox("Pilih doa", titles)
-    base = next(d for d in items if d["judul"] == picked)
+    selected = st.selectbox("Pilih doa", list(judul_map.keys()))
+    doa_id = judul_map.get(selected)
 
-    # kalau konten kosong, fallback panggil detail /api/doa/{id}
-    doa = base
-    if not (base.get("arab") or base.get("latin") or base.get("indo")):
-        try:
-            doa = fetch_detail(int(base["id"]))
-        except Exception:
-            pass  # kalau gagal, tetap pakai base
+    # ambil detail by id agar konten lengkap/akurat
+    det = fetch_detail(doa_id, debug=debug) if doa_id else {}
 
-    title = doa.get("judul") or f"Tanpa judul #{doa.get('id')}"
-    arab  = doa.get("arab") or "-"
-    latin = doa.get("latin") or "-"
-    indo  = doa.get("indo") or "-"
+    st.subheader(det.get("judul", "Tanpa judul"))
 
-    st.subheader(title)
-    st.markdown(f"**Arab:**\n\n{arab}")
-    st.markdown(f"**Latin:**\n\n{latin}")
-    st.info(f"**Arti:** {indo}")
+    st.markdown("**Arab:**")
+    st.write(det.get("arab", "") or "—")
+
+    st.markdown("**Latin:**")
+    st.write(det.get("latin", "") or "—")
+
+    st.info(f"**Arti:** {det.get('indo', '-')}")
     st.caption("Sumber: EQuran.id")
 
-    copy_button("\n\n".join([arab, latin, indo]))
+    # tombol Copy
+    _copy_button(f"{det.get('arab','')}\n\n{det.get('latin','')}\n\n{det.get('indo','-')}")
+
+from streamlit.components.v1 import html
+def _copy_button(text_to_copy: str):
+    code = f"""
+    <style>
+      .copy-btn {{
+        display:inline-block;padding:8px 14px;margin-top:10px;border-radius:6px;
+        background:#10b981;color:white;font-weight:600;border:none;cursor:pointer
+      }}
+      .copy-btn:hover {{ filter:brightness(0.95) }}
+    </style>
+    <button class="copy-btn" onclick="
+      navigator.clipboard.writeText(`{text_to_copy.replace('`','\\`')}`);
+      var t=document.createElement('div');
+      t.innerText='✅ Disalin'; t.style.position='fixed'; t.style.bottom='20px';
+      t.style.right='20px'; t.style.background='#333'; t.style.color='#fff';
+      t.style.padding='8px 12px'; t.style.borderRadius='6px'; t.style.zIndex='9999';
+      document.body.appendChild(t); setTimeout(()=>t.remove(),1500);
+    ">📋 Copy Doa</button>
+    """
+    html(code, height=60)
