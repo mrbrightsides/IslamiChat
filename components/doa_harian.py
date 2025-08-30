@@ -15,13 +15,25 @@ def fetch_api(grup: str | None = None, tag: str | None = None):
     params = {}
     if grup: params["grup"] = grup
     if tag:  params["tag"]  = tag
+
     r = requests.get(API_BASE, params=params, timeout=15)
     r.raise_for_status()
     raw = r.json()
 
-    # Normalisasi ke skema lokal biar UI kompatibel
+    # Pastikan bentuknya list
+    if isinstance(raw, dict):
+        # Kalau respons ada key "data"
+        if "data" in raw and isinstance(raw["data"], list):
+            raw = raw["data"]
+        else:
+            raw = [raw]
+    if not isinstance(raw, list):
+        raise ValueError(f"Unexpected API response: {type(raw)}")
+
     norm = []
     for x in raw:
+        if not isinstance(x, dict):
+            continue
         norm.append({
             "id": x.get("id"),
             "title": x.get("doa") or x.get("judul") or "Tanpa judul",
