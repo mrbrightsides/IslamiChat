@@ -15,6 +15,7 @@ graph TD
     TG["📱 Telegram App"]
     WEB["🌐 Web App (Streamlit)"]
     WV["🔗 Web View (Embed)"]
+    NA["💬 AI (Near)"]
   end
 
   %% === Backend ===
@@ -37,6 +38,7 @@ graph TD
   BOT --> API
   WEB --> API
   WV --> API
+  NA --> API
   API --> LLM
   API --> SVC
   API --> LOG
@@ -52,6 +54,7 @@ click BOT "https://github.com/mrbrightsides/smartfaith-bot" "Open bot repo" _bla
 click API "https://github.com/mrbrightsides/IslamiChat" "Open web app repo" _blank
 click CDN "https://cloudinary.com/console" "Open Cloudinary" _blank
 click MON "https://uptimerobot.com" "Open monitoring" _blank
+click NA "https://app.near.ai/agents/smartfaith.near/smartfaith-ai/latest/run" "Open Registry" _blank
 ```
 
 ---
