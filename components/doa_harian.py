@@ -20,31 +20,67 @@ def fetch_api(grup: str | None = None, tag: str | None = None):
     r.raise_for_status()
     raw = r.json()
 
-    # Pastikan bentuknya list
-    if isinstance(raw, dict):
-        # Kalau respons ada key "data"
-        if "data" in raw and isinstance(raw["data"], list):
-            raw = raw["data"]
-        else:
-            raw = [raw]
-    if not isinstance(raw, list):
-        raise ValueError(f"Unexpected API response: {type(raw)}")
+    # ---- bantu fungsi untuk menemukan list of dicts di response apa pun ----
+    def first_list_of_dicts(obj):
+        if isinstance(obj, list) and (not obj or isinstance(obj[0], dict)):
+            return obj
+        if isinstance(obj, dict):
+            # prioritas umum
+            for k in ("data", "result", "values", "items", "list"):
+                if k in obj:
+                    got = first_list_of_dicts(obj[k])
+                    if got is not None:
+                        return got
+            # kalau masih belum, cari list of dicts di value mana pun
+            for v in obj.values():
+                got = first_list_of_dicts(v)
+                if got is not None:
+                    return got
+        return None
+
+    rows = first_list_of_dicts(raw)
+    if rows is None:
+        # kalau server balikin string JSON di dalam field
+        if isinstance(raw, str):
+            try:
+                rows = first_list_of_dicts(json.loads(raw))
+            except Exception:
+                rows = None
+    if rows is None:
+        raise ValueError("Unexpected API response shape")
+
+    def g(d, *keys, default=""):
+        for k in keys:
+            if k in d and d[k] not in (None, ""):
+                return d[k]
+        return default
 
     norm = []
-    for x in raw:
+    for x in rows:
         if not isinstance(x, dict):
             continue
+        title = g(x, "doa", "judul", default="Tanpa judul")
+        arab  = g(x, "ayat", "arab", "arabic")
+        latin = g(x, "latin", "transliterasi")
+        arti  = g(x, "artinya", "arti", "terjemah")
+        grupv = g(x, "grup", "kategori", "category", default="Lainnya")
+        tagsv = g(x, "tag", "tags", default=[])
+        if isinstance(tagsv, str):
+            # jika server kasih string "malam, hujan" → split
+            tagsv = [t.strip() for t in tagsv.split(",") if t.strip()]
+
         norm.append({
-            "id": x.get("id"),
-            "title": x.get("doa") or x.get("judul") or "Tanpa judul",
-            "arab": x.get("ayat") or x.get("arab") or "",
-            "latin": x.get("latin") or x.get("transliterasi") or "",
-            "translation_id": x.get("artinya") or x.get("arti") or "",
+            "id": g(x, "id"),
+            "title": title,
+            "arab": arab,
+            "latin": latin,
+            "translation_id": arti,
             "source": "EQuran.id",
-            "category": (x.get("grup") or x.get("kategori") or "Lainnya").title(),
-            "audio_url": x.get("audio") or None,
-            "tags": x.get("tag") or x.get("tags") or [],
+            "category": str(grupv).title(),
+            "audio_url": g(x, "audio"),
+            "tags": tagsv,
         })
+
     return norm
 
 def load_hybrid(mode: str, grup: str | None, tag: str | None):
