@@ -2,6 +2,7 @@ import json, requests, streamlit as st
 from pathlib import Path
 from streamlit.components.v1 import html
 
+CACHE_TTL = 60 * 60 * 12  # 12 jam
 API_BASE = "https://equran.id/api/doa"
 
 @st.cache_data(ttl=CACHE_TTL, show_spinner=False)
