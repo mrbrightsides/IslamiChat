@@ -29,7 +29,8 @@ def _normalize_item(x: Dict[str, Any]) -> Dict[str, Any]:
     judul = _getv(x, "nama", "doa", "title", "judul", default="") or (f"Tanpa judul #{_id}" if _id else "Tanpa judul")
     arab  = _getv(x, "ar", "ayat", "arab", "arabic", "arab_text")
     latin = _getv(x, "tr", "latin", "transliterasi", "latin_text")
-    indo  = _getv(x, "idn", "artinya", "indo", "translation", "terjemahan")  # JANGAN masukkan 'id' (bisa bentrok dgn numeric id)
+    # JANGAN ambil 'id' di sini (bisa bentrok dengan numeric id)
+    indo  = _getv(x, "idn", "artinya", "indo", "translation", "terjemahan")
     grup  = _getv(x, "grup", "group", "kategori", default="Tanpa Grup")
     ref   = _getv(x, "tentang", "sumber", "reference", "ket", default="")
     tags  = x.get("tag") or x.get("tags") or []
@@ -49,7 +50,7 @@ def _normalize_item(x: Dict[str, Any]) -> Dict[str, Any]:
 # Fetchers (cached)
 # =========================
 @st.cache_data(ttl=CACHE_TTL, show_spinner=False)
-def fetch_list(grup: Optional[str] = None, tag: Optional[str] = None, debug: bool = False) -> List[Dict[str, Any]]:
+def fetch_list(grup: Optional[str] = None, tag: Optional[str] = None) -> List[Dict[str, Any]]:
     params: Dict[str, Any] = {}
     if grup: params["grup"] = grup
     if tag:  params["tag"]  = tag
@@ -58,15 +59,11 @@ def fetch_list(grup: Optional[str] = None, tag: Optional[str] = None, debug: boo
     r.raise_for_status()
     raw = r.json()
 
-    if debug:
-        st.caption("Debug: respons mentah daftar")
-        st.json(raw)
-
     items = _normalize_container(raw)
     return [_normalize_item(it) for it in items if isinstance(it, dict)]
 
 @st.cache_data(ttl=CACHE_TTL, show_spinner=False)
-def fetch_detail(doa_id: str, debug: bool = False) -> Dict[str, Any]:
+def fetch_detail(doa_id: str) -> Dict[str, Any]:
     if not doa_id:
         return {}
     r = requests.get(f"{API_BASE}/{doa_id}", timeout=15)
@@ -79,10 +76,6 @@ def fetch_detail(doa_id: str, debug: bool = False) -> Dict[str, Any]:
     if isinstance(raw, list) and raw and isinstance(raw[0], dict):
         raw = raw[0]
 
-    if debug:
-        st.caption("Debug: respons mentah detail")
-        st.json(raw)
-
     return _normalize_item(raw if isinstance(raw, dict) else {})
 
 # =========================
@@ -90,10 +83,9 @@ def fetch_detail(doa_id: str, debug: bool = False) -> Dict[str, Any]:
 # =========================
 def show_doa_harian():
     st.header("📖 Doa Harian (EQuran.id API)")
-    debug = st.toggle("Debug API response", value=False)
 
     # Ambil daftar (tanpa filter)
-    data = fetch_list(debug=debug)
+    data = fetch_list()
     if not data:
         st.warning("Tidak ada data dari API. Coba muat ulang atau periksa koneksi.")
         return
@@ -116,7 +108,7 @@ def show_doa_harian():
     doa_id = str(judul_map.get(selected_label, "")).strip()
 
     # Ambil detail by id (konten paling akurat)
-    det = fetch_detail(doa_id, debug=debug) if doa_id else {}
+    det = fetch_detail(doa_id) if doa_id else {}
 
     title = det.get("judul") or (f"Tanpa judul #{doa_id}" if doa_id else "Tanpa judul")
     st.subheader(title)
@@ -150,9 +142,7 @@ def show_doa_harian():
     _copy_button(copy_text)
 
 def _copy_button(text: str, label: str = "📋 Copy Doa"):
-    """
-    Tombol copy aman (escape-proof) pakai payload base64.
-    """
+    """Tombol copy aman (escape-proof) pakai payload base64."""
     payload = base64.b64encode(text.encode("utf-8")).decode("ascii")
     btn_id = f"copy-{uuid.uuid4().hex}"
 
@@ -177,11 +167,9 @@ def _copy_button(text: str, label: str = "📋 Copy Doa"):
   const b64  = "{payload}";
 
   function utf8(atobStr){{
-    // Decode base64 -> byte string -> UTF-8
     try {{
       return decodeURIComponent(escape(atob(atobStr)));
     }} catch(e) {{
-      // fallback kalau escape/decode gagal
       return atob(atobStr);
     }}
   }}
