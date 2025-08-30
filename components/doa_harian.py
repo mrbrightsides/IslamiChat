@@ -1,43 +1,36 @@
 import requests
 import streamlit as st
 from typing import Any, Dict, List, Optional
+from streamlit.components.v1 import html
 
-API_BASE = "https://equran.id/api/doa"
+API_BASE  = "https://equran.id/api/doa"
 CACHE_TTL = 60 * 60  # 1 jam
 
-# ---------- helpers ----------
+# =========================
+# Helpers & Normalizers
+# =========================
 def _getv(d: Dict[str, Any], *candidates: str, default: str = "") -> str:
     """Ambil d[k] dengan beberapa fallback nama kunci."""
     for k in candidates:
         if k in d and d[k] is not None:
-            v = d[k]
-            return str(v)
+            return str(d[k])
     return default
 
 def _normalize_container(raw: Any) -> List[Dict[str, Any]]:
-    """Jika respons dibungkus 'data' atau 'result', ambil isinya."""
+    """Jika respons dibungkus 'data'/'result', ambil isinya; jika list, langsung pakai."""
     if isinstance(raw, dict):
         raw = raw.get("data") or raw.get("result") or raw.get("items") or []
     return raw if isinstance(raw, list) else []
 
 def _normalize_item(x: Dict[str, Any]) -> Dict[str, Any]:
-    """Samakan nama kunci dari berbagai kemungkinan API (EQuran.id, dsb)."""
+    """Samakan nama kunci dari berbagai kemungkinan API (EQuran.id paling utama)."""
     _id   = _getv(x, "id", "ID", "no", default="")
-    judul = _getv(
-        x, "nama", "doa", "title", "judul",  # <— tambahkan "nama"
-        default=f"Tanpa judul #{_id or '?'}"
-    )
-    arab  = _getv(
-        x, "ar", "ayat", "arab", "arabic", "arab_text"  # <— tambahkan "ar"
-    )
-    latin = _getv(
-        x, "tr", "latin", "transliterasi", "latin_text"  # <— tambahkan "tr"
-    )
-    indo  = _getv(
-        x, "idn", "artinya", "indo", "translation", "terjemahan", "id"  # <— tambahkan "idn"
-    )
+    judul = _getv(x, "nama", "doa", "title", "judul", default="") or (f"Tanpa judul #{_id}" if _id else "Tanpa judul")
+    arab  = _getv(x, "ar", "ayat", "arab", "arabic", "arab_text")
+    latin = _getv(x, "tr", "latin", "transliterasi", "latin_text")
+    indo  = _getv(x, "idn", "artinya", "indo", "translation", "terjemahan")  # JANGAN masukkan 'id' (bisa bentrok dgn numeric id)
     grup  = _getv(x, "grup", "group", "kategori", default="Tanpa Grup")
-    ref   = _getv(x, "tentang", "sumber", "reference", default="")
+    ref   = _getv(x, "tentang", "sumber", "reference", "ket", default="")
     tags  = x.get("tag") or x.get("tags") or []
 
     return {
@@ -51,7 +44,9 @@ def _normalize_item(x: Dict[str, Any]) -> Dict[str, Any]:
         "tags": tags,
     }
 
-# ---------- fetchers ----------
+# =========================
+# Fetchers (cached)
+# =========================
 @st.cache_data(ttl=CACHE_TTL, show_spinner=False)
 def fetch_list(grup: Optional[str] = None, tag: Optional[str] = None, debug: bool = False) -> List[Dict[str, Any]]:
     params: Dict[str, Any] = {}
@@ -62,18 +57,12 @@ def fetch_list(grup: Optional[str] = None, tag: Optional[str] = None, debug: boo
     r.raise_for_status()
     raw = r.json()
 
-    items = _normalize_container(raw)
-    out: List[Dict[str, Any]] = []
-    for it in items:
-        if isinstance(it, dict):
-            out.append(_normalize_item(it))
-
-    # (opsional) tampilkan dump jika mau debugging cepat
     if debug:
         st.caption("Debug: respons mentah daftar")
         st.json(raw)
 
-    return out
+    items = _normalize_container(raw)
+    return [_normalize_item(it) for it in items if isinstance(it, dict)]
 
 @st.cache_data(ttl=CACHE_TTL, show_spinner=False)
 def fetch_detail(doa_id: str, debug: bool = False) -> Dict[str, Any]:
@@ -83,11 +72,9 @@ def fetch_detail(doa_id: str, debug: bool = False) -> Dict[str, Any]:
     r.raise_for_status()
     raw = r.json()
 
-    # beberapa API mengembalikan 1 objek, atau {data: {...}}
-    if isinstance(raw, dict) and ("data" in raw) and isinstance(raw["data"], dict):
+    # normalisasi bungkus
+    if isinstance(raw, dict) and isinstance(raw.get("data"), dict):
         raw = raw["data"]
-
-    # kalau masih berupa list, ambil elemen pertama
     if isinstance(raw, list) and raw and isinstance(raw[0], dict):
         raw = raw[0]
 
@@ -97,50 +84,73 @@ def fetch_detail(doa_id: str, debug: bool = False) -> Dict[str, Any]:
 
     return _normalize_item(raw if isinstance(raw, dict) else {})
 
-# ---------- UI utama ----------
+# =========================
+# UI
+# =========================
 def show_doa_harian():
     st.header("📖 Doa Harian (EQuran.id API)")
-
-    # Kalau pengen debugging cepat:
     debug = st.toggle("Debug API response", value=False)
 
-    # ambil daftar (tanpa filter dulu, filter manual di UI)
+    # Ambil daftar (tanpa filter)
     data = fetch_list(debug=debug)
-
     if not data:
         st.warning("Tidak ada data dari API. Coba muat ulang atau periksa koneksi.")
         return
 
-    # kumpulkan grup unik
-    grups = sorted({d["grup"] for d in data})
-    grup = st.selectbox("Kategori", grups, index=0)
+    # Kategori unik
+    grups = sorted({d["grup"] or "Tanpa Grup" for d in data})
+    grup = st.selectbox("Kategori", grups, index=0 if grups else None)
 
-    # filter sesuai grup
-    opsi = [d for d in data if d["grup"] == grup]
-    judul_map = {f"{d['judul']} #{d['id']}" if d['id'] else d['judul']: d["id"] for d in opsi}
+    # Filter sesuai kategori
+    opsi = [d for d in data if (d["grup"] or "Tanpa Grup") == grup] if grup else data
 
-    selected = st.selectbox("Pilih doa", list(judul_map.keys()))
-    doa_id = judul_map.get(selected)
+    # Label pilihan: judul + #id kalau ada
+    judul_map = {
+        (f"{d['judul']} #{d['id']}" if d['id'] else d['judul']): d["id"]
+        for d in opsi
+    }
 
-    # ambil detail by id agar konten lengkap/akurat
+    # Pilih doa
+    selected_label = st.selectbox("Pilih doa", list(judul_map.keys()))
+    doa_id = str(judul_map.get(selected_label, "")).strip()
+
+    # Ambil detail by id (konten paling akurat)
     det = fetch_detail(doa_id, debug=debug) if doa_id else {}
 
-    st.subheader(det.get("judul", "Tanpa judul"))
+    title = det.get("judul") or (f"Tanpa judul #{doa_id}" if doa_id else "Tanpa judul")
+    st.subheader(title)
 
     st.markdown("**Arab:**")
-    st.write(det.get("arab", "") or "—")
+    st.write(det.get("arab") or "—")
 
     st.markdown("**Latin:**")
-    st.write(det.get("latin", "") or "—")
+    st.write(det.get("latin") or "—")
 
-    st.info(f"**Arti:** {det.get('indo', '-')}")
+    st.markdown("**Arti:**")
+    st.info(det.get("indo") or "—")
+
+    # Keterangan/Hadits (opsional, dari 'tentang' EQuran)
+    if det.get("ref"):
+        with st.expander("Keterangan / Hadits", expanded=False):
+            st.write(det["ref"])
+
+    # Tag (opsional)
+    tags = det.get("tags") or []
+    if tags:
+        st.caption("Tag: " + ", ".join(map(str, tags)))
+
     st.caption("Sumber: EQuran.id")
 
-    # tombol Copy
-    _copy_button(f"{det.get('arab','')}\n\n{det.get('latin','')}\n\n{det.get('indo','-')}")
+    # Tombol Copy (ikut sertakan keterangan jika ada)
+    copy_text = "\n\n".join(
+        [det.get("arab", ""), det.get("latin", ""), det.get("indo", "")]
+        + ([det["ref"]] if det.get("ref") else [])
+    ).strip()
+    _copy_button(copy_text)
 
-from streamlit.components.v1 import html
 def _copy_button(text_to_copy: str):
+    # escape backticks agar aman di template string JS
+    safe = text_to_copy.replace("`", "\\`")
     code = f"""
     <style>
       .copy-btn {{
@@ -150,7 +160,7 @@ def _copy_button(text_to_copy: str):
       .copy-btn:hover {{ filter:brightness(0.95) }}
     </style>
     <button class="copy-btn" onclick="
-      navigator.clipboard.writeText(`{text_to_copy.replace('`','\\`')}`);
+      navigator.clipboard.writeText(`{safe}`);
       var t=document.createElement('div');
       t.innerText='✅ Disalin'; t.style.position='fixed'; t.style.bottom='20px';
       t.style.right='20px'; t.style.background='#333'; t.style.color='#fff';
