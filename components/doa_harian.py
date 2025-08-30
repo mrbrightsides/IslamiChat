@@ -21,13 +21,25 @@ def _normalize_container(raw: Any) -> List[Dict[str, Any]]:
     return raw if isinstance(raw, list) else []
 
 def _normalize_item(x: Dict[str, Any]) -> Dict[str, Any]:
-    """Samakan nama kunci dari berbagai kemungkinan API."""
+    """Samakan nama kunci dari berbagai kemungkinan API (EQuran.id, dsb)."""
     _id   = _getv(x, "id", "ID", "no", default="")
-    judul = _getv(x, "doa", "title", "judul", default=f"Tanpa judul #{_id or '?'}")
-    arab  = _getv(x, "ayat", "arab", "arabic", "arab_text", default="")
-    latin = _getv(x, "latin", "transliterasi", "latin_text", default="")
-    indo  = _getv(x, "artinya", "indo", "translation", "terjemahan", "id", default="-")
+    judul = _getv(
+        x, "nama", "doa", "title", "judul",  # <— tambahkan "nama"
+        default=f"Tanpa judul #{_id or '?'}"
+    )
+    arab  = _getv(
+        x, "ar", "ayat", "arab", "arabic", "arab_text"  # <— tambahkan "ar"
+    )
+    latin = _getv(
+        x, "tr", "latin", "transliterasi", "latin_text"  # <— tambahkan "tr"
+    )
+    indo  = _getv(
+        x, "idn", "artinya", "indo", "translation", "terjemahan", "id"  # <— tambahkan "idn"
+    )
     grup  = _getv(x, "grup", "group", "kategori", default="Tanpa Grup")
+    ref   = _getv(x, "tentang", "sumber", "reference", default="")
+    tags  = x.get("tag") or x.get("tags") or []
+
     return {
         "id": _id,
         "grup": grup,
@@ -35,6 +47,8 @@ def _normalize_item(x: Dict[str, Any]) -> Dict[str, Any]:
         "arab": arab,
         "latin": latin,
         "indo": indo,
+        "ref": ref,
+        "tags": tags,
     }
 
 # ---------- fetchers ----------
