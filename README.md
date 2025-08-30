@@ -28,6 +28,9 @@ Tanya jawab Islami, waktu sholat, khutbah AI, setoran hafalan, kalkulator zakat,
   <a href="https://smartfaithbot.vercel.app/">
     <img alt="Live on Vercel" src="https://img.shields.io/badge/Live-Vercel-000000?logo=vercel&logoColor=white&style=for-the-badge">
   </a>
+  <a href="https://app.near.ai/agents/smartfaith.near/smartfaith-ai/latest/run">
+    <img alt="Registry on Near" src="https://img.shields.io/badge/Registry-NEAR_AI-blue?logo=near&logoColor=white&style=for-the-badge">
+  </a>
 </p>
 
 ---
