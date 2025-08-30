@@ -1,5 +1,6 @@
 import requests
 import streamlit as st
+import base64, uuid
 from typing import Any, Dict, List, Optional
 from streamlit.components.v1 import html
 
@@ -148,24 +149,74 @@ def show_doa_harian():
     ).strip()
     _copy_button(copy_text)
 
-def _copy_button(text_to_copy: str):
-    # escape backticks agar aman di template string JS
-    safe = text_to_copy.replace("`", "\\`")
-    code = f"""
-    <style>
-      .copy-btn {{
-        display:inline-block;padding:8px 14px;margin-top:10px;border-radius:6px;
-        background:#10b981;color:white;font-weight:600;border:none;cursor:pointer
-      }}
-      .copy-btn:hover {{ filter:brightness(0.95) }}
-    </style>
-    <button class="copy-btn" onclick="
-      navigator.clipboard.writeText(`{safe}`);
-      var t=document.createElement('div');
-      t.innerText='✅ Disalin'; t.style.position='fixed'; t.style.bottom='20px';
-      t.style.right='20px'; t.style.background='#333'; t.style.color='#fff';
-      t.style.padding='8px 12px'; t.style.borderRadius='6px'; t.style.zIndex='9999';
-      document.body.appendChild(t); setTimeout(()=>t.remove(),1500);
-    ">📋 Copy Doa</button>
+def _copy_button(text: str, label: str = "📋 Copy Doa"):
     """
-    html(code, height=60)
+    Tombol copy aman (escape-proof) pakai payload base64.
+    """
+    payload = base64.b64encode(text.encode("utf-8")).decode("ascii")
+    btn_id = f"copy-{uuid.uuid4().hex}"
+
+    html(f"""
+<div id="{btn_id}">
+  <button class="copy-btn">{label}</button>
+</div>
+
+<style>
+  #{btn_id} .copy-btn {{
+    display:inline-block; padding:8px 14px; border-radius:6px;
+    background:#10b981; color:#fff; font-weight:600;
+    border:none; cursor:pointer;
+  }}
+  #{btn_id} .copy-btn:hover {{ filter:brightness(0.95); }}
+</style>
+
+<script>
+(function(){{
+  const root = document.getElementById("{btn_id}");
+  const btn  = root.querySelector(".copy-btn");
+  const b64  = "{payload}";
+
+  function utf8(atobStr){{
+    // Decode base64 -> byte string -> UTF-8
+    try {{
+      return decodeURIComponent(escape(atob(atobStr)));
+    }} catch(e) {{
+      // fallback kalau escape/decode gagal
+      return atob(atobStr);
+    }}
+  }}
+
+  function showToast(){{
+    const t = document.createElement('div');
+    t.textContent = '✅ Disalin';
+    Object.assign(t.style, {{
+      position:'fixed', bottom:'20px', right:'20px',
+      background:'#333', color:'#fff', padding:'8px 12px',
+      borderRadius:'6px', zIndex: 9999, fontSize:'14px'
+    }});
+    document.body.appendChild(t);
+    setTimeout(()=>t.remove(), 1500);
+  }}
+
+  function fallbackCopy(text){{
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position='fixed';
+    ta.style.top='-1000px';
+    document.body.appendChild(ta);
+    ta.select();
+    try {{ document.execCommand('copy'); showToast(); }}
+    finally {{ ta.remove(); }}
+  }}
+
+  btn.addEventListener('click', () => {{
+    const text = utf8(b64);
+    if (navigator.clipboard && window.isSecureContext) {{
+      navigator.clipboard.writeText(text).then(showToast).catch(() => fallbackCopy(text));
+    }} else {{
+      fallbackCopy(text);
+    }}
+  }});
+}})();
+</script>
+""", height=80)
