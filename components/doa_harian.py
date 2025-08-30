@@ -3,92 +3,32 @@ from pathlib import Path
 from streamlit.components.v1 import html
 
 API_BASE = "https://equran.id/api/doa"
-CACHE_TTL = 60 * 60 * 12  # 12 jam
-
-# ----------------- Data loaders -----------------
-def load_local():
-    p = Path("data/doa_harian.json")
-    return json.loads(p.read_text(encoding="utf-8"))
-
-with st.expander("Debug (developer)"):
-    if st.checkbox("Show raw API sample"):
-        try:
-            sample = requests.get(API_BASE, timeout=10).json()
-            st.json(sample)
-        except Exception as e:
-            st.error(f"Fetch sample failed: {e}")
 
 @st.cache_data(ttl=CACHE_TTL, show_spinner=False)
 def fetch_api(grup: str | None = None, tag: str | None = None):
-    params = {}
-    if grup: params["grup"] = grup
-    if tag:  params["tag"]  = tag
-
-    r = requests.get(API_BASE, params=params, timeout=15)
+    r = requests.get(API_BASE, timeout=15)
     r.raise_for_status()
-    raw = r.json()
+    rows = r.json()  # langsung array of dicts
 
-    # ---- bantu fungsi untuk menemukan list of dicts di response apa pun ----
-    def first_list_of_dicts(obj):
-        if isinstance(obj, list) and (not obj or isinstance(obj[0], dict)):
-            return obj
-        if isinstance(obj, dict):
-            # prioritas umum
-            for k in ("data", "result", "values", "items", "list"):
-                if k in obj:
-                    got = first_list_of_dicts(obj[k])
-                    if got is not None:
-                        return got
-            # kalau masih belum, cari list of dicts di value mana pun
-            for v in obj.values():
-                got = first_list_of_dicts(v)
-                if got is not None:
-                    return got
-        return None
-
-    rows = first_list_of_dicts(raw)
-    if rows is None:
-        # kalau server balikin string JSON di dalam field
-        if isinstance(raw, str):
-            try:
-                rows = first_list_of_dicts(json.loads(raw))
-            except Exception:
-                rows = None
-    if rows is None:
-        raise ValueError("Unexpected API response shape")
-
-    def g(d, *keys, default=""):
-        for k in keys:
-            if k in d and d[k] not in (None, ""):
-                return d[k]
-        return default
+    # filter manual (API support filter query juga, tapi kita handle local biar fleksibel)
+    if grup:
+        rows = [x for x in rows if x.get("grup") and grup.lower() in x["grup"].lower()]
+    if tag:
+        rows = [x for x in rows if x.get("tag") and tag.lower() in str(x["tag"]).lower()]
 
     norm = []
     for x in rows:
-        if not isinstance(x, dict):
-            continue
-        title = g(x, "doa", "judul", default="Tanpa judul")
-        arab  = g(x, "ayat", "arab", "arabic")
-        latin = g(x, "latin", "transliterasi")
-        arti  = g(x, "artinya", "arti", "terjemah")
-        grupv = g(x, "grup", "kategori", "category", default="Lainnya")
-        tagsv = g(x, "tag", "tags", default=[])
-        if isinstance(tagsv, str):
-            # jika server kasih string "malam, hujan" → split
-            tagsv = [t.strip() for t in tagsv.split(",") if t.strip()]
-
         norm.append({
-            "id": g(x, "id"),
-            "title": title,
-            "arab": arab,
-            "latin": latin,
-            "translation_id": arti,
+            "id": x.get("id"),
+            "title": x.get("doa", "Tanpa judul"),
+            "arab": x.get("ayat", ""),
+            "latin": x.get("latin", ""),
+            "translation_id": x.get("artinya", ""),
             "source": "EQuran.id",
-            "category": str(grupv).title(),
-            "audio_url": g(x, "audio"),
-            "tags": tagsv,
+            "category": x.get("grup", "Lainnya"),
+            "audio_url": x.get("audio"),
+            "tags": x.get("tag", []),
         })
-
     return norm
 
 def load_hybrid(mode: str, grup: str | None, tag: str | None):
