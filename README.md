@@ -26,7 +26,7 @@ Coba semua SmartFaith di berbagai platform
   <a href="https://t.me/smartfaith_bot">
     <img alt="Chat on Telegram" src="https://img.shields.io/badge/Chat-Telegram-229ED9?logo=telegram&logoColor=white&style=for-the-badge">
   </a>
-  <a href="https://smartfaithbot.vercel.app/">
+  <a href="https://smartfaith.vercel.app/">
     <img alt="Live on Vercel" src="https://img.shields.io/badge/Live-Vercel-000000?logo=vercel&logoColor=white&style=for-the-badge">
   </a>
   <a href="https://app.near.ai/agents/smartfaith.near/smartfaith-ai/latest/run">
