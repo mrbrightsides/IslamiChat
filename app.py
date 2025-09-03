@@ -69,7 +69,7 @@ with col1:
     st.image(LOGO_URL, use_container_width=True)
 with col2:
     st.markdown("""
-        ## SmartFaith 🕌🤖
+        ## SmartFaith 🕌
     """)
 
 st.caption("Asisten Islami Berbasis AI: Tanya Jawab, Generator Khutbah, & Setor Hafalan")
@@ -95,7 +95,7 @@ tabs = st.tabs([
 with tabs[0]:
     st.subheader("🤖 Chatbot Islami")
     st.markdown("""
-        Silakan pilih beragam pilihan widget chatbot sesuai kebutuhan Anda
+        Silakan pilih beragam pilihan widget chatbot sesuai kebutuhan Anda:
     """)
 
     # --- Persist pilihan widget
@@ -103,9 +103,9 @@ with tabs[0]:
         st.session_state.chat_widget = "TawkTo"  # default
 
     widget_opt = st.radio(
-        " ", ["ArtiBot", "TawkTo", "ChatBase", "Botsonic", "Denser", "Cortext"],
+        " ", ["ArtiBot", "TawkTo", "ChatBase", "Botsonic", "Denser", "Cortex"],
         horizontal=True, label_visibility="collapsed",
-        index=["ArtiBot","TawkTo","ChatBase","Botsonic","Denser","Cortext"].index(st.session_state.chat_widget),
+        index=["ArtiBot","TawkTo","ChatBase","Botsonic","Denser","Cortex"].index(st.session_state.chat_widget),
         key="chat_widget"
     )
 
@@ -115,7 +115,7 @@ with tabs[0]:
         "ChatBase": "https://www.chatbase.co/chatbot-iframe/Ho6CMtS7y0t5oM-Ktx9jU",
         "Botsonic": "https://bot.writesonic.com/share/bot/a148b878-259e-4591-858a-8869b9b23604",
         "Denser": "https://denser.ai/u/embed/chatbot_pbix8pdjxk9brvund1afv",
-        "Cortext": "https://zenoembed.textcortex.com/?embed_id=emb_01k489emhkefvvsnhpxpqjtc7s"
+        "Cortex": "https://zenoembed.textcortex.com/?embed_id=emb_01k489emhkefvvsnhpxpqjtc7s"
     }
     chosen_url = URLS[widget_opt]
 
