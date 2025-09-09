@@ -219,12 +219,20 @@ with tabs[12]:
 
 import streamlit as st
 
+import streamlit as st
+
 st.markdown("---")
 st.markdown(
     """
-    <div style="text-align:center; opacity:.8">
+    <div style="text-align:center; opacity:.85; font-size:14px">
       🌐 <a href="https://smartfaithshowcase.vercel.app" target="_blank">
       SmartFaith Showcase</a> • Gen Z butuh arah, Islam kasih cahaya 🌙
+      <br><br>
+      🌙 Dukung pengembangan proyek ini melalui: 
+      <a href="https://github.com/sponsors/mrbrightsides" target="_blank">💖 GitHub Sponsors</a> •
+      <a href="https://ko-fi.com/khudri" target="_blank">☕ Ko-fi</a> •
+      <a href="https://www.paypal.com/paypalme/akhmadkhudri" target="_blank">💵 PayPal</a> •
+      <a href="https://trakteer.id/akhmad_khudri" target="_blank">🍵 Trakteer</a>
     </div>
     """,
     unsafe_allow_html=True,
