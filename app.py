@@ -7,19 +7,6 @@ import pandas as pd
 import streamlit as st
 from streamlit.components.v1 import iframe
 
-import streamlit as st
-
-st.markdown("---")
-st.markdown(
-    """
-    <div style="text-align:center; opacity:.8">
-      🌐 <a href="https://smartfaithshowcase.vercel.app" target="_blank">
-      SmartFaith Showcase</a> • Gen Z butuh arah, Islam kasih cahaya 🌙
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
 if st.query_params.get("ping") == "1":
     st.write("ok"); st.stop()
 
@@ -229,3 +216,16 @@ with tabs[11]:
 # === Tab 12: Doa Harian ===
 with tabs[12]:
     show_doa_harian()
+
+import streamlit as st
+
+st.markdown("---")
+st.markdown(
+    """
+    <div style="text-align:center; opacity:.8">
+      🌐 <a href="https://smartfaithshowcase.vercel.app" target="_blank">
+      SmartFaith Showcase</a> • Gen Z butuh arah, Islam kasih cahaya 🌙
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
