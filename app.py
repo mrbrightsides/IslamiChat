@@ -7,20 +7,14 @@ import pandas as pd
 import streamlit as st
 from streamlit.components.v1 import iframe
 
+import streamlit as st
+
+st.markdown("---")
 st.markdown(
     """
-    <div style="
-        display:flex; gap:12px; align-items:center; justify-content:center;
-        padding:10px 12px; margin:-1rem -1rem 1rem; 
-        background:linear-gradient(90deg,#0b0b0b,#161616); 
-        border-bottom:1px solid rgba(255,255,255,.08);
-    ">
-      <span style="opacity:.85">✨ Lihat juga:</span>
-      <a href="https://smartfaithshowcase.vercel.app" target="_blank"
-         style="padding:.35rem .7rem; border-radius:.6rem; 
-                background:#fff; color:#000; text-decoration:none; font-weight:600;">
-        SmartFaith Showcase
-      </a>
+    <div style="text-align:center; opacity:.8">
+      🌐 <a href="https://smartfaithshowcase.vercel.app" target="_blank">
+      SmartFaith Showcase</a> • Gen Z butuh arah, Islam kasih cahaya 🌙
     </div>
     """,
     unsafe_allow_html=True,
