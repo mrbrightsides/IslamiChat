@@ -100,21 +100,22 @@ with tabs[0]:
 
     # --- Persist pilihan widget
     if "chat_widget" not in st.session_state:
-        st.session_state.chat_widget = "TawkTo"  # default
+        st.session_state.chat_widget = "SirahBot"  # default
 
     widget_opt = st.radio(
-        " ", ["ArtiBot", "TawkTo", "ChatBase", "Denser", "Cortex"],
+        " ", ["FiqhBot", "SirahBot", "TarikhBot", "NusantaraBot", "MuamalahBot", "GenZBot"],
         horizontal=True, label_visibility="collapsed",
-        index=["ArtiBot","TawkTo","ChatBase","Denser","Cortex"].index(st.session_state.chat_widget),
+        index=["FiqhBot","SirahBot","TarikhBot","NusantaraBot","MuamalahBot","GenZBot"].index(st.session_state.chat_widget),
         key="chat_widget"
     )
 
     URLS = {
-        "ArtiBot": "https://my.artibot.ai/islamichat",
-        "TawkTo": "https://tawk.to/chat/63f1709c4247f20fefe15b12/1gpjhvpnb",
-        "ChatBase": "https://www.chatbase.co/chatbot-iframe/Ho6CMtS7y0t5oM-Ktx9jU",
-        "Denser": "https://denser.ai/u/embed/chatbot_pbix8pdjxk9brvund1afv",
-        "Cortex": "https://zenoembed.textcortex.com/?embed_id=emb_01k489emhkefvvsnhpxpqjtc7s"
+        "FiqhBot": "https://my.artibot.ai/islamichat",
+        "SirahBot": "https://tawk.to/chat/63f1709c4247f20fefe15b12/1gpjhvpnb",
+        "TarikhBot": "https://www.chatbase.co/chatbot-iframe/Ho6CMtS7y0t5oM-Ktx9jU",
+        "NusantaraBot": "https://denser.ai/u/embed/chatbot_pbix8pdjxk9brvund1afv",
+        "MuamalahBot": "https://zenoembed.textcortex.com/?embed_id=emb_01k489emhkefvvsnhpxpqjtc7s",
+        "GenZBot": "https://smartfaith.vercel.app"
     }
     chosen_url = URLS[widget_opt]
 
