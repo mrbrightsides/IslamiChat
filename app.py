@@ -226,7 +226,7 @@ st.markdown(
     """
     <div style="text-align:center; opacity:.85; font-size:14px">
       🌐 <a href="https://smartfaithshowcase.vercel.app" target="_blank">
-      SmartFaith Showcase</a> • Gen Z butuh arah, Islam kasih cahaya 🌙
+      SmartFaith Showcase</a> • Gen Z butuh arah, Islam kasih cahaya • Built with 💙 by <a href="https://s.id/khudri" target="_blank">Khudri</a>
       <br><br>
       🌙 Dukung pengembangan proyek ini melalui: 
       <a href="https://github.com/sponsors/mrbrightsides" target="_blank">💖 GitHub Sponsors</a> •
