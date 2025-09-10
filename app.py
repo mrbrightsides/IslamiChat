@@ -70,6 +70,7 @@ with col1:
 with col2:
     st.markdown("""
         ## SmartFaith 🕌
+        Your Daily Islamic Assistant
     """)
 
 st.caption("Asisten Islami Berbasis AI: Tanya Jawab, Generator Khutbah, & Setor Hafalan")
