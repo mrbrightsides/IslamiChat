@@ -52,13 +52,13 @@ Coba semua SmartFaith di berbagai platform
 ## ✨ Fitur Utama
 - 💬 Tanya jawab Islami (powered by AI)  
 - 🕌 Jadwal sholat realtime (lokasi & metode hisab bisa diatur)  
-- ⏰ Pengingat sholat berikutnya dengan hitung mundur  
+- ⏰ Pengingat sholat berikutnya dengan hitung mundur (Al-Adhan API)
 - 📢 KhutbahGPT: generator khutbah singkat berbasis AI  
 - 🎙️ Setor hafalan: validasi bacaan Al-Qur’an via AI  
 - 📖 Murottal Al-Qur’an (streaming dari MP3Quran)  
 - 🧮 Kalkulator zakat (otomatis ambil harga emas dari GoldAPI)  
-- 📚 Doa harian (Hisnul Muslim)  
-- 🧭 Arah kiblat  
+- 📚 Doa harian (Hisnul Muslim dan EQuran.id API)  
+- 📖 Al-Quran (Sumber data: EQuran.id • Teks/tafsir Kemenag • Audio via CDN) 
 - 🕌 Cari masjid terdekat (OpenStreetMap)  
 - 🔌 Siap integrasi IoT untuk:  
   - Notifikasi adzan otomatis  
