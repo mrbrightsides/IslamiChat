@@ -89,7 +89,7 @@ with st.sidebar:
     7. [Learn3](https://learn3.streamlit.app/)
     8. [Nexus](https://rantai-nexus.streamlit.app/)
     9. [BlockPedia](https://blockpedia.streamlit.app/)
-    10. [DataHub](https://stc-datahub.streamlit.app/
+    10. [DataHub](https://stc-datahub.streamlit.app/)
     11. [STC GasX](https://stc-gasx.streamlit.app/)
 
     ---
