@@ -79,18 +79,25 @@ with st.sidebar:
          - Kontrol perangkat pintar berbasis jadwal sholat
     
     ---
-    ### 🧩 RANTAI Ecosystem
+    ### 🧩 STC Ecosystem
     1. [STC Analytics](https://stc-analytics.streamlit.app/)
     2. [STC GasVision](https://stc-gasvision.streamlit.app/)
     3. [STC Converter](https://stc-converter.streamlit.app/)
     4. [STC Bench](https://stc-bench.streamlit.app/)
     5. [STC Insight](https://stc-insight.streamlit.app/)
     6. [STC Plugin](https://smartourism.elpeef.com/)
-    7. [Learn3](https://learn3.streamlit.app/)
-    8. [Nexus](https://rantai-nexus.streamlit.app/)
-    9. [BlockPedia](https://blockpedia.streamlit.app/)
-    10. [DataHub](https://stc-datahub.streamlit.app/)
-    11. [STC GasX](https://stc-gasx.streamlit.app/)
+    7. [STC GasX](https://stc-gasx.streamlit.app/)
+    8. [DataHub](https://stc-data.streamlit.app/)
+
+    ---
+    ### ☂ RANTAI Communities
+    1. [Learn3](https://learn3.streamlit.app/)
+    2. [BlockPedia](https://blockpedia.streamlit.app/)
+    3. [SmartFaith](https://smartfaith.streamlit.app/)
+    4. [Nexus](https://rantai-nexus.streamlit.app/)
+    5. [Exploratory Data Analysis](https://rantai-exploda.streamlit.app/)
+    6. [Business Intelligence](https://rantai-busi.streamlit.app/)
+    7. [Predictive Modelling](https://rantai-model-predi.streamlit.app/)
 
     ---
     #### 🙌 Dukungan & kontributor
