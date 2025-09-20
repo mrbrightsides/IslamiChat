@@ -57,7 +57,7 @@ from components.doa_harian import show_doa_harian
 
 with st.sidebar:
     st.sidebar.image(
-        "https://i.imgur.com/pwYe3ox.png",
+        "https://i.imgur.com/Rd8GyFU.png",
         use_container_width=True
     )
     st.sidebar.markdown("📘 **About**")
