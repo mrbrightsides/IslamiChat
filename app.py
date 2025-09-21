@@ -168,7 +168,7 @@ with tabs[0]:
 
     # --- Persist pilihan widget
     if "chat_widget" not in st.session_state:
-        st.session_state.chat_widget = "SirahBot"  # default
+        st.session_state.chat_widget = "FiqhBot"  # default
 
     widget_opt = st.radio(
         " ", ["FiqhBot", "SirahBot", "TarikhBot", "NusantaraBot", "MuamalahBot", "GenZBot"],
