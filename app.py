@@ -102,6 +102,8 @@ with st.sidebar:
     3. [BlockPedia](https://blockpedia.streamlit.app/)
     4. [Learn3](https://learn3.streamlit.app/)
     5. [LearnPy](https://rantai-learnpy.streamlit.app/)
+    6. [Cruise](https://rantai-cruise.streamlit.app/)
+    7. [IndustriX](https://rantai-industrix.streamlit.app/)
 
     🌐 Net → “Connect the chain”
     1. [SmartFaith](https://smartfaith.streamlit.app/)
@@ -111,6 +113,7 @@ with st.sidebar:
     5. [Decentralized Storage Optimizer](https://rantai-greenstorage.streamlit.app/)
     6. [Cloud Carbon Footprint Tracker](https://rantai-greencloud.streamlit.app/)
     7. [Cloud.Climate.Chain](https://rantai-3c.streamlit.app/)
+    8. [Property Management System](https://rantai-pms.streamlit.app/)
     
     🌱 Lab → “Grow the chain”
     1. [BlockBook](https://blockbook.streamlit.app/)
