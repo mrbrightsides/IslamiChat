@@ -12,6 +12,14 @@ CHANNELS = {
     "Quran1 (Sheikh Mishary Rashid Alafasy)": {
         "url": "https://www.youtube.com/embed/lCeoYw3Y9zM",
         "title": "Quran Recitation"
+    },
+    "Quran2 (Saad Al-Ghamdi)": {
+        "url": "https://www.youtube.com/embed/hBRkEE96geE",
+        "title": "Quran Recitation"
+    },
+    "Quran3 (Alaa Aqel)": {
+        "url": "https://www.youtube.com/embed/9shisvrYqXM",
+        "title": "Quran Recitation"
     }
 }
 
