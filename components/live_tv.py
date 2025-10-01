@@ -6,7 +6,7 @@ CHANNELS = {
         "title": "Makkah Live"
     },
     "Madinah (Masjid Nabawi)": {
-        "url": "https://www.youtube.com/embed/IVrpe0j4ZGI",
+        "url": "https://www.youtube.com/embed/TpT8b8JFZ6E",
         "title": "Madinah Live"
     },
     "Quran1 (Sheikh Mishary Rashid Alafasy)": {
