@@ -79,53 +79,9 @@ with st.sidebar:
          - Kontrol perangkat pintar berbasis jadwal sholat
     
     ---
-    ### 🧩 STC Ecosystem
-    1. [STC Analytics](https://stc-analytics.streamlit.app/)
-    2. [STC GasVision](https://stc-gasvision.streamlit.app/)
-    3. [STC Converter](https://stc-converter.streamlit.app/)
-    4. [STC Bench](https://stc-bench.streamlit.app/)
-    5. [STC Insight](https://stc-insight.streamlit.app/)
-    6. [STC Plugin](https://smartourism.elpeef.com/)
-    7. [STC GasX](https://stc-gasx.streamlit.app/)
-    8. [STC CarbonPrint](https://stc-carbonprint.streamlit.app/)
-    9. [STC ImpactViz](https://stc-impactviz.streamlit.app/)
-    10. [DataHub](https://stc-data.streamlit.app/)
-
-    ---
-    ### ⛓ RANTAI Communities
-
-    > 💡 RANTAI Communities adalah ekosistem apps eksperimental berbasis Web3 & AI untuk riset, kolaborasi, dan inovasi. Dibangun di atas 3 core: Dev → Build, Net → Connect, Lab → Grow.
-    
-    🔧 Dev → “Build the chain”
-    1. [Numerical Methods Lab](https://metnumlab.streamlit.app/)
-    2. [Computational Analytics Studio](https://komnumlab.streamlit.app/)
-    3. [BlockPedia](https://blockpedia.streamlit.app/)
-    4. [Learn3](https://learn3.streamlit.app/)
-    5. [LearnPy](https://rantai-learnpy.streamlit.app/)
-    6. [Cruise](https://rantai-cruise.streamlit.app/)
-    7. [IndustriX](https://rantai-industrix.streamlit.app/)
-
-    🌐 Net → “Connect the chain”
-    1. [SmartFaith](https://smartfaith.streamlit.app/)
-    2. [Nexus](https://rantai-nexus.streamlit.app/)
-    3. [Decentralized Supply Chain](https://rantai-trace.streamlit.app/)
-    4. [ESG Compliance Manager](https://rantai-sentinel.streamlit.app/)
-    5. [Decentralized Storage Optimizer](https://rantai-greenstorage.streamlit.app/)
-    6. [Cloud Carbon Footprint Tracker](https://rantai-greencloud.streamlit.app/)
-    7. [Cloud.Climate.Chain](https://rantai-3c.streamlit.app/)
-    8. [Property Management System](https://rantai-pms.streamlit.app/)
-    
-    🌱 Lab → “Grow the chain”
-    1. [BlockBook](https://blockbook.streamlit.app/)
-    2. [Data Insights & Visualization Assistant](https://rantai-diva.streamlit.app/)
-    3. [Exploratory Data Analysis](https://rantai-exploda.streamlit.app/)
-    4. [Business Intelligence](https://rantai-busi.streamlit.app/)
-    5. [Predictive Modelling](https://rantai-model-predi.streamlit.app/)
-    6. [Ethic & Bias Checker](https://rantai-ethika.streamlit.app/)
-    7. [Smart Atlas For Environment](https://rantai-safe.streamlit.app/)
-    8. [Blockchain Healthcare Revolution](https://healthchain.streamlit.app/)
-    9. [Academic Flow Diagram Generator](https://mermaind.streamlit.app/)
-    10. [Decentralized Agriculture](https://agroviz.streamlit.app/)
+    ### 🧩 Apps Showcase
+    Lihat disini untuk semua tools yang kami kembangkan:
+    [ELPEEF](https://showcase.elpeef.com/)
 
     ---
     #### 🙌 Dukungan & kontributor
