@@ -1,7 +1,8 @@
 import streamlit as st
 
 MAKKAH_EMBED = "https://www.youtube.com/embed/bNY8a2BB5Gc"
-MADINAH_EMBED = "https://www.youtube.com/embed/wiQWH8908PU"
+MADINAH_EMBED = "https://www.youtube.com/embed/IVrpe0j4ZGI"
+QURAN1_EMBED = "https://www.youtube.com/embed/lCeoYw3Y9zM"
 
 def _responsive_embed(embed_url: str, title: str) -> str:
     """
@@ -24,10 +25,10 @@ def _responsive_embed(embed_url: str, title: str) -> str:
     """
 
 def render_live_tv_tab():
-    st.subheader("📺 Live TV — Makkah & Madinah")
+    st.subheader("📺 Live TV — Makkah, Madinah, dan Quran Recitation")
     st.caption("Streaming resmi via YouTube. Jika tidak muncul, coba refresh atau buka langsung di aplikasi YouTube.")
 
-    choice = st.selectbox("Pilih Channel", ["Makkah (Masjidil Haram)", "Madinah (Masjid Nabawi)"])
+    choice = st.selectbox("Pilih Channel", ["Makkah (Masjidil Haram)", "Madinah (Masjid Nabawi)", "Quran1 (Sheikh Mishary Rashid Alafasy)"])
 
     if "Makkah" in choice:
         st.markdown(_responsive_embed(MAKKAH_EMBED, "Makkah Live"), unsafe_allow_html=True)
