@@ -168,7 +168,10 @@ with tabs[0]:
     st.write(f"💬 Chat aktif: **{widget_opt}**")
     st.caption("Jika area kosong, kemungkinan dibatasi oleh CSP/X-Frame-Options dari penyedia.")
 
-    iframe(src=final_url, height=720)
+    if widget_opt == "MuallafBot":
+        embed_cropped(final_url, hide_px=56, height=720, title=None)
+    else:
+        iframe(src=final_url, height=720)
 
     if st.button(f"🔗 Klik disini jika ingin menampilkan halaman chat {widget_opt} dengan lebih baik"):
         st.markdown(
