@@ -7,13 +7,6 @@ import pandas as pd
 import streamlit as st
 from streamlit.components.v1 import iframe
 
-try:
-    from streamlit_cropper import embed_cropped
-except ImportError:
-    def embed_cropped(url, hide_px=0, height=720, title=None):
-        """Fallback: iframe biasa jika cropper tidak ada"""
-        iframe(src=url, height=height)
-
 if st.query_params.get("ping") == "1":
     st.write("ok"); st.stop()
 
@@ -175,10 +168,7 @@ with tabs[0]:
     st.write(f"💬 Chat aktif: **{widget_opt}**")
     st.caption("Jika area kosong, kemungkinan dibatasi oleh CSP/X-Frame-Options dari penyedia.")
 
-    if widget_opt == "MuallafBot":
-        embed_cropped(final_url, hide_px=56, height=720, title=None)
-    else:
-        iframe(src=final_url, height=720)
+    iframe(src=final_url, height=720)
 
     if st.button(f"🔗 Klik disini jika ingin menampilkan halaman chat {widget_opt} dengan lebih baik"):
         st.markdown(
