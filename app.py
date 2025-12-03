@@ -7,6 +7,13 @@ import pandas as pd
 import streamlit as st
 from streamlit.components.v1 import iframe
 
+try:
+    from streamlit_cropper import embed_cropped
+except ImportError:
+    def embed_cropped(url, hide_px=0, height=720, title=None):
+        """Fallback: iframe biasa jika cropper tidak ada"""
+        iframe(src=url, height=height)
+
 if st.query_params.get("ping") == "1":
     st.write("ok"); st.stop()
 
