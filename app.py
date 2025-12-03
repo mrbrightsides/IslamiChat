@@ -145,9 +145,9 @@ with tabs[0]:
         st.session_state.chat_widget = "FiqhBot"  # default
 
     widget_opt = st.radio(
-        " ", ["FiqhBot", "SirahBot", "TarikhBot", "NusantaraBot", "MuamalahBot", "GenZBot"],
+        " ", ["FiqhBot", "SirahBot", "TarikhBot", "NusantaraBot", "MuamalahBot", "GenZBot", "MuallafBot"],
         horizontal=True, label_visibility="collapsed",
-        index=["FiqhBot","SirahBot","TarikhBot","NusantaraBot","MuamalahBot","GenZBot"].index(st.session_state.chat_widget),
+        index=["FiqhBot","SirahBot","TarikhBot","NusantaraBot","MuamalahBot","GenZBot","MuallafBot"].index(st.session_state.chat_widget),
         key="chat_widget"
     )
 
@@ -157,7 +157,8 @@ with tabs[0]:
         "TarikhBot": "https://www.chatbase.co/chatbot-iframe/Ho6CMtS7y0t5oM-Ktx9jU",
         "NusantaraBot": "https://denser.ai/u/embed/chatbot_pbix8pdjxk9brvund1afv",
         "MuamalahBot": "https://zenoembed.textcortex.com/?embed_id=emb_01k489emhkefvvsnhpxpqjtc7s",
-        "GenZBot": "https://smartfaith.vercel.app"
+        "GenZBot": "https://smartfaith.vercel.app",
+        "MuallafBot": "https://bot.writesonic.com/share/bot/a148b878-259e-4591-858a-8869b9b23604"
     }
     chosen_url = URLS[widget_opt]
 
