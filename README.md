@@ -67,6 +67,22 @@ Coba semua SmartFaith di berbagai platform
 
 ---
 
+```mermaid
+---
+config:
+  layout: dagre
+  theme: mc
+  look: neo
+---
+flowchart RL
+    A["SmartFaith 🕌<br>Your Daily Islamic Assistant"] --> B["Main Features Bar"] & C["Chatbot Islami Section"]
+    B --> B1["Waktu Sholat"] & B2["Murottal Quran"] & B3["Quran"] & B4["Kalkulator Zakat"] & B5["Masjid Terdekat"] & B6["Event Islam"] & B7["KhutbahGPT"] & B8["Live TV"] & B9["Chat Ustadz"] & B10["Setor Hafalan"] & B11["Zikir"] & B12["Doa Harian"]
+    C --> D["Widget Selector"]
+    D --> D1["FiqhBot"] & D2["SirahBot"] & D3["TarikhBot"] & D4["NusantaraBot"] & D5["MuamalatBot"] & D6["GenZBot"] & D7["MuallafBot"]
+```
+
+---
+
 ## 🖼️ Preview
 <img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/612de068-b911-4a29-853e-2c4f94b86447" />
 
